@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-27 · Sesión #5 (marca Vértice confirmada, asistente demo v0.1)
+> Última actualización: 2026-10-27 · Sesión #6 (motor OpenAI para pruebas, dominio pospuesto)
 
 ---
 
@@ -30,12 +30,14 @@
   cafeteras, restaurantes, inmobiliarias, veterinarias/salones.
 - **Tecnología:** agente propio "Clara" con **Claude API + Cloud API de Meta** en un VPS barato, multi-cliente;
   n8n solo como puente opcional (análisis en `docs/11-stack-tecnico-agentes-2026.md`).
-- **Marca: Vértice — Automatización con IA** ✅ confirmada por el fundador (dominio sugerido `verticeautomatizacion.com`,
-  disponible al 2026-10-27; pendiente registrarlo). Ver `docs/12-marca.md`.
+- **Marca: Vértice — Automatización con IA** ✅ confirmada por el fundador. **Dominio pospuesto hasta la
+  primera venta** (sugerido `verticeautomatizacion.com`, disponible al 2026-10-27). Ver `docs/12-marca.md`.
 - **Asistente demo v0.1 construido** en `agente/` (Python + FastAPI + Claude API + Cloud API de WhatsApp):
   agenda, cancela y muestra citas, guarda prospectos, pasa a humano avisando al dueño; multi-negocio por YAML;
   demos "Clínica Dental Sonríe" (Sofía) y "MotoTaller Express" (Max); simulador en terminal; 12 pruebas OK.
-  Falta: API key de Anthropic para probarlo en vivo y conectar el número de prueba de Meta.
+  **Motores intercambiables** (`VERTICE_PROVEEDOR=claude|openai`): por ahora se prueba con la API key de
+  OpenAI que ya tiene el fundador. Falta: probarlo en vivo (desde su PC o habilitando `api.openai.com` en la red
+  del entorno de Claude) y conectar el número de prueba de Meta.
 - **Prospectos:** base de 62 negocios de Pereira y Dosquebradas en `prospectos/prospectos-pereira-dosquebradas.csv`
   (39 con WhatsApp/celular). Construida con búsqueda web (Google Maps bloqueado en el entorno de Claude).
 - **Por qué:** WhatsApp tiene ~90–99 % de penetración en Colombia; las pymes pierden ventas por responder
@@ -91,9 +93,10 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [x] Base de 62 prospectos (Pereira + Dosquebradas) con contacto y fuente
 - [x] Nombre elegido: Vértice
 - [x] Asistente demo v0.1 (código + pruebas) — `agente/README.md`
-- [ ] Fundador registra `verticeautomatizacion.com`
-- [ ] Fundador crea API key en console.anthropic.com (cargar ~USD 5–10 de créditos) para probar la demo
-- [ ] Probar Haiku 5.5 vs Opus 5.5 con conversaciones reales y elegir modelo de producción (costo)
+- [x] Motor OpenAI agregado al asistente (para probar con la key que ya tiene el fundador)
+- [ ] Probar la demo en vivo con OpenAI (PC del fundador o red del entorno habilitada para `api.openai.com`)
+- [ ] Elegir modelo de producción comparando calidad/costo (OpenAI vs Claude Haiku/Opus) con conversaciones reales
+- [ ] Registrar `verticeautomatizacion.com` — **después de la primera venta**
 - [ ] Fundador marca en la base los negocios donde ha sido cliente (semi-cálidos)
 - [ ] Fundador crea cuenta en Meta for Developers (número de prueba de WhatsApp)
 - [ ] RUT + cuenta separada para el negocio
@@ -123,10 +126,12 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-27 | Asistente en Python/FastAPI, manual loop con Claude API, herramientas estrictas, SQLite, caché de prompt y respaldo `fallbacks: "default"` | Bajo costo, multi-cliente, mantenible por Claude |
 | 2026-10-27 | Modelo por defecto `claude-opus-5-5` (esfuerzo low), configurable; evaluar Haiku 5.5 antes del primer cliente | Opus ≈ COP 120k/mes por cliente vs Haiku ≈ COP 3,5k; decisión del fundador tras comparar calidad |
 | 2026-10-27 | Prospectos se guardan en `prospectos/*.csv` con columna de fuente y etapa | CRM simple, versionado y verificable |
+| 2026-10-27 | Pruebas con la API de OpenAI (key existente del fundador); motor intercambiable Claude/OpenAI | Cero gasto nuevo; el modelo final se decide con datos |
+| 2026-10-27 | Dominio se compra después de la primera venta | Prioridad: vender antes de gastar |
 
 ## 8. Preguntas abiertas para el fundador
 
-1. ¿Puedes crear la API key de Anthropic y la cuenta de Meta for Developers para probar la demo en vivo?
+1. ¿Cómo prefieres probar la demo: en tu computador (te guío paso a paso) o habilitando `api.openai.com` y la key como secreto en el entorno de Claude?
 2. De la base de 62 prospectos, ¿en cuáles has sido cliente? ¿Hay otros que no estén?
 3. ¿Tienes conocimientos técnicos o computador disponible para crear la cuenta de Meta for Developers con guía?
 4. ¿Facturarás como persona natural al inicio? (recomendado; SAS después).

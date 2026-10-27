@@ -8,7 +8,7 @@
 
 | Rubro | Concepto | COP | Cuándo |
 |---|---|---|---|
-| Marca | Dominio `.com` (p. ej. atiendeclara.com, ~USD 16) | 65.000 | Semana 1 |
+| Marca | Dominio `.com` (verticeautomatizacion.com, ~USD 16) | 65.000 | **Después de la primera venta** (decisión 2026-10-27) |
 | Tecnología | VPS pequeño para el agente (3 meses × ~25.000) | 75.000 | Semana 2 |
 | Tecnología | Créditos de Claude API (demo + pilotos) | 80.000 | Semana 2 |
 | Tecnología | SIM prepago para número propio de demo | 10.000 | Semana 2 |

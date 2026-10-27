@@ -194,6 +194,46 @@ def test_webhook_responde_una_sola_vez(db):
 
 
 def test_respaldo_se_omite_en_haiku():
-    from vertice.agente import _respaldo
-    assert _respaldo("claude-opus-5-5")["fallbacks"] == "default"
-    assert _respaldo("claude-haiku-5-5") == {}
+    from vertice.motores import respaldo
+    assert respaldo("claude-opus-5-5")["fallbacks"] == "default"
+    assert respaldo("claude-haiku-5-5") == {}
+
+
+# --- Motor OpenAI -------------------------------------------------------------
+class OpenAIFalsa:
+    def __init__(self, guion):
+        self.guion = list(guion)
+        self.peticiones = []
+        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._crear))
+
+    def _crear(self, **kwargs):
+        self.peticiones.append(json.loads(json.dumps(kwargs, default=str)))
+        return self.guion.pop(0)
+
+
+def respuesta_openai(contenido=None, llamadas=()):
+    tool_calls = [SimpleNamespace(id=i, function=SimpleNamespace(name=n, arguments=json.dumps(a)))
+                  for i, n, a in llamadas] or None
+    mensaje = SimpleNamespace(content=contenido, tool_calls=tool_calls, refusal=None)
+    return SimpleNamespace(choices=[SimpleNamespace(message=mensaje)],
+                           usage=SimpleNamespace(prompt_tokens=10, completion_tokens=5))
+
+
+def test_motor_openai_agenda_con_herramientas(db):
+    api = OpenAIFalsa([
+        respuesta_openai(llamadas=[("c1", "agendar_cita", {"nombre": "Ana Gómez", "servicio": "limpieza",
+                                                           "fecha": "2026-11-03", "hora": "09:00"})]),
+        respuesta_openai("¡Listo, Ana! Tu limpieza quedó el martes a las *9:00*."),
+    ])
+    asistente = Asistente(db, api, ahora, proveedor="openai")
+    r = asistente.responder(CLINICA, "573001112233", "Agéndame limpieza mañana 9 am, soy Ana Gómez")
+    assert "9:00" in r
+    assert db.citas_de_cliente(CLINICA.id, "573001112233")  # la cita quedó guardada
+
+    primera, segunda = api.peticiones
+    assert primera["messages"][0]["role"] == "system"
+    assert primera["tools"][0]["function"]["strict"] is True
+    assert segunda["messages"][-1]["role"] == "tool" and segunda["messages"][-1]["tool_call_id"] == "c1"
+    # El historial de OpenAI se guarda aparte del de Claude.
+    assert db.historial(f"{CLINICA.id}@openai", "573001112233")
+    assert db.historial(CLINICA.id, "573001112233") == []

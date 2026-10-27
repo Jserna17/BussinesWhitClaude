@@ -17,7 +17,8 @@ Un solo servidor atiende a **muchos negocios**: cada cliente es un archivo en `n
 | `vertice/db.py` | SQLite: conversaciones, citas, prospectos, casos para humanos |
 | `negocios/clinica-demo.yaml` | Clínica dental ficticia ("Sofía") para demos |
 | `negocios/taller-demo.yaml` | Taller de motos ficticio ("Max") para demos |
-| `tests/` | 12 pruebas sin conexión |
+| `vertice/motores.py` | Motores intercambiables: Claude u OpenAI |
+| `tests/` | 13 pruebas sin conexión |
 
 ## Decisiones técnicas
 - **Modelo:** `claude-opus-5-5` con esfuerzo `low` (respuestas rápidas). Se cambia con las variables
@@ -32,13 +33,31 @@ Un solo servidor atiende a **muchos negocios**: cada cliente es un archivo en `n
 - **Seguridad:** valida la firma de Meta, ignora entregas duplicadas, nunca agenda horas ocupadas ni
   cancela citas de otro número.
 
+## Motores de IA: Claude u OpenAI
+El asistente funciona con dos proveedores; se elige con `VERTICE_PROVEEDOR`:
+
+| Proveedor | Variables | Modelo por defecto |
+|---|---|---|
+| `claude` (por defecto) | `ANTHROPIC_API_KEY`, `VERTICE_MODELO`, `VERTICE_ESFUERZO` | `claude-opus-5-5` |
+| `openai` | `OPENAI_API_KEY`, `VERTICE_MODELO_OPENAI` | `gpt-5-mini` (cámbialo si tu cuenta usa otro) |
+
+Las herramientas, el prompt y la base de datos son los mismos; cada proveedor guarda su historial aparte.
+
 ## Probarlo en la terminal (simulador)
 ```bash
 cd agente
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY=sk-ant-...        # clave de console.anthropic.com
+
+# Con OpenAI (prueba inicial)
+export VERTICE_PROVEEDOR=openai
+export OPENAI_API_KEY=sk-...              # nunca la pegues en un chat ni la subas al repositorio
+
+# o con Claude
+# export ANTHROPIC_API_KEY=sk-ant-...
+
 python -m vertice.chat clinica-demo         # o taller-demo; agrega --debug para ver herramientas
 ```
+En Windows (PowerShell) usa `$env:OPENAI_API_KEY="sk-..."` y `$env:VERTICE_PROVEEDOR="openai"`.
 Ejemplos para probar: "¿Cuánto vale una limpieza?", "Quiero cita mañana en la tarde",
 "¿Qué citas tengo?", "Me duele mucho una muela" (debe pasar a humano), "¿Quién ganó el partido?"
 (debe negarse con amabilidad).

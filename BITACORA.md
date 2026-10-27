@@ -131,3 +131,25 @@ Claude busque en Google Maps negocios de Pereira y Dosquebradas con toda su info
 2. Fundador crea app en Meta for Developers (número de prueba) → conectar webhook.
 3. Comparar Haiku 5.5 vs Opus 5.5 en 20 conversaciones de prueba y fijar el modelo.
 4. Grabar video demo de 60 s para las visitas.
+
+---
+
+## Sesión #6 — 2026-10-27 — Motor OpenAI para pruebas; dominio pospuesto
+
+**Pedido del fundador:** usar por ahora su API key de ChatGPT (OpenAI) para probar; no comprar el dominio
+hasta vender.
+
+**Qué se hizo:**
+- `agente/vertice/motores.py`: motores intercambiables `MotorClaude` y `MotorOpenAI` (Chat Completions con
+  herramientas `strict`), elegidos con `VERTICE_PROVEEDOR`. Modelo OpenAI por defecto `gpt-5-mini`
+  (configurable con `VERTICE_MODELO_OPENAI`). Historial guardado por proveedor.
+- 13 pruebas OK + prueba de punta a punta con los SDK reales de OpenAI y de Anthropic contra servidores
+  locales simulados.
+- `api.openai.com` está bloqueado por la red del entorno de Claude → la prueba en vivo queda pendiente
+  (opciones: PC del fundador, o habilitar el dominio y guardar la key como secreto del entorno).
+- Dominio pospuesto hasta la primera venta (MEMORIA §7, presupuesto y plan actualizados).
+
+**Próximos pasos:**
+1. Fundador elige cómo probar en vivo y corre 20 conversaciones de prueba.
+2. Conectar el número de prueba de Meta.
+3. Video demo de 60 s y primeras visitas (Megacentro Pinares).

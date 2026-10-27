@@ -20,7 +20,7 @@
 ## Fase 1 · Fundación (semanas 1–2)
 | # | Tarea | Responsable | Entregable |
 |---|---|---|---|
-| 1 | Elegir nombre (`docs/12-marca.md`) y registrar dominio | Fundador | Marca |
+| 1 | ~~Elegir nombre~~ ✅ Vértice · dominio se compra tras la primera venta | Fundador | Marca |
 | 2 | Listar 15–20 negocios de Pereira donde ha sido cliente (nombre, tipo, dirección) | Fundador (20 min) | Lista semi-cálida |
 | 3 | RUT como persona natural + cuenta separada | Fundador | Listo para facturar |
 | 4 | Crear cuenta de Meta for Developers + app de WhatsApp (número de prueba gratis) | Fundador con guía de Claude | Acceso a la API |

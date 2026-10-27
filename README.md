@@ -1,7 +1,8 @@
 # BussinesWhitClaude 🚀
 
-Negocio construido entre **Juan José Serna** y **Claude**: una agencia de **Recepcionistas IA 24/7 por WhatsApp**
-para clínicas y pymes de servicios en LATAM, con ingresos recurrentes mensuales.
+Negocio construido entre **Juan José Serna** y **Claude**: una **agencia de automatización con IA para negocios
+locales** en **Pereira, Colombia**. Entramos con una Recepcionista IA 24/7 por WhatsApp y luego automatizamos
+más procesos de cada cliente, con ingresos recurrentes mensuales.
 
 ## Empieza aquí
 1. 🧠 [`MEMORIA.md`](MEMORIA.md) — contexto completo, decisiones, estado y metas (leer siempre primero).
@@ -18,7 +19,9 @@ para clínicas y pymes de servicios en LATAM, con ingresos recurrentes mensuales
 | 05 | [Solución y entrega](docs/05-solucion-y-entrega.md) | Stack, onboarding, retención |
 | 06 | [Administración](docs/06-administracion.md) | Finanzas, legal, KPIs, rutinas |
 | 07 | [Herramientas, skills y conectores](docs/07-herramientas-skills-conectores.md) | Inventario de capacidades |
-| 08 | [Plan de 90 días](docs/08-plan-90-dias.md) | Hoja de ruta a 10 clientes |
+| 08 | [Plan de 90 días](docs/08-plan-90-dias.md) | Hoja de ruta en Pereira con 2 h/día |
+| 09 | [Presupuesto](docs/09-presupuesto.md) | Inversión inicial en COP y en qué se usa |
+| 10 | [Catálogo de servicios](docs/10-catalogo-servicios-automatizacion.md) | Módulos de automatización, verticales y precios |
 
 ## Plantillas
 - [Guiones de outreach y ventas](plantillas/guiones-outreach.md)

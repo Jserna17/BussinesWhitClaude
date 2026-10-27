@@ -27,3 +27,29 @@ negocios actuales, habilidades, skills, conectores y herramientas; documentarlo 
 1. Fundador responde preguntas abiertas (`MEMORIA.md` §7).
 2. Construir demo del agente para el nicho.
 3. Armar lista de 200 prospectos y lanzar outreach (semana 1–2 del plan de 90 días).
+
+---
+
+## Sesión #2 — 2026-10-27 — Pereira, presupuesto y ampliación del servicio
+
+**Respuestas del fundador:**
+- Empezamos en **Colombia, ciudad de Pereira**.
+- Tiempo disponible: "unas dos horas en total" (se asume 2 h/día; pendiente confirmar).
+- Conoce a algunos dueños de negocios.
+- Le gusta el modelo (ya lo tenía en mente) y quiere ampliarlo a **automatizar otros procesos de negocios
+  locales**, no solo WhatsApp para clínicas.
+- Pidió estimar el presupuesto y en qué se invierte.
+
+**Qué se hizo:**
+- Investigación de tarifas de WhatsApp API en Colombia (oct-2026): servicio/utilidad ~USD 0,0008/mensaje,
+  marketing ~USD 0,0125 → costo de mensajería casi insignificante.
+- Nuevo `docs/09-presupuesto.md`: mínimo ~COP 950.000, recomendado ~COP 2.000.000 para 90 días.
+- Nuevo `docs/10-catalogo-servicios-automatizacion.md`: 12 módulos, paquetes por vertical de Pereira,
+  precios en COP (450k / 850k / 1,5M mensuales).
+- `docs/08-plan-90-dias.md` reescrito para Pereira y 2 h/día (meta: 8 clientes, ~COP 5 M MRR al día 90).
+- `MEMORIA.md` actualizada (ubicación, modelo ampliado, precios COP, recursos, metas, decisiones).
+
+**Próximos pasos:**
+1. Fundador confirma horas (¿día o semana?) y presupuesto.
+2. Fundador envía lista de sus contactos dueños de negocio → Claude redacta un mensaje personalizado para cada uno.
+3. Claude propone nombres de marca y construye la demo.

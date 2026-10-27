@@ -28,7 +28,11 @@
 7. **Garantía:** si en 30 días no hay ≥ 10 citas atribuibles al sistema, devolución del setup y seguimos gratis hasta lograrlo.
 8. **Escasez/urgencia real:** solo 5 clínicas nuevas por mes por ciudad (capacidad real de onboarding).
 
-## 4. Planes y precios (USD, ajustar a moneda local)
+## 4. Planes y precios
+
+> ⚠️ **Actualizado 2026-10-27:** los precios vigentes para Pereira están en COP en
+> `docs/10-catalogo-servicios-automatizacion.md` §3 (Arranque 450.000 · Crecimiento 850.000 · Integral 1.500.000 al mes).
+> La tabla en USD de abajo queda como referencia internacional.
 
 | | Esencial | Crecimiento ⭐ | Premium |
 |---|---|---|---|

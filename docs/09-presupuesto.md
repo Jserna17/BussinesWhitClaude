@@ -1,78 +1,57 @@
 # 09 · Presupuesto inicial — Pereira, Colombia
 
-> Cifras en pesos colombianos (COP), tasa de referencia **1 USD ≈ 4.000 COP**. Son estimaciones del
-> 2026-10-27; verificar precios al momento de pagar. El objetivo es **gastar lo mínimo hasta tener
-> clientes pagando** y que los primeros clientes financien el crecimiento.
+> Cifras en COP, tasa de referencia **1 USD ≈ 4.000 COP**. Estimaciones del 2026-10-27.
+> **Presupuesto confirmado por el fundador: COP 500.000.** Regla: no gastar en nada que no acerque a un
+> cliente pagando; el primer setup cobrado financia lo que falte (abogado, correo pago, anuncios).
 
-## Resumen
+## Plan con COP 500.000 (90 días)
 
-| Escenario | Inversión mes 1 | Gasto mensual meses 2–3 | Total 90 días |
+| Rubro | Concepto | COP | Cuándo |
 |---|---|---|---|
-| **Mínimo (bootstrapping)** | ~COP 450.000 | ~COP 250.000 | **~COP 950.000** |
-| **Recomendado** ⭐ | ~COP 1.100.000 | ~COP 450.000 | **~COP 2.000.000** |
-| Acelerado (con anuncios desde mes 2) | ~COP 1.500.000 | ~COP 1.100.000 | ~COP 3.700.000 |
+| Marca | Dominio `.com` (p. ej. atiendeclara.com, ~USD 16) | 65.000 | Semana 1 |
+| Tecnología | VPS pequeño para el agente (3 meses × ~25.000) | 75.000 | Semana 2 |
+| Tecnología | Créditos de Claude API (demo + pilotos) | 80.000 | Semana 2 |
+| Tecnología | SIM prepago para número propio de demo | 10.000 | Semana 2 |
+| Ventas | Transporte para visitas en Pereira/Dosquebradas (3 meses) | 150.000 | Continuo |
+| Ventas | Tarjetas de presentación sencillas | 40.000 | Semana 2 |
+| Reserva | Imprevistos | 80.000 | — |
+| **Total** | | **500.000** | |
 
-Con **2 clientes en el plan Crecimiento** (ver precios en COP en `docs/02-modelo-de-negocio.md`) el
-negocio ya cubre todos sus gastos mensuales.
-
-## Detalle — escenario recomendado
-
-### 1. Legal y administrativo
-| Concepto | Costo | Cuándo |
-|---|---|---|
-| RUT ante la DIAN (persona natural) | Gratis | Semana 1 |
-| Cuenta bancaria/billetera separada para el negocio (Nequi, Bancolombia, etc.) | Gratis | Semana 1 |
-| Facturación electrónica (solución gratuita DIAN o software básico) | COP 0–50.000/mes | Al primer cliente pagado |
-| Revisión por abogado: contrato + autorización de datos personales (Ley 1581 de 2012) | COP 300.000–600.000 (una vez) | Antes del primer cliente pagado |
-| Constituir SAS (Cámara de Comercio de Pereira) | Más adelante (> ~COP 12 M de ingreso mensual o cuando el contador lo recomiende) | Mes 4+ |
-
-### 2. Marca y presencia
-| Concepto | Costo |
+### Lo que es gratis o se pospone
+| Concepto | Solución sin costo / cuándo se paga |
 |---|---|
-| Dominio `.co` o `.com` | COP 60.000–150.000/año |
-| Correo profesional (Google Workspace, 1 usuario) | ~COP 30.000/mes |
-| Logo, kit de marca, posts (Canva gratis + Claude) | COP 0 |
-| Landing page (Higgsfield / hosting gratuito) | COP 0–40.000/mes |
-| Tarjetas de presentación + 1 pieza impresa para visitas | COP 50.000–100.000 |
+| RUT (DIAN) y cuenta bancaria/Nequi separada | Gratis |
+| Logo, posts, propuestas | Canva gratis + Claude |
+| Landing page | Hosting gratuito (Higgsfield/Cloudflare Pages/GitHub Pages) |
+| Correo con dominio | Zoho Mail gratis; Google Workspace cuando haya ingresos |
+| Número de pruebas de WhatsApp | Número de prueba gratuito de la Cloud API de Meta |
+| Plataforma de automatización | Agente propio (sin licencia); n8n autohospedado gratis si se necesita |
+| CRM | Google Sheets |
+| Videos de venta | Loom gratis / grabación del celular |
+| Abogado (contrato + Ley 1581) | **Con el primer setup cobrado** (COP 300.000–600.000) |
+| Facturación electrónica | Solución gratuita de la DIAN al primer cobro |
+| Anuncios | Solo desde el mes 3, pagados con ingresos |
 
-### 3. Tecnología (para construir la demo y atender a los primeros clientes)
-| Concepto | Costo | Nota |
-|---|---|---|
-| SIM prepago para el número demo de WhatsApp | COP 5.000–10.000 | Un número exclusivo para pruebas |
-| Orquestador de automatizaciones: n8n en un servidor (VPS) | COP 25.000–60.000/mes | O el plan gratuito de Make para empezar |
-| Créditos de IA (Claude API) | COP 40.000–120.000/mes | Crece con los clientes; se incluye en lo que les cobramos |
-| API de WhatsApp: Cloud API de Meta directa | COP 0 de plataforma | Un BSP con panel cuesta ~USD 20–60/mes; opcional |
-| Mensajes de Meta en Colombia | Casi nada: servicio/utilidad ~USD 0,0008 por mensaje; marketing ~USD 0,0125 | 1.000 respuestas ≈ COP 3.200. Se le traslada al cliente |
-| Loom (videos de venta), Google Calendar, Sheets | COP 0 | Planes gratuitos |
+## Por qué alcanza
+- La mensajería de Meta en Colombia es casi insignificante (~USD 0,0008 por mensaje de servicio/utilidad;
+  1.000 respuestas ≈ COP 3.200) y se cobra al cliente.
+- Al no usar plataformas pagas por cliente (ver `docs/11-stack-tecnico-agentes-2026.md`), el costo de
+  tecnología casi no crece al sumar clientes.
+- **Un solo cliente en plan Arranque (COP 450.000/mes + setup)** ya cubre todos los gastos mensuales.
 
-### 4. Ventas en Pereira
-| Concepto | Costo |
+## Escenarios de referencia (si luego se invierte más)
+| Escenario | Total 90 días |
 |---|---|
-| Transporte para visitas presenciales (Pereira, Dosquebradas, Santa Rosa) | COP 100.000–200.000/mes |
-| Cafés/reuniones con dueños conocidos | COP 50.000–100.000/mes |
-
-### 5. Marketing
-| Concepto | Costo | Cuándo |
-|---|---|---|
-| Contenido orgánico (Instagram/LinkedIn/TikTok) | COP 0 | Desde semana 3 |
-| Anuncios Meta segmentados a Pereira y el Eje Cafetero | COP 300.000–600.000/mes | Solo desde el mes 3 y si la tasa de cierre en frío es ≥ 25 % |
-
-### 6. Reserva
-Un 15–20 % adicional para imprevistos (~COP 200.000–300.000).
-
-## Qué NO compramos al inicio
-- Cursos ni "mentorías" de agencias IA.
-- Software caro de CRM (Google Sheets o Notion bastan hasta tener ~15 clientes).
-- Anuncios antes de que la oferta esté validada en conversaciones reales.
-- Oficina: se trabaja remoto y en las instalaciones del cliente.
+| Mínimo actual ⭐ | ~COP 500.000 |
+| Recomendado original | ~COP 2.000.000 |
+| Acelerado con anuncios | ~COP 3.700.000 |
 
 ## Regla de reinversión
-De cada pago de cliente: **30 % reserva/impuestos · 20 % reinversión (herramientas/anuncios) · 50 % operación y pago al fundador.**
+De cada pago de cliente: **30 % reserva/impuestos · 20 % reinversión · 50 % operación y pago al fundador.**
+Prioridad de reinversión: 1) abogado/contrato, 2) correo profesional, 3) prueba de anuncios.
 
 ## Fuentes
 - [Leadsales — WhatsApp Business API: cuánto cuesta en 2026](https://leadsales.io/blog/whatsapp-business-api-cuanto-cuesta/)
 - [Mercately — Nuevos precios de WhatsApp API desde el 1 de octubre de 2026](https://blog.mercately.com/nuevos-precios-whatsapp-api-octubre-2026/)
 - [Dapta — Precios WhatsApp Business API](https://dapta.ai/es/blog-posts/precios-whatsapp-business-api/)
 - [Chattigo — Cuánto cobra WhatsApp Business por mensaje](https://blog.chattigo.com/whatsapp-business/cuanto-cobra-whatsapp-business-por-mensaje)
-- [Aunoa — Precios de WhatsApp Business 2026](https://aunoa.ai/blog/precios-de-whatsapp-business-2026-cuanto-va-a-costar-cada-mensaje/)
-- [Dapta — Cuánto cuesta un chatbot con IA](https://dapta.ai/es/blog-posts/cuanto-cuesta-un-chatbot-con-ia/)

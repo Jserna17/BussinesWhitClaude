@@ -2,6 +2,23 @@
 
 > Reemplazar [corchetes]. Personalizar SIEMPRE la primera línea. Nunca enviar sin aprobación del fundador.
 
+## Visita presencial (negocios donde el fundador ya fue cliente)
+> **Al llegar:** "Hola, soy [Nombre], vengo seguido por acá. ¿Está el dueño o el administrador? Es algo
+> rápido de 2 minutos sobre los mensajes de WhatsApp del negocio."
+>
+> **Con el dueño:** "Le cuento rápido: tengo una empresa aquí en Pereira que pone una asistente con
+> inteligencia artificial en el WhatsApp de negocios como el suyo. Responde en segundos, a cualquier hora,
+> da precios y deja la cita agendada. El [día] les escribí a las [hora] y la respuesta llegó [X horas]
+> después — eso le pasa a casi todos. ¿Me deja mostrarle en 1 minuto cómo se vería con su negocio?"
+> *(mostrar demo en el celular)*
+>
+> **Cierre de la visita:** "Estoy escogiendo 3 negocios en Pereira para instalarlo sin costo de instalación
+> a cambio de que me cuenten cómo les fue. ¿Le parece si el [día] le muestro una prueba con la información
+> de su negocio? Son 20 minutos."
+>
+> **Si no está el dueño:** dejar tarjeta + pedir el WhatsApp o el Instagram del dueño/administrador, y
+> escribir ese mismo día: "Hola [Nombre], pasé hoy por [negocio], soy cliente de ustedes…"
+
 ## Mensaje 1 — Instagram DM (frío)
 > Hola [Nombre], vi [algo específico: su post/sede nueva/reseñas]. Pregunta rápida: el [día] a las [hora]
 > les escribí por WhatsApp como paciente y la respuesta llegó [X horas] después. Ayudo a clínicas como

@@ -22,6 +22,8 @@ más procesos de cada cliente, con ingresos recurrentes mensuales.
 | 08 | [Plan de 90 días](docs/08-plan-90-dias.md) | Hoja de ruta en Pereira con 2 h/día |
 | 09 | [Presupuesto](docs/09-presupuesto.md) | Inversión inicial en COP y en qué se usa |
 | 10 | [Catálogo de servicios](docs/10-catalogo-servicios-automatizacion.md) | Módulos de automatización, verticales y precios |
+| 11 | [Stack técnico de agentes 2026](docs/11-stack-tecnico-agentes-2026.md) | n8n vs plataformas vs agente propio |
+| 12 | [Marca](docs/12-marca.md) | Nombres y dominios |
 
 ## Plantillas
 - [Guiones de outreach y ventas](plantillas/guiones-outreach.md)

@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-27 · Sesión #2 (Pereira, presupuesto, catálogo de servicios)
+> Última actualización: 2026-10-27 · Sesión #3 (presupuesto 500k, stack técnico, marca, adquisición sin red)
 
 ---
 
@@ -28,6 +28,9 @@
 - **Nicho de lanzamiento (marketing y prospección en frío):** clínicas odontológicas y estéticas de Pereira.
 - **Verticales secundarias** (vía contactos del fundador): talleres de motos/carros, gimnasios, turismo/fincas
   cafeteras, restaurantes, inmobiliarias, veterinarias/salones.
+- **Tecnología:** agente propio "Clara" con **Claude API + Cloud API de Meta** en un VPS barato, multi-cliente;
+  n8n solo como puente opcional (análisis en `docs/11-stack-tecnico-agentes-2026.md`).
+- **Marca propuesta:** **Clara** — dominio `atiendeclara.com` disponible al 2026-10-27 (pendiente decisión; `docs/12-marca.md`).
 - **Por qué:** WhatsApp tiene ~90–99 % de penetración en Colombia; las pymes pierden ventas por responder
   tarde; la mensajería de Meta en Colombia es muy barata (~USD 0,0008 por mensaje de servicio/utilidad).
 
@@ -47,11 +50,12 @@
 
 ## 4. Recursos del fundador
 
-- **Tiempo:** ~2 horas (⚠️ confirmar si es al día o a la semana; el plan asume **2 h/día hábil**).
-  Claude prepara todo; el fundador solo envía mensajes, hace llamadas/visitas y aprueba.
-- **Red:** conoce a algunos dueños de negocios → canal #1 de adquisición (outreach cálido).
-- **Presupuesto:** recomendado ~COP 2.000.000 para 90 días (mínimo viable ~COP 950.000). Detalle en `docs/09-presupuesto.md`.
-  ⚠️ Pendiente: el fundador confirma cuánto puede invertir.
+- **Tiempo:** **2 horas al día** (confirmado). Claude prepara todo; el fundador envía mensajes, visita
+  negocios, hace demos y aprueba.
+- **Red:** **no tiene red cálida** — conoce negocios donde ha sido cliente, sin relación con los dueños.
+  ➜ Adquisición "semi-cálida" presencial (visitas con demo en el celular) + mystery shopping + frío digital.
+- **Presupuesto:** **COP 500.000** para 90 días (confirmado). Distribución en `docs/09-presupuesto.md`.
+  El abogado, correo pago y anuncios se pagan con el primer setup cobrado.
 
 ## 5. Metas y números clave (ajustadas a 2 h/día)
 
@@ -74,8 +78,12 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [x] Planes de adquisición, marketing, entrega y administración
 - [x] Ciudad confirmada: Pereira · Modelo confirmado · Fundador tiene contactos
 - [x] Presupuesto estimado y catálogo de servicios de automatización
-- [ ] Fundador confirma: monto de presupuesto, horas (día o semana), nombre de marca
-- [ ] Fundador hace la lista de sus contactos dueños de negocio (nombre, negocio, sector, teléfono)
+- [x] Confirmado: 2 h/día, presupuesto COP 500.000, sin red cálida
+- [x] Análisis de stack técnico (n8n vs alternativas) → agente propio con Claude API
+- [x] Propuestas de marca con dominios verificados
+- [ ] Fundador elige nombre y registra dominio
+- [ ] Fundador lista 15–20 negocios de Pereira donde ha sido cliente
+- [ ] Fundador crea cuenta en Meta for Developers (número de prueba de WhatsApp)
 - [ ] RUT + cuenta separada para el negocio
 - [ ] Construir demo funcional del agente
 - [ ] Lista de 150 negocios objetivo en Pereira
@@ -94,14 +102,17 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-27 | Precios en COP (v2): 450k / 850k / 1,5M mensuales | Ajuste al poder adquisitivo de Pereira |
 | 2026-10-27 | Primeros pilotos salen de los contactos del fundador, en cualquier vertical | Ciclo de venta más corto; foco de marketing sigue en clínicas |
 | 2026-10-27 | Stack inicial de bajo costo: Cloud API de Meta + n8n + Claude API + Google Sheets | Presupuesto mínimo |
+| 2026-10-27 | **Reemplaza la anterior:** agente propio (Claude API + Cloud API de Meta, multi-cliente) como núcleo; n8n solo opcional | Plataformas gestionadas cuestan USD 15–113/cliente/mes y n8n es torpe multi-cliente; Claude construye y mantiene el código |
+| 2026-10-27 | Presupuesto de arranque: COP 500.000 | Confirmado por el fundador |
+| 2026-10-27 | **Reemplaza "pilotos de contactos":** adquisición semi-cálida presencial (negocios donde el fundador es cliente) + mystery shopping | El fundador no tiene relación con dueños |
+| 2026-10-27 | El agente se limita al negocio del cliente (sin respuestas de propósito general) | Política de Meta vigente desde 15-ene-2026 |
 
 ## 8. Preguntas abiertas para el fundador
 
-1. ¿Las 2 horas son al día o a la semana?
-2. ¿Cuánto puedes invertir en los primeros 90 días (mínimo ~COP 950.000, recomendado ~COP 2.000.000)?
-3. Lista de contactos dueños de negocio: nombre, tipo de negocio, relación, teléfono.
-4. ¿Nombre de marca preferido? (Claude puede proponer y verificar dominios).
-5. ¿Facturarás como persona natural al inicio? (recomendado; SAS después).
+1. ¿Qué nombre eliges? (recomendado: Clara / atiendeclara.com — ver `docs/12-marca.md`).
+2. Lista de 15–20 negocios de Pereira donde has sido cliente (nombre, tipo, dirección/Instagram).
+3. ¿Tienes conocimientos técnicos o computador disponible para crear la cuenta de Meta for Developers con guía?
+4. ¿Facturarás como persona natural al inicio? (recomendado; SAS después).
 
 ## 9. Reglas de operación para Claude
 
@@ -125,5 +136,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - `docs/08-plan-90-dias.md` — hoja de ruta semana a semana (Pereira, 2 h/día)
 - `docs/09-presupuesto.md` — presupuesto inicial en COP y en qué se invierte
 - `docs/10-catalogo-servicios-automatizacion.md` — módulos, paquetes por vertical y precios
+- `docs/11-stack-tecnico-agentes-2026.md` — cómo se montan hoy los agentes; por qué agente propio y no n8n
+- `docs/12-marca.md` — nombres propuestos y dominios verificados
 - `plantillas/` — guiones, propuesta, contrato y onboarding listos para usar
 - `BITACORA.md` — diario de sesiones

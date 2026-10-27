@@ -1,7 +1,7 @@
 # 08 · Plan de 90 días — Pereira, de 0 a 8 clientes recurrentes
 
 > Versión 2 (2026-10-27): ajustada a Pereira, a ~2 h/día del fundador y a la ampliación del negocio a
-> automatización para negocios locales. Si las 2 h son a la semana, multiplicar los plazos por ~3.
+> automatización para negocios locales. 2 h/día confirmadas; presupuesto COP 500.000; sin red cálida.
 
 ## Reparto de trabajo
 
@@ -20,18 +20,18 @@
 ## Fase 1 · Fundación (semanas 1–2)
 | # | Tarea | Responsable | Entregable |
 |---|---|---|---|
-| 1 | Responder preguntas abiertas (`MEMORIA.md` §8) | Fundador | Decisiones en memoria |
-| 2 | Escribir lista de contactos dueños de negocio | Fundador (30 min) | Lista de contactos |
+| 1 | Elegir nombre (`docs/12-marca.md`) y registrar dominio | Fundador | Marca |
+| 2 | Listar 15–20 negocios de Pereira donde ha sido cliente (nombre, tipo, dirección) | Fundador (20 min) | Lista semi-cálida |
 | 3 | RUT como persona natural + cuenta separada | Fundador | Listo para facturar |
-| 4 | Nombre, dominio y kit de marca | Claude propone → fundador aprueba | Marca |
-| 5 | Construir "Clínica Demo" + "Taller Demo" en un número de WhatsApp de pruebas | Claude | Demo + video de 60 s |
-| 6 | Landing con calculadora "¿cuánto pierdes por no responder?" | Claude | URL |
-| 7 | Outreach cálido: mensaje personal a cada contacto | Fundador | 5–8 conversaciones |
+| 4 | Crear cuenta de Meta for Developers + app de WhatsApp (número de prueba gratis) | Fundador con guía de Claude | Acceso a la API |
+| 5 | Construir el agente propio "Clara" + "Clínica Demo" y "Taller Demo" (`docs/11`) | Claude | Demo + video de 60 s |
+| 6 | Kit de marca, tarjeta y landing con calculadora "¿cuánto pierdes por no responder?" | Claude | URL |
+| 7 | Mystery shopping por WhatsApp a los negocios de la lista | Fundador (10 min/día) | Tiempos de respuesta medidos |
 
 ## Fase 2 · Pilotos (semanas 3–6)
 | # | Tarea | Meta |
 |---|---|---|
-| 8 | Diagnóstico + demo con los contactos interesados | 2–3 pilotos firmados |
+| 8 | Visitas presenciales (2/día) a la lista semi-cálida con la demo en el celular | 2–3 pilotos firmados |
 | 9 | Onboarding de pilotos en 72 h cada uno | Pilotos funcionando |
 | 10 | Claude arma lista de 150 clínicas/negocios de Pereira y Dosquebradas (Google Maps, Instagram) + mystery shopping | Hoja CRM |
 | 11 | Outreach frío: 15 contactos/día (Instagram + WhatsApp + visitas) | 5–8 llamadas |

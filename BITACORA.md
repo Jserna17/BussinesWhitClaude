@@ -53,3 +53,32 @@ negocios actuales, habilidades, skills, conectores y herramientas; documentarlo 
 1. Fundador confirma horas (¿día o semana?) y presupuesto.
 2. Fundador envía lista de sus contactos dueños de negocio → Claude redacta un mensaje personalizado para cada uno.
 3. Claude propone nombres de marca y construye la demo.
+
+---
+
+## Sesión #3 — 2026-10-27 — Presupuesto de COP 500.000, stack técnico, marca y adquisición sin red
+
+**Respuestas del fundador:**
+- 2 horas **al día** (confirmado).
+- Puede invertir **COP 500.000**.
+- Pide analizar si n8n sigue siendo lo más viable para montar el agente y cómo se montan hoy.
+- No tiene red cálida: conoce negocios donde ha sido cliente, pero sin relación con los dueños.
+- Pide propuestas de nombre de marca.
+
+**Qué se hizo:**
+- Investigación de cómo se construyen hoy los agentes de WhatsApp: n8n quedó como herramienta de
+  "control para desarrolladores" y back-office; el mercado usa plataformas gestionadas (Botpress, Cliengo,
+  Wati, Respond.io…, USD 15–113/cliente/mes) o agentes con SDK de modelos. Política de Meta: desde
+  15-ene-2026 se prohíben chatbots de propósito general en la API; los asistentes de negocio están permitidos.
+- **Decisión:** agente propio multi-cliente con Claude API + Cloud API de Meta (`docs/11`).
+- Nombres generados con el conector de Shopify + dominios verificados: recomendado **Clara**
+  (`atiendeclara.com` disponible); alternativas Tinto IA, Brío, Atiendo (`docs/12`).
+- Presupuesto rehecho a COP 500.000 (`docs/09`).
+- Adquisición "semi-cálida" presencial + guion de visita (`docs/03` §2b, `plantillas/guiones-outreach.md`).
+- Plan de 90 días y `MEMORIA.md` actualizados.
+
+**Próximos pasos:**
+1. Fundador elige nombre y registra el dominio.
+2. Fundador lista 15–20 negocios donde ha sido cliente.
+3. Fundador crea cuenta de Meta for Developers (Claude le da la guía paso a paso).
+4. Claude empieza a construir el agente "Clara" y la Clínica Demo.

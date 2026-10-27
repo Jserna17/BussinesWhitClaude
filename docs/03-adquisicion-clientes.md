@@ -23,7 +23,25 @@ Luego aplicar **"más, mejor, nuevo"**: hacer más de lo que funciona, mejorarlo
 - Dueño/a o administrador/a accesible y que decide.
 - **Señales de compra:** tardan > 1 h en responder; tienen "escríbenos al WhatsApp" en Instagram; reseñas que se quejan de no respuesta.
 
-## 3. Canal 1 — Outreach cálido (semana 1)
+## 2b. Situación real del fundador (actualizado 2026-10-27)
+
+El fundador **no tiene red cálida**: conoce negocios donde ha sido cliente, pero no tiene relación con los
+dueños. Por eso la adquisición inicial es **"semi-cálida" presencial + frío**, aprovechando que en Pereira
+la visita en persona genera mucha confianza:
+
+1. **Negocios donde ya fue cliente (semi-cálido):** el fundador llega como cliente conocido, pide hablar con
+   el dueño/administrador y ofrece un **diagnóstico gratis de su WhatsApp** (guion en
+   `plantillas/guiones-outreach.md` §Visita presencial). Llevar la demo en el celular.
+2. **Mystery shopping + visita:** Claude elige 5 negocios por semana, el fundador les escribe por WhatsApp
+   como cliente (fuera de horario), anota cuánto tardan en responder, y luego visita con ese dato.
+3. **Frío digital** (Instagram DM/WhatsApp) para los que no se pueden visitar.
+4. **Comunidad:** eventos de la Cámara de Comercio de Pereira, grupos de empresarios/emprendedores y
+   ferias locales → objetivo: 3–5 conversaciones por evento.
+5. **Pilotos con precio de lanzamiento:** sin setup para los 3 primeros a cambio de testimonio.
+
+Con 2 h/día: **2 visitas presenciales/día** (o 1 visita + 1 demo) + 10–15 mensajes digitales.
+
+## 3. Canal 1 — Outreach cálido (cuando exista red)
 
 1. Fundador lista **todos** sus contactos (WhatsApp, Instagram, LinkedIn, familia, ex-compañeros).
 2. Mensaje (no vender, pedir referidos):

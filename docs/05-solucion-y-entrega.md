@@ -21,6 +21,10 @@ Paciente ──WhatsApp──▶ API oficial de WhatsApp (vía BSP)
 
 ## 2. Stack recomendado (validar costos en el país)
 
+> ⚠️ **Actualizado 2026-10-27:** se decidió construir un **agente propio con la Claude API + Cloud API de Meta**
+> (sin plataforma paga por cliente). n8n queda solo como puente opcional. Ver análisis completo en
+> `docs/11-stack-tecnico-agentes-2026.md`. La tabla de abajo queda como referencia.
+
 | Capa | Opción A (rápida, no-code) | Opción B (más control/margen) |
 |---|---|---|
 | API WhatsApp (BSP) | 360dialog, Twilio, o alternativas LATAM (ezcontact, Chattigo) | Cloud API directa de Meta |

@@ -1,0 +1,48 @@
+# Negocio FICTICIO para demostraciones de venta a talleres de motos y carros.
+id: taller-demo
+nombre: MotoTaller Express (demo)
+tipo: taller de mantenimiento de motos
+ciudad: Dosquebradas, Risaralda
+direccion: "Av. Simón Bolívar, Dosquebradas (dirección de demostración)"
+nombre_asistente: Max
+tono: directo, amable y práctico
+telefono_dueno: ""
+whatsapp_phone_number_id: ""
+horario:
+  lunes: ["07:30", "17:30"]
+  martes: ["07:30", "17:30"]
+  miercoles: ["07:30", "17:30"]
+  jueves: ["07:30", "17:30"]
+  viernes: ["07:30", "17:30"]
+  sabado: ["07:30", "13:00"]
+servicios:
+  - nombre: Diagnóstico general
+    precio: "$30.000 (gratis si haces la reparación con nosotros)"
+    duracion_min: 30
+  - nombre: Cambio de aceite y filtro
+    precio: "desde $45.000 según el aceite"
+    duracion_min: 30
+  - nombre: Mantenimiento preventivo
+    precio: "desde $120.000 (motos hasta 200 cc)"
+    duracion_min: 120
+    descripcion: Revisión de frenos, cadena, filtros, bujía, luces y ajuste general.
+  - nombre: Sincronización
+    precio: "desde $80.000"
+    duracion_min: 60
+  - nombre: Revisión de frenos
+    precio: "$35.000 (repuestos aparte)"
+    duracion_min: 45
+faq:
+  - pregunta: ¿Recogen la moto a domicilio?
+    respuesta: Sí, en Pereira y Dosquebradas por $15.000 adicionales, con cita previa.
+  - pregunta: ¿Dan garantía?
+    respuesta: Sí, 30 días de garantía en mano de obra.
+  - pregunta: ¿Venden repuestos?
+    respuesta: Sí, repuestos originales y genéricos; el precio se confirma tras el diagnóstico.
+politicas:
+  - Las motos que no se recojan 3 días después de terminadas pagan parqueo de $5.000 diarios.
+  - Para mantenimiento preventivo, traer la moto con al menos medio tanque de gasolina.
+pasar_a_humano_si:
+  - El cliente pide cotización de un repuesto o una reparación específica.
+  - Hay un reclamo por un trabajo ya hecho o por garantía.
+  - La moto está varada y necesita grúa.

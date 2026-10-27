@@ -1,4 +1,6 @@
-# BussinesWhitClaude 🚀
+# Vértice · Automatización con IA 🚀
+
+*(repositorio BussinesWhitClaude)*
 
 Negocio construido entre **Juan José Serna** y **Claude**: una **agencia de automatización con IA para negocios
 locales** en **Pereira, Colombia**. Entramos con una Recepcionista IA 24/7 por WhatsApp y luego automatizamos
@@ -24,6 +26,9 @@ más procesos de cada cliente, con ingresos recurrentes mensuales.
 | 10 | [Catálogo de servicios](docs/10-catalogo-servicios-automatizacion.md) | Módulos de automatización, verticales y precios |
 | 11 | [Stack técnico de agentes 2026](docs/11-stack-tecnico-agentes-2026.md) | n8n vs plataformas vs agente propio |
 | 12 | [Marca](docs/12-marca.md) | Nombres y dominios |
+
+## Producto
+- [Asistente de WhatsApp — demo v0.1](agente/README.md)
 
 ## Prospectos
 - [Base de 62 negocios de Pereira y Dosquebradas](prospectos/README.md)

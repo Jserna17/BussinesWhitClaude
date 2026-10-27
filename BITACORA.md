@@ -106,3 +106,28 @@ Claude busque en Google Maps negocios de Pereira y Dosquebradas con toda su info
 2. Fundador marca en qué negocios ha sido cliente.
 3. Mystery shopping a los 15 primeros (WhatsApp fuera de horario) y primeras visitas en Megacentro Pinares.
 4. Claude construye el agente demo.
+
+---
+
+## Sesión #5 — 2026-10-27 — Marca Vértice y asistente demo v0.1
+
+**Pedido del fundador:** le gusta Vértice; empezar a construir el asistente demo.
+
+**Qué se hizo:**
+- Marca **Vértice** confirmada (MEMORIA §7).
+- Código en `agente/`: Python + FastAPI + SDK de Anthropic 2.3 + Cloud API de WhatsApp.
+  - Herramientas estrictas: consultar_disponibilidad, agendar_cita, ver_mis_citas, cancelar_cita,
+    registrar_interes, pasar_a_humano (avisa al dueño por WhatsApp).
+  - Multi-negocio por YAML; demos `clinica-demo` (Sofía) y `taller-demo` (Max).
+  - Caché del prompt (prompt fijo por negocio, fecha en cada mensaje), respaldo `fallbacks: "default"`
+    (omitido en Haiku), historial completo con reinicio a las 24 h, idempotencia del webhook y firma de Meta.
+  - Simulador en terminal (`python -m vertice.chat clinica-demo`).
+- Verificación: 12 pruebas sin conexión OK + prueba de punta a punta con el SDK real contra un servidor
+  local que imita la API (peticiones bien formadas; bloques de razonamiento y herramientas ida y vuelta).
+- **No probado aún contra la API real** (no hay API key en el entorno) ni contra Meta.
+
+**Próximos pasos:**
+1. Fundador crea API key en console.anthropic.com y prueba el simulador.
+2. Fundador crea app en Meta for Developers (número de prueba) → conectar webhook.
+3. Comparar Haiku 5.5 vs Opus 5.5 en 20 conversaciones de prueba y fijar el modelo.
+4. Grabar video demo de 60 s para las visitas.

@@ -1,0 +1,59 @@
+# Negocio FICTICIO para demostraciones de venta. Al mostrarlo a un prospecto, copiar este
+# archivo y reemplazar los datos con los de su clínica (servicios, precios, horario, FAQ).
+id: clinica-demo
+nombre: Clínica Dental Sonríe (demo)
+tipo: clínica odontológica y de estética dental
+ciudad: Pereira, Risaralda
+direccion: "Megacentro Pinares, Cra. 18 #12-75, Torre 1, consultorio 900 (dirección de demostración)"
+nombre_asistente: Sofía
+tono: cálido, profesional y tranquilizador
+telefono_dueno: ""            # WhatsApp del dueño para avisos, formato 57XXXXXXXXXX
+whatsapp_phone_number_id: ""  # ID del número en Meta (lo da la Cloud API)
+horario:
+  lunes: ["08:00", "18:00"]
+  martes: ["08:00", "18:00"]
+  miercoles: ["08:00", "18:00"]
+  jueves: ["08:00", "18:00"]
+  viernes: ["08:00", "18:00"]
+  sabado: ["08:00", "12:00"]
+servicios:
+  - nombre: Valoración odontológica
+    precio: "$50.000 (se descuenta si haces el tratamiento)"
+    duracion_min: 30
+    descripcion: Revisión completa, diagnóstico y plan de tratamiento.
+  - nombre: Limpieza dental (profilaxis)
+    precio: "$120.000"
+    duracion_min: 45
+  - nombre: Blanqueamiento dental
+    precio: "desde $650.000"
+    duracion_min: 90
+    descripcion: Requiere valoración previa.
+  - nombre: Resina estética
+    precio: "desde $150.000 por diente"
+    duracion_min: 60
+  - nombre: Diseño de sonrisa
+    precio: "se cotiza en la valoración"
+    duracion_min: 30
+    descripcion: Se agenda primero una valoración de diseño de sonrisa (30 min).
+  - nombre: Ortodoncia (control)
+    precio: "$90.000"
+    duracion_min: 30
+    descripcion: Solo para pacientes con tratamiento de ortodoncia activo.
+faq:
+  - pregunta: ¿Reciben pagos con tarjeta o a cuotas?
+    respuesta: Sí. Efectivo, transferencia, tarjetas débito y crédito. Tratamientos de más de $1.000.000 se pueden financiar hasta en 6 cuotas sin interés con la clínica.
+  - pregunta: ¿Atienden urgencias?
+    respuesta: Sí, en horario de atención se busca espacio el mismo día. Fuera de horario se pasa el caso al equipo.
+  - pregunta: ¿Hay parqueadero?
+    respuesta: Sí, el Megacentro Pinares tiene parqueadero pago.
+  - pregunta: ¿Atienden con EPS o prepagada?
+    respuesta: Atendemos de forma particular. Algunas prepagadas reembolsan; el paciente debe consultar con su aseguradora.
+politicas:
+  - Las citas se pueden cancelar o reprogramar sin costo con 24 horas de anticipación.
+  - Menores de edad deben venir con un adulto responsable.
+  - Llegar 10 minutos antes de la cita.
+pasar_a_humano_si:
+  - Hay dolor fuerte, sangrado, inflamación o trauma (posible urgencia).
+  - El paciente tiene una queja o un reclamo.
+  - Pide un descuento, un precio especial o información de un tratamiento ya iniciado.
+  - Pregunta algo médico que requiere criterio del odontólogo.

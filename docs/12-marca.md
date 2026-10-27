@@ -1,5 +1,7 @@
 # 12 · Marca — propuestas de nombre
 
+> ✅ **Decisión (2026-10-27): VÉRTICE.** Registrar `verticeautomatizacion.com`.
+>
 > v2 (2026-10-27): el fundador descartó "Clara" y pidió un nombre que **suene a agencia profesional**.
 > Ideas y dominios verificados con el conector de Shopify en esa fecha. La disponibilidad NO es una reserva:
 > registrar pronto el elegido. Ningún nombre está verificado como marca: buscar antes en la **SIC** y el **RUES**.

@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-27 · Sesión #4 (marca profesional, base de 62 prospectos)
+> Última actualización: 2026-10-27 · Sesión #5 (marca Vértice confirmada, asistente demo v0.1)
 
 ---
 
@@ -30,8 +30,12 @@
   cafeteras, restaurantes, inmobiliarias, veterinarias/salones.
 - **Tecnología:** agente propio "Clara" con **Claude API + Cloud API de Meta** en un VPS barato, multi-cliente;
   n8n solo como puente opcional (análisis en `docs/11-stack-tecnico-agentes-2026.md`).
-- **Marca propuesta:** **Vértice — Automatización con IA** (`verticeautomatizacion.com` disponible al 2026-10-27).
-  "Clara" fue descartada por el fundador (quiere un nombre de agencia profesional). Alternativas: Axioma, Prisma. Ver `docs/12-marca.md`.
+- **Marca: Vértice — Automatización con IA** ✅ confirmada por el fundador (dominio sugerido `verticeautomatizacion.com`,
+  disponible al 2026-10-27; pendiente registrarlo). Ver `docs/12-marca.md`.
+- **Asistente demo v0.1 construido** en `agente/` (Python + FastAPI + Claude API + Cloud API de WhatsApp):
+  agenda, cancela y muestra citas, guarda prospectos, pasa a humano avisando al dueño; multi-negocio por YAML;
+  demos "Clínica Dental Sonríe" (Sofía) y "MotoTaller Express" (Max); simulador en terminal; 12 pruebas OK.
+  Falta: API key de Anthropic para probarlo en vivo y conectar el número de prueba de Meta.
 - **Prospectos:** base de 62 negocios de Pereira y Dosquebradas en `prospectos/prospectos-pereira-dosquebradas.csv`
   (39 con WhatsApp/celular). Construida con búsqueda web (Google Maps bloqueado en el entorno de Claude).
 - **Por qué:** WhatsApp tiene ~90–99 % de penetración en Colombia; las pymes pierden ventas por responder
@@ -85,7 +89,11 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [x] Análisis de stack técnico (n8n vs alternativas) → agente propio con Claude API
 - [x] Propuestas de marca con dominios verificados
 - [x] Base de 62 prospectos (Pereira + Dosquebradas) con contacto y fuente
-- [ ] Fundador elige nombre (recomendado Vértice) y registra dominio
+- [x] Nombre elegido: Vértice
+- [x] Asistente demo v0.1 (código + pruebas) — `agente/README.md`
+- [ ] Fundador registra `verticeautomatizacion.com`
+- [ ] Fundador crea API key en console.anthropic.com (cargar ~USD 5–10 de créditos) para probar la demo
+- [ ] Probar Haiku 5.5 vs Opus 5.5 con conversaciones reales y elegir modelo de producción (costo)
 - [ ] Fundador marca en la base los negocios donde ha sido cliente (semi-cálidos)
 - [ ] Fundador crea cuenta en Meta for Developers (número de prueba de WhatsApp)
 - [ ] RUT + cuenta separada para el negocio
@@ -111,11 +119,14 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-27 | **Reemplaza "pilotos de contactos":** adquisición semi-cálida presencial (negocios donde el fundador es cliente) + mystery shopping | El fundador no tiene relación con dueños |
 | 2026-10-27 | El agente se limita al negocio del cliente (sin respuestas de propósito general) | Política de Meta vigente desde 15-ene-2026 |
 | 2026-10-27 | Marca: descartada "Clara"; propuesta "Vértice Automatización" (pendiente aprobación) | El fundador quiere imagen de agencia profesional |
+| 2026-10-27 | **Marca confirmada: Vértice** | Aprobada por el fundador |
+| 2026-10-27 | Asistente en Python/FastAPI, manual loop con Claude API, herramientas estrictas, SQLite, caché de prompt y respaldo `fallbacks: "default"` | Bajo costo, multi-cliente, mantenible por Claude |
+| 2026-10-27 | Modelo por defecto `claude-opus-5-5` (esfuerzo low), configurable; evaluar Haiku 5.5 antes del primer cliente | Opus ≈ COP 120k/mes por cliente vs Haiku ≈ COP 3,5k; decisión del fundador tras comparar calidad |
 | 2026-10-27 | Prospectos se guardan en `prospectos/*.csv` con columna de fuente y etapa | CRM simple, versionado y verificable |
 
 ## 8. Preguntas abiertas para el fundador
 
-1. ¿Qué nombre eliges? (recomendado: Vértice / verticeautomatizacion.com — ver `docs/12-marca.md`).
+1. ¿Puedes crear la API key de Anthropic y la cuenta de Meta for Developers para probar la demo en vivo?
 2. De la base de 62 prospectos, ¿en cuáles has sido cliente? ¿Hay otros que no estén?
 3. ¿Tienes conocimientos técnicos o computador disponible para crear la cuenta de Meta for Developers con guía?
 4. ¿Facturarás como persona natural al inicio? (recomendado; SAS después).
@@ -145,5 +156,6 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - `docs/11-stack-tecnico-agentes-2026.md` — cómo se montan hoy los agentes; por qué agente propio y no n8n
 - `docs/12-marca.md` — nombres propuestos y dominios verificados
 - `prospectos/` — base de prospectos (CSV) y guía de uso
+- `agente/` — código del asistente de WhatsApp (README con instalación, conexión a Meta y costos)
 - `plantillas/` — guiones, propuesta, contrato y onboarding listos para usar
 - `BITACORA.md` — diario de sesiones

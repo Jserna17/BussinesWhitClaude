@@ -237,3 +237,11 @@ def test_motor_openai_agenda_con_herramientas(db):
     # El historial de OpenAI se guarda aparte del de Claude.
     assert db.historial(f"{CLINICA.id}@openai", "573001112233")
     assert db.historial(CLINICA.id, "573001112233") == []
+
+
+def test_servicio_con_valoracion_previa_no_se_agenda(db):
+    h = Herramientas(db, CLINICA, "573001112233", ahora)
+    salida, error = h.ejecutar("consultar_disponibilidad", {"fecha": "2026-11-03", "servicio": "Blanqueamiento dental"})
+    assert error and "Valoración odontológica" in salida
+    _, error = h.ejecutar("agendar_cita", {"nombre": "Ana", "servicio": "Blanqueamiento dental", "fecha": "2026-11-03", "hora": "09:00"})
+    assert error

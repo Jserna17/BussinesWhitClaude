@@ -39,7 +39,7 @@ El asistente funciona con dos proveedores; se elige con `VERTICE_PROVEEDOR`:
 | Proveedor | Variables | Modelo por defecto |
 |---|---|---|
 | `claude` (por defecto) | `ANTHROPIC_API_KEY`, `VERTICE_MODELO`, `VERTICE_ESFUERZO` | `claude-opus-5-5` |
-| `openai` | `OPENAI_API_KEY`, `VERTICE_MODELO_OPENAI` | `gpt-5-mini` (cámbialo si tu cuenta usa otro) |
+| `openai` | `OPENAI_API_KEY`, `VERTICE_MODELO_OPENAI` | `gpt-5.4-mini` (probado: 20/20 en la batería, 2026-10-27) |
 
 Las herramientas, el prompt y la base de datos son los mismos; cada proveedor guarda su historial aparte.
 

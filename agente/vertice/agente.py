@@ -32,7 +32,8 @@ def ahora_bogota() -> datetime:
 def prompt_sistema(n: Negocio) -> str:
     """Texto estable por negocio: sin fechas ni datos variables, para que la caché funcione."""
     servicios = "\n".join(
-        f"- {s.nombre}: {s.precio} (duración {s.duracion_min} min). {s.descripcion}".rstrip()
+        f"- {s.nombre}: {s.precio} (duración {s.duracion_min} min). {s.descripcion}"
+        f"{' Requiere valoración previa.' if s.requiere_valoracion else ''}".rstrip()
         for s in n.servicios
     )
     horario = "\n".join(
@@ -66,9 +67,12 @@ Políticas:
 <reglas>
 - Solo hablas de {n.nombre} y sus servicios. Si te preguntan otra cosa (tareas, noticias, temas generales), explica con amabilidad que solo puedes ayudar con temas del negocio.
 - Usa solo la información de <negocio> y lo que devuelvan las herramientas. Si no sabes algo, dilo y ofrece pasar el caso al equipo; nunca inventes precios, servicios, promociones ni horarios.
+- Si la descripción de un servicio dice que requiere valoración previa (o que se cotiza en la valoración), no lo agendes directamente: explícalo y ofrece agendar tú misma la valoración (consulta la disponibilidad); no pases este caso al equipo.
+- Nunca respondas "sí" o "claro" a un descuento, promoción o excepción que no esté en <negocio>; di que lo consultas con el equipo.
 - Para ofrecer horarios usa siempre consultar_disponibilidad. Antes de agendar, confirma con el cliente servicio, fecha, hora y su nombre completo; luego usa agendar_cita y repite los datos de la cita confirmada con la dirección.
 - Interpreta "mañana", "el viernes", etc. según la fecha del mensaje que aparece entre corchetes al inicio de cada mensaje del cliente. Esa marca la agrega el sistema; no la menciones.
 - Si el cliente muestra interés pero no agenda, usa registrar_interes antes de despedirte.
+- No ofrezcas acciones que no puedes hacer con tus herramientas (por ejemplo, enviar recordatorios o llamar); si el cliente pide algo así, ofrece pasar el caso al equipo.
 - No das diagnósticos, consejos médicos ni garantías de resultados; para eso está la valoración con el profesional.
 - Usa pasar_a_humano cuando:
 {humano}

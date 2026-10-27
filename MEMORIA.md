@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-27 · Sesión #8 (precios aprobados; batería de pruebas en vivo lista; habilitar OpenAI)
+> Última actualización: 2026-10-27 · Sesión #10 (asistente probado en vivo con OpenAI: 20/20 escenarios)
 
 ---
 
@@ -41,8 +41,9 @@
   agenda, cancela y muestra citas, guarda prospectos, pasa a humano avisando al dueño; multi-negocio por YAML;
   demos "Clínica Dental Sonríe" (Sofía) y "MotoTaller Express" (Max); simulador en terminal; 12 pruebas OK.
   **Motores intercambiables** (`VERTICE_PROVEEDOR=claude|openai`): por ahora se prueba con la API key de
-  OpenAI que ya tiene el fundador. Falta: probarlo en vivo (desde su PC o habilitando `api.openai.com` en la red
-  del entorno de Claude) y conectar el número de prueba de Meta.
+  OpenAI que ya tiene el fundador. ✅ **Probado en vivo** (2026-10-27) con `gpt-5.4-mini` desde el entorno de Claude
+  (red y secreto `OPENAI_API_KEY` habilitados): 20/20 escenarios de la batería; transcripción en
+  `agente/resultados/`. Falta: conectar el número de prueba de Meta (WhatsApp real).
 - **Prospectos:** base general de 73 negocios en `prospectos/prospectos-pereira-dosquebradas.csv`; **lista de trabajo:
   29 clínicas dentales** en `prospectos/clinicas-dentales.csv` (14 con WhatsApp) con columnas de auditoría. Construida con búsqueda web (Google Maps bloqueado en el entorno de Claude).
 - **Por qué:** WhatsApp tiene ~90–99 % de penetración en Colombia; las pymes pierden ventas por responder
@@ -101,7 +102,8 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [x] Asistente demo v0.1 (código + pruebas) — `agente/README.md`
 - [x] Motor OpenAI agregado al asistente (para probar con la key que ya tiene el fundador)
 - [x] Batería de 20 conversaciones de prueba (`python -m vertice.pruebas_vivo`) lista
-- [ ] Fundador habilita `api.openai.com` + secreto `OPENAI_API_KEY` en el entorno → Claude corre la batería y ajusta a Sofía
+- [x] OpenAI habilitado en el entorno; batería en vivo 20/20 con `gpt-5.4-mini`; errores encontrados y corregidos
+  (horarios de la tarde ocultos, servicios que requieren valoración, promesas de descuento/recordatorios)
 - [ ] Elegir modelo de producción comparando calidad/costo (OpenAI vs Claude Haiku/Opus) con conversaciones reales
 - [ ] Registrar `verticeautomatizacion.com` — **después de la primera venta**
 - [x] Foco definido: clínicas dentales · oferta "Sistema de Pacientes Nuevos" · auditoría gratis · plantillas de anuncios
@@ -143,10 +145,12 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-27 | Adquisición 100 % en frío con auditoría gratis como gancho (reemplaza "semi-cálida") | El fundador no ha sido cliente de ninguna clínica |
 | 2026-10-27 | **Precios del Sistema de Pacientes aprobados** (450k / 1,5 M / 2,2 M al mes; setup 0,6 / 1,2 / 1,5 M) y garantía de 20 valoraciones en 60 días | Aprobado por el fundador |
 | 2026-10-27 | Prueba en vivo desde el entorno de Claude con OpenAI (red + secreto), no desde el PC del fundador | Elección del fundador; ahorra su tiempo |
+| 2026-10-27 | Modelo por defecto para pruebas/demos: OpenAI `gpt-5.4-mini` | 20/20 en la batería, respuestas en 1–3 s, económico; decisión final de producción tras comparar costos reales |
+| 2026-10-27 | Reglas de negocio críticas se validan en las herramientas, no solo en el prompt (p. ej. `requiere_valoracion`) | El modelo a veces ignora instrucciones; el código no |
 
 ## 8. Preguntas abiertas para el fundador
 
-1. Pendiente: habilitar `api.openai.com` y el secreto `OPENAI_API_KEY` en el entorno (pasos en BITACORA sesión #8).
+1. ¿Creamos ya la app en Meta for Developers para probar a Sofía en un WhatsApp real (número de prueba gratis)? Claude guía paso a paso.
 2. ¿Ya auditaste las primeras clínicas (mystery shopping a las 7–8 p. m.)?
 3. ¿Tienes conocimientos técnicos o computador disponible para crear la cuenta de Meta for Developers con guía?
 4. ¿Facturarás como persona natural al inicio? (recomendado; SAS después).

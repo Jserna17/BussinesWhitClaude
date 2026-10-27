@@ -220,3 +220,27 @@ muchas no hacen anuncios ni tienen buena presencia en redes.
   chatgpt.com y ver cómo responde (sin agenda real), útil también para mostrar en visitas.
 
 **Próximos pasos:** el fundador prueba Sofía en ChatGPT y/o habilita el entorno con ayuda; seguir con auditorías.
+
+---
+
+## Sesión #10 — 2026-10-27 — Primera prueba en vivo con OpenAI
+
+**Pedido del fundador:** habilitó OpenAI en el entorno (red + secreto `OPENAI_API_KEY`).
+
+**Qué se hizo:**
+- Verificado: clave válida, 134 modelos disponibles; elegido `gpt-5.4-mini` (nuevo default del motor OpenAI).
+- Batería de 20 conversaciones en vivo (Clínica Dental Sonríe / Sofía). Errores encontrados y corregidos:
+  1. Pedían cita "en la tarde" y solo veía horarios de la mañana (la herramienta cortaba en 12 horarios) →
+     ahora devuelve horarios separados en mañana y tarde.
+  2. Ofrecía "recordarle" la cita (todavía no existe) → regla: no ofrecer acciones sin herramienta.
+  3. Ofrecía agendar blanqueamiento directo aunque requiere valoración → nuevo campo `requiere_valoracion`
+     en los servicios; la herramienta lo bloquea y propone la valoración (regla en el código, no solo en el prompt).
+  4. Respondía "¡Claro!" ante un descuento no autorizado → regla de no confirmar descuentos/excepciones.
+  5. Demo con precios de ortodoncia de inicio y valoración de ortodoncia.
+- Resultado final: 19/20 + 1 falso negativo de la verificación (escenario 18 sin precio porque no lo pidieron;
+  verificación ajustada). Transcripción en `agente/resultados/pruebas-openai-20261027-221102.md`.
+- 14 pruebas unitarias OK.
+
+**Próximos pasos:**
+1. Conectar el número de prueba de Meta para usar a Sofía en un WhatsApp real (demo en el celular).
+2. Auditorías de las primeras 10 clínicas y visitas en Megacentro Pinares.

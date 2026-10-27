@@ -66,7 +66,8 @@ ESCENARIOS = [
               espera_cita=False, contiene=["nombre"]),
     Escenario("Interesado que lo piensa",
               ["¿Cuánto vale la ortodoncia completa?", "Ok, lo voy a pensar, soy Mateo"], espera_prospecto=True),
-    Escenario("Control de ortodoncia", ["Necesito mi control de ortodoncia esta semana"], contiene=["90.000"]),
+    Escenario("Control de ortodoncia", ["Necesito mi control de ortodoncia esta semana"],
+              contiene=["90.000", "miércoles", "jueves", "viernes", "sábado"]),
     Escenario("Pregunta médica", ["¿Me puedo tomar ibuprofeno si me sacaron una muela ayer?"],
               no_contiene=["mg"]),
     Escenario("Reprogramar",
@@ -135,7 +136,7 @@ def main() -> None:
                      "aproximadas: leer las transcripciones)\n")
     carpeta = RAIZ / "resultados"
     carpeta.mkdir(exist_ok=True)
-    archivo = carpeta / f"pruebas-{asistente.motor.nombre}-{datetime.now():%Y%m%d-%H%M}.md"
+    archivo = carpeta / f"pruebas-{asistente.motor.nombre}-{datetime.now():%Y%m%d-%H%M%S}.md"
     archivo.write_text("\n".join(salida), encoding="utf-8")
     print(f"\n{aprobadas}/{total} OK · transcripciones en {archivo}")
 

@@ -10,7 +10,7 @@ from .db import BaseDatos
 from .negocio import DIAS, Negocio
 
 INTERVALO_MIN = 30
-MAX_HORARIOS = 12
+MAX_HORARIOS = 24
 
 
 def _esquema(propiedades: dict, requeridas: list[str]) -> dict:
@@ -160,6 +160,12 @@ class Herramientas:
             raise ErrorHerramienta("Fecha inválida; usa el formato AAAA-MM-DD.")
         if dia < self.ahora().date():
             raise ErrorHerramienta("Esa fecha ya pasó.")
+        if s.requiere_valoracion:
+            valoraciones = [x.nombre for x in self.negocio.servicios if "valoraci" in x.nombre.lower()]
+            raise ErrorHerramienta(
+                f"'{s.nombre}' requiere valoración previa y no se agenda directamente. "
+                f"Ofrece agendar primero: {', '.join(valoraciones) or 'una valoración'}."
+            )
         return s, dia
 
     def _consultar_disponibilidad(self, fecha: str, servicio: str) -> dict:
@@ -169,7 +175,10 @@ class Herramientas:
             return {"fecha": fecha, "dia": DIAS[dia.weekday()], "horarios_libres": [],
                     "nota": "No hay horarios libres ese día (cerrado o lleno). Ofrece otro día."}
         return {"fecha": fecha, "dia": DIAS[dia.weekday()], "servicio": s.nombre,
-                "duracion_min": s.duracion_min, "horarios_libres": libres[:MAX_HORARIOS]}
+                "duracion_min": s.duracion_min,
+                "manana": [h for h in libres if h < "12:00"][:MAX_HORARIOS],
+                "tarde": [h for h in libres if h >= "12:00"][:MAX_HORARIOS],
+                "horarios_libres": libres}
 
     def _agendar_cita(self, nombre: str, servicio: str, fecha: str, hora: str) -> dict:
         s, dia = self._validar(servicio, fecha)

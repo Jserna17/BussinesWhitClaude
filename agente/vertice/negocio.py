@@ -18,6 +18,7 @@ class Servicio:
     precio: str
     duracion_min: int
     descripcion: str = ""
+    requiere_valoracion: bool = False  # no se agenda directo: primero la valoración
 
 
 @dataclass(frozen=True)

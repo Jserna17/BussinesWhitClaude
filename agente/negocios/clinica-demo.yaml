@@ -27,7 +27,7 @@ servicios:
   - nombre: Blanqueamiento dental
     precio: "desde $650.000"
     duracion_min: 90
-    descripcion: Requiere valoración previa.
+    requiere_valoracion: true
   - nombre: Resina estética
     precio: "desde $150.000 por diente"
     duracion_min: 60
@@ -35,6 +35,15 @@ servicios:
     precio: "se cotiza en la valoración"
     duracion_min: 30
     descripcion: Se agenda primero una valoración de diseño de sonrisa (30 min).
+  - nombre: Ortodoncia (inicio de tratamiento)
+    precio: "brackets desde $2.500.000 o alineadores desde $6.000.000; el valor exacto se da en la valoración"
+    duracion_min: 60
+    descripcion: Financiable en cuotas mensuales.
+    requiere_valoracion: true
+  - nombre: Valoración de ortodoncia
+    precio: "$60.000"
+    duracion_min: 30
+    descripcion: Revisión, radiografía y plan de ortodoncia con cuota mensual.
   - nombre: Ortodoncia (control)
     precio: "$90.000"
     duracion_min: 30

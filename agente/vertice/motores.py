@@ -101,7 +101,7 @@ class MotorOpenAI:
 
         self._openai = openai
         self.api = cliente or openai.OpenAI()
-        self.modelo = os.environ.get("VERTICE_MODELO_OPENAI", "gpt-5-mini")
+        self.modelo = os.environ.get("VERTICE_MODELO_OPENAI", "gpt-5.4-mini")
 
     def turno(self, sistema: str, mensajes: list[dict], herramientas: Herramientas) -> str:
         texto_final = ""

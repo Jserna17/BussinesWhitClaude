@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-27 · Sesión #6 (motor OpenAI para pruebas, dominio pospuesto)
+> Última actualización: 2026-10-27 · Sesión #7 (foco 100 % clínicas dentales + Sistema de Pacientes Nuevos)
 
 ---
 
@@ -25,9 +25,13 @@
 - **Expansión dentro de cada cliente:** automatizar más procesos con módulos reutilizables (agendamiento,
   reseñas, cotizaciones, cobranza, pedidos, Instagram DM, reportes, contenido, voz, back-office).
   Catálogo completo en `docs/10-catalogo-servicios-automatizacion.md`.
-- **Nicho de lanzamiento (marketing y prospección en frío):** clínicas odontológicas y estéticas de Pereira.
-- **Verticales secundarias** (vía contactos del fundador): talleres de motos/carros, gimnasios, turismo/fincas
-  cafeteras, restaurantes, inmobiliarias, veterinarias/salones.
+- **Nicho: 100 % clínicas dentales de Pereira y Dosquebradas** (decisión 2026-10-27). Otras verticales
+  (estética, talleres, veterinarias…) quedan para después de tener casos de éxito dentales.
+- **Oferta principal: "Sistema Vértice de Pacientes Nuevos"** (`docs/13-sistema-pacientes-dentales.md`):
+  anuncios Meta "clic a WhatsApp" + asistente IA que responde y agenda 24/7 + ficha de Google y reseñas +
+  contenido + reactivación + reporte mensual. COP 1.200.000 setup + 1.500.000/mes (anuncios aparte, los paga
+  la clínica a Meta; mínimo recomendado 0,8–1,5 M/mes). El asistente solo (450k) queda como plan de entrada.
+- **Puerta de entrada en frío:** "Auditoría gratis de pacientes perdidos" (`plantillas/auditoria-pacientes-perdidos.md`).
 - **Tecnología:** agente propio "Clara" con **Claude API + Cloud API de Meta** en un VPS barato, multi-cliente;
   n8n solo como puente opcional (análisis en `docs/11-stack-tecnico-agentes-2026.md`).
 - **Marca: Vértice — Automatización con IA** ✅ confirmada por el fundador. **Dominio pospuesto hasta la
@@ -38,8 +42,8 @@
   **Motores intercambiables** (`VERTICE_PROVEEDOR=claude|openai`): por ahora se prueba con la API key de
   OpenAI que ya tiene el fundador. Falta: probarlo en vivo (desde su PC o habilitando `api.openai.com` en la red
   del entorno de Claude) y conectar el número de prueba de Meta.
-- **Prospectos:** base de 62 negocios de Pereira y Dosquebradas en `prospectos/prospectos-pereira-dosquebradas.csv`
-  (39 con WhatsApp/celular). Construida con búsqueda web (Google Maps bloqueado en el entorno de Claude).
+- **Prospectos:** base general de 73 negocios en `prospectos/prospectos-pereira-dosquebradas.csv`; **lista de trabajo:
+  29 clínicas dentales** en `prospectos/clinicas-dentales.csv` (14 con WhatsApp) con columnas de auditoría. Construida con búsqueda web (Google Maps bloqueado en el entorno de Claude).
 - **Por qué:** WhatsApp tiene ~90–99 % de penetración en Colombia; las pymes pierden ventas por responder
   tarde; la mensajería de Meta en Colombia es muy barata (~USD 0,0008 por mensaje de servicio/utilidad).
 
@@ -61,8 +65,9 @@
 
 - **Tiempo:** **2 horas al día** (confirmado). Claude prepara todo; el fundador envía mensajes, visita
   negocios, hace demos y aprueba.
-- **Red:** **no tiene red cálida** — conoce negocios donde ha sido cliente, sin relación con los dueños.
-  ➜ Adquisición "semi-cálida" presencial (visitas con demo en el celular) + mystery shopping + frío digital.
+- **Red:** **ninguna** — no ha sido cliente de ninguna clínica de la lista (confirmado 2026-10-27).
+  ➜ Adquisición 100 % en frío: auditoría gratis (mystery shopping + Google + Instagram + anuncios) → visita
+  presencial con la hoja impresa y demo en el celular.
 - **Presupuesto:** **COP 500.000** para 90 días (confirmado). Distribución en `docs/09-presupuesto.md`.
   El abogado, correo pago y anuncios se pagan con el primer setup cobrado.
 
@@ -97,7 +102,10 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [ ] Probar la demo en vivo con OpenAI (PC del fundador o red del entorno habilitada para `api.openai.com`)
 - [ ] Elegir modelo de producción comparando calidad/costo (OpenAI vs Claude Haiku/Opus) con conversaciones reales
 - [ ] Registrar `verticeautomatizacion.com` — **después de la primera venta**
-- [ ] Fundador marca en la base los negocios donde ha sido cliente (semi-cálidos)
+- [x] Foco definido: clínicas dentales · oferta "Sistema de Pacientes Nuevos" · auditoría gratis · plantillas de anuncios
+- [ ] Auditar las primeras 10 clínicas (mystery shopping + Google + Instagram + Biblioteca de anuncios)
+- [ ] Primeras 5 visitas con la auditoría impresa (ruta Megacentro Pinares)
+- [ ] Ampliar lista dental a 60+ clínicas (cuando haya acceso a Google Maps o con ayuda del fundador)
 - [ ] Fundador crea cuenta en Meta for Developers (número de prueba de WhatsApp)
 - [ ] RUT + cuenta separada para el negocio
 - [ ] Construir demo funcional del agente
@@ -128,11 +136,14 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-27 | Prospectos se guardan en `prospectos/*.csv` con columna de fuente y etapa | CRM simple, versionado y verificable |
 | 2026-10-27 | Pruebas con la API de OpenAI (key existente del fundador); motor intercambiable Claude/OpenAI | Cero gasto nuevo; el modelo final se decide con datos |
 | 2026-10-27 | Dominio se compra después de la primera venta | Prioridad: vender antes de gastar |
+| 2026-10-27 | **Nicho único: clínicas dentales** (reemplaza clínicas estéticas + verticales secundarias por ahora) | Son las más numerosas y necesitan pacientes; foco = mensajes y casos de éxito más rápidos |
+| 2026-10-27 | Oferta principal "Sistema de Pacientes Nuevos" (anuncios + IA + Google + contenido + reactivación), 1,2 M setup + 1,5 M/mes; anuncios pagados por la clínica | La mayoría no hace anuncios ni tiene buena presencia en redes; ticket mayor y más retención |
+| 2026-10-27 | Adquisición 100 % en frío con auditoría gratis como gancho (reemplaza "semi-cálida") | El fundador no ha sido cliente de ninguna clínica |
 
 ## 8. Preguntas abiertas para el fundador
 
 1. ¿Cómo prefieres probar la demo: en tu computador (te guío paso a paso) o habilitando `api.openai.com` y la key como secreto en el entorno de Claude?
-2. De la base de 62 prospectos, ¿en cuáles has sido cliente? ¿Hay otros que no estén?
+2. ¿Apruebas los precios del Sistema de Pacientes (1,2 M + 1,5 M/mes + anuncios) y la garantía de 20 valoraciones en 60 días?
 3. ¿Tienes conocimientos técnicos o computador disponible para crear la cuenta de Meta for Developers con guía?
 4. ¿Facturarás como persona natural al inicio? (recomendado; SAS después).
 
@@ -160,7 +171,8 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - `docs/10-catalogo-servicios-automatizacion.md` — módulos, paquetes por vertical y precios
 - `docs/11-stack-tecnico-agentes-2026.md` — cómo se montan hoy los agentes; por qué agente propio y no n8n
 - `docs/12-marca.md` — nombres propuestos y dominios verificados
+- `docs/13-sistema-pacientes-dentales.md` — oferta principal para clínicas dentales (sistema de adquisición)
 - `prospectos/` — base de prospectos (CSV) y guía de uso
 - `agente/` — código del asistente de WhatsApp (README con instalación, conexión a Meta y costos)
-- `plantillas/` — guiones, propuesta, contrato y onboarding listos para usar
+- `plantillas/` — guiones, propuesta, contrato, onboarding, **auditoría gratis** y **anuncios dentales**
 - `BITACORA.md` — diario de sesiones

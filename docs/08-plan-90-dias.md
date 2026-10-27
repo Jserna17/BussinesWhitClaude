@@ -3,6 +3,10 @@
 > Versión 2 (2026-10-27): ajustada a Pereira, a ~2 h/día del fundador y a la ampliación del negocio a
 > automatización para negocios locales. 2 h/día confirmadas; presupuesto COP 500.000; sin red cálida.
 
+> ⚠️ **Actualización 2026-10-27:** foco 100 % clínicas dentales, adquisición en frío con la auditoría gratis
+> (`plantillas/auditoria-pacientes-perdidos.md`) y oferta "Sistema de Pacientes Nuevos" (`docs/13`). Donde este
+> plan dice "lista semi-cálida" o "negocios donde ha sido cliente", leer "clínicas de `prospectos/clinicas-dentales.csv`".
+
 ## Reparto de trabajo
 
 | Quién | Hace |

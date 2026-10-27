@@ -26,6 +26,7 @@ más procesos de cada cliente, con ingresos recurrentes mensuales.
 | 10 | [Catálogo de servicios](docs/10-catalogo-servicios-automatizacion.md) | Módulos de automatización, verticales y precios |
 | 11 | [Stack técnico de agentes 2026](docs/11-stack-tecnico-agentes-2026.md) | n8n vs plataformas vs agente propio |
 | 12 | [Marca](docs/12-marca.md) | Nombres y dominios |
+| 13 | [Sistema de Pacientes Nuevos](docs/13-sistema-pacientes-dentales.md) | Oferta principal para clínicas dentales |
 
 ## Producto
 - [Asistente de WhatsApp — demo v0.1](agente/README.md)
@@ -37,3 +38,5 @@ más procesos de cada cliente, con ingresos recurrentes mensuales.
 - [Guiones de outreach y ventas](plantillas/guiones-outreach.md)
 - [Checklist de onboarding](plantillas/onboarding-checklist.md)
 - [Propuesta y contrato](plantillas/propuesta-y-contrato.md)
+- [Auditoría gratis de pacientes perdidos](plantillas/auditoria-pacientes-perdidos.md)
+- [Anuncios para clínicas dentales](plantillas/anuncios-dentales.md)

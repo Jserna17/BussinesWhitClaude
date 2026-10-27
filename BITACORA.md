@@ -153,3 +153,32 @@ hasta vender.
 1. Fundador elige cómo probar en vivo y corre 20 conversaciones de prueba.
 2. Conectar el número de prueba de Meta.
 3. Video demo de 60 s y primeras visitas (Megacentro Pinares).
+
+---
+
+## Sesión #7 — 2026-10-27 — Foco en clínicas dentales y Sistema de Pacientes Nuevos
+
+**Pedido del fundador:** no ha sido cliente de ninguna clínica; empezar con clínicas dentales (las más
+numerosas y que más necesitan pacientes) y crear un sistema de adquisición de clientes para ellas, porque
+muchas no hacen anuncios ni tienen buena presencia en redes.
+
+**Qué se hizo:**
+- Investigación: benchmarks de anuncios dentales (EE. UU.: ~USD 77 por lead en Meta, el sector más caro;
+  sin datos públicos de Colombia), modelos de agencias dentales (gestión + IA de respuesta inmediata),
+  normas: Estatuto del Consumidor/SIC, habilitación REPS (alertas de Supersalud), políticas de Meta para salud
+  (antes/después con reglas poco claras en 2026).
+- `docs/13-sistema-pacientes-dentales.md`: oferta "Sistema Vértice de Pacientes Nuevos" (anuncios clic a
+  WhatsApp + asistente IA + Google + contenido + reactivación + reporte), planes 450k / 1,5 M / 2,2 M al mes,
+  garantía condicionada, matemática para la clínica (hipótesis 🧪), cumplimiento y operación.
+- `plantillas/auditoria-pacientes-perdidos.md`: auditoría gratis con puntaje 0–100, formato de una página y
+  guion de visita en frío.
+- `plantillas/anuncios-dentales.md`: 6 anuncios clic a WhatsApp + configuración + lista de verificación.
+- Prospectos: +11 clínicas dentales; nueva lista de trabajo `prospectos/clinicas-dentales.csv` (29 clínicas,
+  14 con WhatsApp) con columnas de auditoría.
+- MEMORIA, plan de 90 días y README actualizados.
+
+**Próximos pasos:**
+1. Fundador aprueba precios y garantía del Sistema de Pacientes.
+2. Auditar 10 clínicas (mystery shopping a las 7–8 p. m. + Google + Instagram + Biblioteca de anuncios).
+3. Probar la demo en vivo (pendiente elegir: PC del fundador o habilitar `api.openai.com` en el entorno).
+4. Primeras visitas en Megacentro Pinares con la auditoría impresa.

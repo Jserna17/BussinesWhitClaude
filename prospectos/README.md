@@ -1,5 +1,9 @@
 # Base de prospectos — Pereira y Dosquebradas
 
+> **Foco actual (2026-10-27): clínicas dentales.** Lista de trabajo: [`clinicas-dentales.csv`](clinicas-dentales.csv)
+> (29 clínicas, 14 con WhatsApp, con columnas para la auditoría gratis). El archivo general se conserva para
+> verticales futuras.
+
 Archivo principal: [`prospectos-pereira-dosquebradas.csv`](prospectos-pereira-dosquebradas.csv) (se abre en
 Excel o Google Sheets). Primera versión: 2026-10-27 · **62 negocios**.
 

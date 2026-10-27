@@ -25,6 +25,9 @@ más procesos de cada cliente, con ingresos recurrentes mensuales.
 | 11 | [Stack técnico de agentes 2026](docs/11-stack-tecnico-agentes-2026.md) | n8n vs plataformas vs agente propio |
 | 12 | [Marca](docs/12-marca.md) | Nombres y dominios |
 
+## Prospectos
+- [Base de 62 negocios de Pereira y Dosquebradas](prospectos/README.md)
+
 ## Plantillas
 - [Guiones de outreach y ventas](plantillas/guiones-outreach.md)
 - [Checklist de onboarding](plantillas/onboarding-checklist.md)

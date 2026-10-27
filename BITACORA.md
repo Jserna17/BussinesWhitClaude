@@ -82,3 +82,27 @@ negocios actuales, habilidades, skills, conectores y herramientas; documentarlo 
 2. Fundador lista 15–20 negocios donde ha sido cliente.
 3. Fundador crea cuenta de Meta for Developers (Claude le da la guía paso a paso).
 4. Claude empieza a construir el agente "Clara" y la Clínica Demo.
+
+---
+
+## Sesión #4 — 2026-10-27 — Marca profesional y base de prospectos
+
+**Pedido del fundador:** no le gusta "Clara"; quiere un nombre que suene a agencia profesional. Pide que
+Claude busque en Google Maps negocios de Pereira y Dosquebradas con toda su información de contacto.
+
+**Qué se hizo:**
+- Nombres profesionales generados y dominios verificados (conector Shopify). Recomendado **Vértice
+  Automatización** (`verticeautomatizacion.com` disponible); alternativas Axioma (`axiomaautomation.com`),
+  Prisma (`prismaautomatizacion.com`). `docs/12-marca.md` v2.
+- Google Maps y la descarga directa de páginas están bloqueados por el proxy del entorno → se usó búsqueda
+  web sobre sitios oficiales, redes y directorios.
+- Base de **62 prospectos** (`prospectos/prospectos-pereira-dosquebradas.csv`): 18 odontología, 12 medicina
+  estética/dermatología/cirugía plástica, 8 estética/spa, 9 inmobiliarias, 6 veterinarias, 6 talleres,
+  3 gimnasios. 39 con celular/WhatsApp (prioridad A). Cada fila con su fuente. Top 15 y ruta de visitas
+  (Megacentro Pinares, Edificio Oval) en `prospectos/README.md`.
+
+**Próximos pasos:**
+1. Fundador aprueba nombre y registra dominio.
+2. Fundador marca en qué negocios ha sido cliente.
+3. Mystery shopping a los 15 primeros (WhatsApp fuera de horario) y primeras visitas en Megacentro Pinares.
+4. Claude construye el agente demo.

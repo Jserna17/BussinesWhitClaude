@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-27 · Sesión #3 (presupuesto 500k, stack técnico, marca, adquisición sin red)
+> Última actualización: 2026-10-27 · Sesión #4 (marca profesional, base de 62 prospectos)
 
 ---
 
@@ -30,7 +30,10 @@
   cafeteras, restaurantes, inmobiliarias, veterinarias/salones.
 - **Tecnología:** agente propio "Clara" con **Claude API + Cloud API de Meta** en un VPS barato, multi-cliente;
   n8n solo como puente opcional (análisis en `docs/11-stack-tecnico-agentes-2026.md`).
-- **Marca propuesta:** **Clara** — dominio `atiendeclara.com` disponible al 2026-10-27 (pendiente decisión; `docs/12-marca.md`).
+- **Marca propuesta:** **Vértice — Automatización con IA** (`verticeautomatizacion.com` disponible al 2026-10-27).
+  "Clara" fue descartada por el fundador (quiere un nombre de agencia profesional). Alternativas: Axioma, Prisma. Ver `docs/12-marca.md`.
+- **Prospectos:** base de 62 negocios de Pereira y Dosquebradas en `prospectos/prospectos-pereira-dosquebradas.csv`
+  (39 con WhatsApp/celular). Construida con búsqueda web (Google Maps bloqueado en el entorno de Claude).
 - **Por qué:** WhatsApp tiene ~90–99 % de penetración en Colombia; las pymes pierden ventas por responder
   tarde; la mensajería de Meta en Colombia es muy barata (~USD 0,0008 por mensaje de servicio/utilidad).
 
@@ -81,12 +84,13 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [x] Confirmado: 2 h/día, presupuesto COP 500.000, sin red cálida
 - [x] Análisis de stack técnico (n8n vs alternativas) → agente propio con Claude API
 - [x] Propuestas de marca con dominios verificados
-- [ ] Fundador elige nombre y registra dominio
-- [ ] Fundador lista 15–20 negocios de Pereira donde ha sido cliente
+- [x] Base de 62 prospectos (Pereira + Dosquebradas) con contacto y fuente
+- [ ] Fundador elige nombre (recomendado Vértice) y registra dominio
+- [ ] Fundador marca en la base los negocios donde ha sido cliente (semi-cálidos)
 - [ ] Fundador crea cuenta en Meta for Developers (número de prueba de WhatsApp)
 - [ ] RUT + cuenta separada para el negocio
 - [ ] Construir demo funcional del agente
-- [ ] Lista de 150 negocios objetivo en Pereira
+- [ ] Ampliar base a 150 negocios (restaurantes, salones, hoteles/fincas, Santa Rosa, La Virginia)
 - [ ] Primeros 3 clientes piloto
 
 ## 7. Decisiones tomadas (registro inmutable — agregar, no borrar)
@@ -106,11 +110,13 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-27 | Presupuesto de arranque: COP 500.000 | Confirmado por el fundador |
 | 2026-10-27 | **Reemplaza "pilotos de contactos":** adquisición semi-cálida presencial (negocios donde el fundador es cliente) + mystery shopping | El fundador no tiene relación con dueños |
 | 2026-10-27 | El agente se limita al negocio del cliente (sin respuestas de propósito general) | Política de Meta vigente desde 15-ene-2026 |
+| 2026-10-27 | Marca: descartada "Clara"; propuesta "Vértice Automatización" (pendiente aprobación) | El fundador quiere imagen de agencia profesional |
+| 2026-10-27 | Prospectos se guardan en `prospectos/*.csv` con columna de fuente y etapa | CRM simple, versionado y verificable |
 
 ## 8. Preguntas abiertas para el fundador
 
-1. ¿Qué nombre eliges? (recomendado: Clara / atiendeclara.com — ver `docs/12-marca.md`).
-2. Lista de 15–20 negocios de Pereira donde has sido cliente (nombre, tipo, dirección/Instagram).
+1. ¿Qué nombre eliges? (recomendado: Vértice / verticeautomatizacion.com — ver `docs/12-marca.md`).
+2. De la base de 62 prospectos, ¿en cuáles has sido cliente? ¿Hay otros que no estén?
 3. ¿Tienes conocimientos técnicos o computador disponible para crear la cuenta de Meta for Developers con guía?
 4. ¿Facturarás como persona natural al inicio? (recomendado; SAS después).
 
@@ -138,5 +144,6 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - `docs/10-catalogo-servicios-automatizacion.md` — módulos, paquetes por vertical y precios
 - `docs/11-stack-tecnico-agentes-2026.md` — cómo se montan hoy los agentes; por qué agente propio y no n8n
 - `docs/12-marca.md` — nombres propuestos y dominios verificados
+- `prospectos/` — base de prospectos (CSV) y guía de uso
 - `plantillas/` — guiones, propuesta, contrato y onboarding listos para usar
 - `BITACORA.md` — diario de sesiones

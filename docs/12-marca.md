@@ -1,32 +1,37 @@
 # 12 · Marca — propuestas de nombre
 
-> Generado el 2026-10-27 con el conector de Shopify (ideas + verificación de dominios en ese momento).
-> La disponibilidad de dominios NO es una reserva: registrar pronto el elegido. Ningún nombre ha sido
-> verificado como marca: antes de decidir, buscar en la **SIC** (Superintendencia de Industria y Comercio)
-> y en el **RUES** (registro de nombres de la Cámara de Comercio).
+> v2 (2026-10-27): el fundador descartó "Clara" y pidió un nombre que **suene a agencia profesional**.
+> Ideas y dominios verificados con el conector de Shopify en esa fecha. La disponibilidad NO es una reserva:
+> registrar pronto el elegido. Ningún nombre está verificado como marca: buscar antes en la **SIC** y el **RUES**.
 
-## Criterios
-- Fácil de decir por teléfono y recordar en Pereira.
-- Sirve para la agencia completa (no solo citas ni solo clínicas).
-- **Sin la palabra "WhatsApp"** (marca registrada de Meta; riesgo legal y de rechazo en sus plataformas).
-- Dominio disponible a precio normal.
+## Criterios (v2)
+- Suena a consultora/agencia seria B2B, no a "bot".
+- Corto, fácil de decir por teléfono en Pereira, en español o neutro.
+- Sirve para toda la agencia (automatización, agentes, procesos), no solo WhatsApp ni solo citas.
+- Sin "WhatsApp" (marca de Meta). Dominio `.com` disponible.
 
 ## Lista corta
 
-| # | Nombre | Idea | Dominio verificado | Comentario |
+| # | Nombre | Concepto | Dominio verificado | Comentario |
 |---|---|---|---|---|
-| 1 ⭐ | **Clara** ("Atiende Clara") | Personifica al agente: "Clara, la recepcionista IA de tu negocio". Transmite claridad y confianza | `atiendeclara.com` **disponible** (~USD 16 el primer año) | Recomendado. El producto tiene nombre propio y es fácil de vender ("Clara responde por ti") |
-| 2 | **Tinto IA** | Muy local (Eje Cafetero): "Te atiende mientras te tomas un tinto" | `tintoia.com` ocupado; `tintoia.net` disponible (~USD 19) | Cercano y memorable; revisar `.co` en un registrador colombiano |
-| 3 | **Brío** ("Brío Automatización") | Energía, rapidez; sirve para todos los servicios de automatización | `brioautomatizacion.com` **disponible** (~USD 16) | Bueno como nombre de agencia; menos emocional |
-| 4 | **Atiendo** | Directo: lo que hacemos es atender | `atiendo.com` ocupado; `atiendo.org`/`.shop` disponibles | Dominio `.com` no disponible |
-| 5 | AgendaIA / CitaBot | Descriptivos (del generador de Shopify) | No verificados | Genéricos, difíciles de registrar como marca y limitan a "citas" |
+| 1 ⭐ | **Vértice** — *Vértice Automatización* | El punto más alto / donde se unen las líneas: procesos que convergen y negocios que escalan | `verticeautomatizacion.com` **disponible** (~USD 16) | Recomendado: español, serio, fácil de pronunciar; firma "Vértice · Automatización con IA" |
+| 2 | **Axioma** — *Axioma Automation* | Una verdad que no se discute: precisión, lógica, confianza | `axiomaautomation.com` **disponible** (~USD 16) | Muy corporativo; mezcla español/inglés |
+| 3 | **Prisma** — *Prisma Automatización* | Toma un proceso y lo descompone en partes claras | `prismaautomatizacion.com` **disponible** (~USD 16) | Profesional, visual (buen logo); nombre común en otras industrias |
+| 4 | **Brío** — *Brío Automatización* | Energía y velocidad | `brioautomatizacion.com` disponible (~USD 16) | Más cálido, menos corporativo |
+| 5 | Cognitiva | IA / pensamiento | `cognitivatech.com` ocupado; `.net` disponible | `.com` no disponible |
+| 6 | Escala IA | Crecimiento | `escalaia.com` ocupado | `.com` no disponible |
+| 7 | Andes Automation / Nexora Labs / Operia | — | `.com` ocupados | Descartados |
 
-Otras ideas del generador (descartadas por genéricas o por incluir "WhatsApp"): PereiraBot, AutoRecep,
-CitaSmart, WhatsIA, LocalBotics, SmartRecep, WhatsAppIA, NegocioAuto, PereiraConnect.
+Otras ideas del generador de Shopify (sin verificar dominio): AutoIntel Consultores, Nexia AI Solutions,
+Optima Automatización, Stratus AI, Vanguard Automatización, Synapse B2B, Eficiencia AI.
 
-## Propuesta de uso (si se elige Clara)
-- **Agencia:** Clara — Automatización con IA para negocios.
-- **Producto de entrada:** "Clara, tu recepcionista 24/7".
-- **Lema:** "Ningún cliente sin respuesta."
-- **Dominio:** `atiendeclara.com` (más adelante también el `.co` si está libre).
-- **Correo:** inicialmente gratis (Zoho Mail free con el dominio) para cuidar el presupuesto.
+## Arquitectura de marca sugerida (si se elige Vértice)
+- **Agencia:** Vértice — Automatización con IA para empresas.
+- **Productos con nombre descriptivo:** "Recepcionista IA 24/7", "Agenda Automática", "Reactivación de clientes"…
+  (el producto no necesita nombre propio; el profesionalismo lo da la agencia).
+- **Lema:** "Tu negocio funcionando, aunque tú no estés." / alternativa: "Automatizamos lo repetitivo. Tú creces."
+- **Dominio:** `verticeautomatizacion.com`; correo `juanjose@verticeautomatizacion.com`.
+- **Identidad visual:** triángulo/vértice minimalista, azul profundo + un acento (verde café o naranja).
+
+## Historial
+- v1 (descartada): Clara / atiendeclara.com — el fundador la sintió poco profesional para una agencia.

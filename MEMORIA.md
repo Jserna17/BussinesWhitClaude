@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-27 · Sesión #10 (asistente probado en vivo con OpenAI: 20/20 escenarios)
+> Última actualización: 2026-10-27 · Sesión #11 (página demo de Sofía para visitas)
 
 ---
 
@@ -44,6 +44,9 @@
   OpenAI que ya tiene el fundador. ✅ **Probado en vivo** (2026-10-27) con `gpt-5.4-mini` desde el entorno de Claude
   (red y secreto `OPENAI_API_KEY` habilitados): 20/20 escenarios de la batería; transcripción en
   `agente/resultados/`. Falta: conectar el número de prueba de Meta (WhatsApp real).
+- **Página demo para visitas:** https://claude.ai/artifact/QNoA7pa8cbFn5WqLEwce34 (`demo/sofia.html`): chat tipo
+  WhatsApp con Sofía (corre con Claude dentro de claude.ai, con la cuenta de quien la abre) + panel "lo que ve la
+  clínica" (agenda, avisos al equipo, interesados) + personalizar nombre/dirección de la clínica visitada. Privada.
 - **Prospectos:** base general de 73 negocios en `prospectos/prospectos-pereira-dosquebradas.csv`; **lista de trabajo:
   29 clínicas dentales** en `prospectos/clinicas-dentales.csv` (14 con WhatsApp) con columnas de auditoría. Construida con búsqueda web (Google Maps bloqueado en el entorno de Claude).
 - **Por qué:** WhatsApp tiene ~90–99 % de penetración en Colombia; las pymes pierden ventas por responder
@@ -147,6 +150,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-27 | Prueba en vivo desde el entorno de Claude con OpenAI (red + secreto), no desde el PC del fundador | Elección del fundador; ahorra su tiempo |
 | 2026-10-27 | Modelo por defecto para pruebas/demos: OpenAI `gpt-5.4-mini` | 20/20 en la batería, respuestas en 1–3 s, económico; decisión final de producción tras comparar costos reales |
 | 2026-10-27 | Reglas de negocio críticas se validan en las herramientas, no solo en el prompt (p. ej. `requiere_valoracion`) | El modelo a veces ignora instrucciones; el código no |
+| 2026-10-27 | Demo para visitas = página web en claude.ai (artifact) que el fundador abre en su celular | No requiere servidor ni WhatsApp conectado; muestra chat + agenda en vivo |
 
 ## 8. Preguntas abiertas para el fundador
 

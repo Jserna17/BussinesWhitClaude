@@ -244,3 +244,20 @@ muchas no hacen anuncios ni tienen buena presencia en redes.
 **Próximos pasos:**
 1. Conectar el número de prueba de Meta para usar a Sofía en un WhatsApp real (demo en el celular).
 2. Auditorías de las primeras 10 clínicas y visitas en Megacentro Pinares.
+
+---
+
+## Sesión #11 — 2026-10-27 — Página demo de Sofía
+
+**Pedido del fundador:** ¿cómo ve la interfaz o lo que Claude estaba ejecutando?
+
+**Qué se hizo:**
+- Explicado: lo ejecutado eran comandos en el computador en la nube de Claude (sin interfaz); los resultados
+  quedan en archivos como `agente/resultados/…md`.
+- Página web demo publicada (privada): https://claude.ai/artifact/QNoA7pa8cbFn5WqLEwce34 — chat estilo
+  WhatsApp con Sofía (modelo de Claude vía la cuenta de quien abre la página, nivel "quick"), agenda real dentro
+  de la página con las mismas reglas que el sistema (horario, 30 min, 1 h de anticipación, requiere valoración),
+  panel de citas / avisos al equipo / interesados, botones de preguntas rápidas y personalización del nombre de la
+  clínica. Sintaxis del script verificada; la conversación no se pudo probar desde el entorno (requiere abrirla en claude.ai).
+
+**Próximos pasos:** el fundador la prueba en su celular y la usa en las primeras visitas.

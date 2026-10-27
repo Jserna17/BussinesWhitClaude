@@ -1,0 +1,372 @@
+<title>Sofía · Demo Vértice</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: teléfono con el chat a la izquierda; "lo que ve la clínica" a la derecha (abajo en el celular). */
+:root {
+  --bg: #eef2f1;
+  --surface: #ffffff;
+  --fg: #16201e;
+  --muted: #5b6b67;
+  --line: #d6dfdc;
+  --chat-bg: #e7ece9;
+  --brand: #0e5c4f;          /* verde azulado Vértice */
+  --brand-ink: #ffffff;
+  --mine: #d5f2e3;           /* burbuja del paciente */
+  --theirs: #ffffff;         /* burbuja de Sofía */
+  --accent: #c2410c;         /* avisos al equipo */
+  --ok: #15803d;
+  --chip: #ffffff;
+  --display: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --body: "Figtree", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1514; --surface: #172120; --fg: #e3ebe8; --muted: #93a6a1; --line: #2a3835;
+    --chat-bg: #111a19; --brand: #2f9c86; --brand-ink: #06110f; --mine: #1d4a3e; --theirs: #1f2b29;
+    --accent: #f08a5d; --ok: #4ade80; --chip: #1f2b29; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1514; --surface: #172120; --fg: #e3ebe8; --muted: #93a6a1; --line: #2a3835;
+  --chat-bg: #111a19; --brand: #2f9c86; --brand-ink: #06110f; --mine: #1d4a3e; --theirs: #1f2b29;
+  --accent: #f08a5d; --ok: #4ade80; --chip: #1f2b29; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 32px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 20px; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); align-items: start; }
+@media (max-width: 860px) { .wrap { grid-template-columns: minmax(0, 1fr); } }
+header.top { max-width: 1040px; margin: 0 auto 16px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+header.top h1 { font-family: var(--display); font-weight: 800; font-size: 1.35rem; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+header.top p { margin: 0; color: var(--muted); font-size: .9rem; }
+.brandmark { font-family: var(--display); font-weight: 800; color: var(--brand); letter-spacing: .02em; }
+
+/* Teléfono */
+.phone { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; height: min(720px, 82vh); min-height: 520px; box-shadow: 0 10px 30px rgb(0 0 0 / .08); }
+.chat-head { background: var(--brand); color: var(--brand-ink); padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--brand-ink); color: var(--brand); display: grid; place-items: center; font-family: var(--display); font-weight: 800; flex: none; }
+.chat-head .who { min-width: 0; }
+.chat-head strong { display: block; font-family: var(--display); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-head span { font-size: .8rem; opacity: .85; }
+.msgs { flex: 1; overflow-y: auto; background: var(--chat-bg); padding: 14px 12px; display: flex; flex-direction: column; gap: 6px; }
+.b { max-width: 82%; padding: 8px 11px 6px; border-radius: 12px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .95rem; box-shadow: 0 1px 1px rgb(0 0 0 / .06); }
+.b .t { display: block; text-align: right; font-size: .7rem; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.b.me { align-self: flex-end; background: var(--mine); border-top-right-radius: 4px; }
+.b.her { align-self: flex-start; background: var(--theirs); border-top-left-radius: 4px; }
+.b.sys { align-self: center; background: transparent; box-shadow: none; color: var(--muted); font-size: .8rem; text-align: center; max-width: 92%; }
+.typing { align-self: flex-start; color: var(--muted); font-size: .85rem; padding: 4px 8px; }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 10px 0; background: var(--chat-bg); }
+.chips button { flex: none; border: 1px solid var(--line); background: var(--chip); color: var(--fg); border-radius: 999px; padding: 6px 12px; font: 500 .82rem var(--body); cursor: pointer; }
+.chips button:hover { border-color: var(--brand); }
+form.send { display: flex; gap: 8px; padding: 10px; background: var(--chat-bg); }
+form.send input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 10px 14px; font: 400 .95rem var(--body); }
+form.send button { border: 0; background: var(--brand); color: var(--brand-ink); border-radius: 999px; padding: 0 16px; font: 700 .9rem var(--display); cursor: pointer; }
+form.send button:disabled, form.send input:disabled { opacity: .55; cursor: default; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* Panel de la clínica */
+.panel { display: grid; gap: 16px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+.card h2 { font-family: var(--display); font-size: 1rem; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+.card .sub { color: var(--muted); font-size: .85rem; margin: 0 0 10px; }
+.count { font: 700 .75rem var(--display); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font-variant-numeric: tabular-nums; }
+ul.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ul.list li { border-top: 1px solid var(--line); padding-top: 8px; font-size: .9rem; display: grid; gap: 2px; }
+ul.list li:first-child { border-top: 0; padding-top: 0; }
+.when { font-weight: 600; font-variant-numeric: tabular-nums; }
+.tag { justify-self: start; font: 700 .7rem var(--display); text-transform: uppercase; letter-spacing: .06em; padding: 2px 8px; border-radius: 999px; }
+.tag.ok { color: var(--ok); border: 1px solid currentColor; }
+.tag.alert { color: var(--accent); border: 1px solid currentColor; }
+.empty { color: var(--muted); font-size: .88rem; }
+details.cfg summary { cursor: pointer; font-family: var(--display); font-weight: 700; }
+.cfg label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); margin-top: 10px; }
+.cfg input { border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 8px; padding: 8px 10px; font: 400 .95rem var(--body); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.btn { border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 8px; padding: 8px 12px; font: 600 .85rem var(--body); cursor: pointer; }
+.btn.primary { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+.notice { background: var(--surface); border: 1px dashed var(--accent); border-radius: 12px; padding: 12px 14px; font-size: .9rem; }
+@media (prefers-reduced-motion: no-preference) { .b { animation: pop .18s ease-out; } @keyframes pop { from { transform: translateY(4px); opacity: .4; } } }
+</style>
+
+<header class="top">
+  <h1>Sofía, la recepcionista con IA de tu clínica</h1>
+  <p>Demo de <span class="brandmark">VÉRTICE</span> · Automatización con IA · Pereira</p>
+</header>
+
+<div class="wrap">
+  <section class="phone" aria-label="Chat de WhatsApp de la clínica">
+    <div class="chat-head">
+      <div class="avatar" aria-hidden="true">S</div>
+      <div class="who"><strong id="headName">Clínica</strong><span id="headSub">Asistente virtual · responde 24/7</span></div>
+    </div>
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+    <div class="chips" id="chips"></div>
+    <form class="send" id="sendForm" autocomplete="off">
+      <input id="box" placeholder="Escribe como si fueras un paciente…" aria-label="Mensaje">
+      <button id="sendBtn" type="submit">Enviar</button>
+    </form>
+  </section>
+
+  <section class="panel" aria-label="Lo que ve la clínica">
+    <div id="notice" class="notice" hidden></div>
+    <div class="card">
+      <h2>Agenda de la clínica <span class="count" id="nCitas">0</span></h2>
+      <p class="sub">Citas que Sofía agendó en esta demostración.</p>
+      <ul class="list" id="citas"></ul>
+    </div>
+    <div class="card">
+      <h2>Avisos al equipo <span class="count" id="nAvisos">0</span></h2>
+      <p class="sub">Casos que Sofía pasó a una persona (urgencias, quejas, descuentos, preguntas médicas). En la versión real le llegan al dueño por WhatsApp.</p>
+      <ul class="list" id="avisos"></ul>
+    </div>
+    <div class="card">
+      <h2>Interesados para seguimiento <span class="count" id="nInteres">0</span></h2>
+      <p class="sub">Pacientes que preguntaron pero no agendaron todavía.</p>
+      <ul class="list" id="interes"></ul>
+    </div>
+    <div class="card">
+      <details class="cfg">
+        <summary>Personalizar para una visita</summary>
+        <p class="sub" style="margin-top:8px">Pon el nombre de la clínica que visitas para que vea su propio asistente. Precios y servicios siguen siendo los de ejemplo.</p>
+        <label for="cfgNombre">Nombre de la clínica<input id="cfgNombre"></label>
+        <label for="cfgDir">Dirección<input id="cfgDir"></label>
+        <label for="cfgAsis">Nombre del asistente<input id="cfgAsis"></label>
+        <div class="row"><button class="btn primary" id="cfgSave" type="button">Aplicar y reiniciar chat</button></div>
+      </details>
+      <div class="row"><button class="btn" id="resetBtn" type="button">Reiniciar demostración</button></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const BASE = {"nombre": "Clínica Dental Sonríe (demo)", "tipo": "clínica odontológica y de estética dental", "ciudad": "Pereira, Risaralda", "direccion": "Megacentro Pinares, Cra. 18 #12-75, Torre 1, consultorio 900 (dirección de demostración)", "horario": {"lunes": ["08:00", "18:00"], "martes": ["08:00", "18:00"], "miercoles": ["08:00", "18:00"], "jueves": ["08:00", "18:00"], "viernes": ["08:00", "18:00"], "sabado": ["08:00", "12:00"]}, "servicios": [{"nombre": "Valoración odontológica", "precio": "$50.000 (se descuenta si haces el tratamiento)", "duracion_min": 30, "descripcion": "Revisión completa, diagnóstico y plan de tratamiento.", "requiere_valoracion": false}, {"nombre": "Limpieza dental (profilaxis)", "precio": "$120.000", "duracion_min": 45, "descripcion": "", "requiere_valoracion": false}, {"nombre": "Blanqueamiento dental", "precio": "desde $650.000", "duracion_min": 90, "descripcion": "", "requiere_valoracion": true}, {"nombre": "Resina estética", "precio": "desde $150.000 por diente", "duracion_min": 60, "descripcion": "", "requiere_valoracion": false}, {"nombre": "Diseño de sonrisa", "precio": "se cotiza en la valoración", "duracion_min": 30, "descripcion": "Se agenda primero una valoración de diseño de sonrisa (30 min).", "requiere_valoracion": false}, {"nombre": "Ortodoncia (inicio de tratamiento)", "precio": "brackets desde $2.500.000 o alineadores desde $6.000.000; el valor exacto se da en la valoración", "duracion_min": 60, "descripcion": "Financiable en cuotas mensuales.", "requiere_valoracion": true}, {"nombre": "Valoración de ortodoncia", "precio": "$60.000", "duracion_min": 30, "descripcion": "Revisión, radiografía y plan de ortodoncia con cuota mensual.", "requiere_valoracion": false}, {"nombre": "Ortodoncia (control)", "precio": "$90.000", "duracion_min": 30, "descripcion": "Solo para pacientes con tratamiento de ortodoncia activo.", "requiere_valoracion": false}], "faq": [{"pregunta": "¿Reciben pagos con tarjeta o a cuotas?", "respuesta": "Sí. Efectivo, transferencia, tarjetas débito y crédito. Tratamientos de más de $1.000.000 se pueden financiar hasta en 6 cuotas sin interés con la clínica."}, {"pregunta": "¿Atienden urgencias?", "respuesta": "Sí, en horario de atención se busca espacio el mismo día. Fuera de horario se pasa el caso al equipo."}, {"pregunta": "¿Hay parqueadero?", "respuesta": "Sí, el Megacentro Pinares tiene parqueadero pago."}, {"pregunta": "¿Atienden con EPS o prepagada?", "respuesta": "Atendemos de forma particular. Algunas prepagadas reembolsan; el paciente debe consultar con su aseguradora."}], "politicas": ["Las citas se pueden cancelar o reprogramar sin costo con 24 horas de anticipación.", "Menores de edad deben venir con un adulto responsable.", "Llegar 10 minutos antes de la cita."], "pasar_a_humano_si": ["Hay dolor fuerte, sangrado, inflamación o trauma (posible urgencia).", "El paciente tiene una queja o un reclamo.", "Pide un descuento, un precio especial o información de un tratamiento ya iniciado.", "Pregunta algo médico que requiere criterio del odontólogo."], "tono": "cálido, profesional y tranquilizador", "nombre_asistente": "Sofía"};
+const DIAS = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+const DIAS_TXT = { lunes: "Lunes", martes: "Martes", miercoles: "Miércoles", jueves: "Jueves", viernes: "Viernes", sabado: "Sábado", domingo: "Domingo" };
+const ORDEN = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
+const CHIPS = ["¿Cuánto vale una limpieza?", "Quiero cita mañana en la tarde", "Me duele mucho una muela", "¿Atienden el domingo?", "¿Puedo pagar a cuotas?"];
+
+let clinica = loadCfg();
+let state = { turns: [], citas: [], avisos: [], interes: [], nextId: 1 };
+let sample = null, busy = false, ctl = null;
+
+// --- Tiempo de Bogotá como "hora de pared" en campos UTC -------------------
+function ahora() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  return new Date(Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute));
+}
+const iso = d => d.toISOString().slice(0, 10);
+const hhmm = d => d.toISOString().slice(11, 16);
+const diaDe = d => DIAS[d.getUTCDay()];
+function fechaLarga(d) { return `${DIAS_TXT[diaDe(d)].toLowerCase()} ${d.getUTCDate()}/${d.getUTCMonth() + 1}`; }
+
+// --- Herramientas de la agenda (misma lógica que el sistema real) ----------
+function servicio(nombre) {
+  const b = String(nombre || "").trim().toLowerCase();
+  return clinica.servicios.find(s => s.nombre.toLowerCase() === b) || clinica.servicios.find(s => s.nombre.toLowerCase().includes(b) || b.includes(s.nombre.toLowerCase()));
+}
+function validar(serv, fecha) {
+  const s = servicio(serv);
+  if (!s) throw new Error(`El servicio '${serv}' no existe. Servicios: ${clinica.servicios.map(x => x.nombre).join(", ")}.`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(fecha))) throw new Error("Fecha inválida; usa AAAA-MM-DD.");
+  const d = new Date(fecha + "T00:00:00Z");
+  if (iso(d) < iso(ahora())) throw new Error("Esa fecha ya pasó.");
+  if (s.requiere_valoracion) {
+    const v = clinica.servicios.filter(x => x.nombre.toLowerCase().includes("valoraci")).map(x => x.nombre);
+    throw new Error(`'${s.nombre}' requiere valoración previa y no se agenda directamente. Ofrece agendar primero: ${v.join(", ")}.`);
+  }
+  return [s, d];
+}
+function libres(d, dur) {
+  const fr = clinica.horario[diaDe(d)];
+  if (!fr) return [];
+  const mk = h => new Date(`${iso(d)}T${h}:00Z`);
+  const ini = mk(fr[0]), fin = mk(fr[1]);
+  const ocup = state.citas.filter(c => c.fecha === iso(d)).map(c => [mk(c.hora), new Date(mk(c.hora).getTime() + c.dur * 60000)]);
+  const minimo = new Date(ahora().getTime() + 3600000);
+  const out = [];
+  for (let t = ini; t.getTime() + dur * 60000 <= fin.getTime(); t = new Date(t.getTime() + 30 * 60000)) {
+    const f = new Date(t.getTime() + dur * 60000);
+    if (t >= minimo && !ocup.some(([a, b]) => t < b && f > a)) out.push(hhmm(t));
+  }
+  return out;
+}
+const TOOLS = [
+  { name: "consultar_disponibilidad", description: "Horarios libres para un servicio en una fecha (AAAA-MM-DD). Úsala siempre antes de ofrecer horarios. Devuelve horarios de mañana y tarde.",
+    inputSchema: { type: "object", properties: { fecha: { type: "string" }, servicio: { type: "string" } }, required: ["fecha", "servicio"] },
+    execute(i) { const [s, d] = validar(i.servicio, i.fecha); const l = libres(d, s.duracion_min);
+      return l.length ? { fecha: iso(d), dia: diaDe(d), servicio: s.nombre, manana: l.filter(h => h < "12:00"), tarde: l.filter(h => h >= "12:00") } : { fecha: iso(d), dia: diaDe(d), horarios_libres: [], nota: "Cerrado o lleno ese día. Ofrece otro día." }; } },
+  { name: "agendar_cita", description: "Agenda una cita confirmada cuando el paciente ya eligió servicio, fecha (AAAA-MM-DD), hora (HH:MM, 24 h) de los horarios libres y dio su nombre completo.",
+    inputSchema: { type: "object", properties: { nombre: { type: "string" }, servicio: { type: "string" }, fecha: { type: "string" }, hora: { type: "string" } }, required: ["nombre", "servicio", "fecha", "hora"] },
+    execute(i) { const [s, d] = validar(i.servicio, i.fecha); if (!String(i.nombre || "").trim()) throw new Error("Falta el nombre del paciente.");
+      const h = String(i.hora).padStart(5, "0"); if (!libres(d, s.duracion_min).includes(h)) throw new Error(`La hora ${h} no está disponible el ${iso(d)}. Consulta la disponibilidad otra vez.`);
+      const c = { id: state.nextId++, nombre: String(i.nombre).trim(), servicio: s.nombre, fecha: iso(d), hora: h, dur: s.duracion_min }; state.citas.push(c); render();
+      return { cita_id: c.id, estado: "confirmada", servicio: s.nombre, fecha: c.fecha, dia: diaDe(d), hora: h, direccion: clinica.direccion }; } },
+  { name: "ver_mis_citas", description: "Muestra las próximas citas confirmadas de este paciente.", inputSchema: { type: "object", properties: {} },
+    execute() { return { citas: state.citas.map(c => ({ cita_id: c.id, servicio: c.servicio, fecha: c.fecha, hora: c.hora, nombre: c.nombre })) }; } },
+  { name: "cancelar_cita", description: "Cancela una cita del paciente por su id (usa ver_mis_citas primero y confirma con el paciente).",
+    inputSchema: { type: "object", properties: { cita_id: { type: "integer" } }, required: ["cita_id"] },
+    execute(i) { const k = state.citas.findIndex(c => c.id === Number(i.cita_id)); if (k < 0) throw new Error("No encontré esa cita."); state.citas.splice(k, 1); render(); return { cita_id: Number(i.cita_id), estado: "cancelada" }; } },
+  { name: "registrar_interes", description: "Guarda un interesado que pregunta pero aún no agenda (nombre o cadena vacía, servicio de interés, notas).",
+    inputSchema: { type: "object", properties: { nombre: { type: "string" }, interes: { type: "string" }, notas: { type: "string" } }, required: ["nombre", "interes", "notas"] },
+    execute(i) { state.interes.push({ nombre: String(i.nombre || "Sin nombre"), interes: String(i.interes || ""), notas: String(i.notas || "") }); render(); return { guardado: true }; } },
+  { name: "pasar_a_humano", description: "Avisa al equipo para que una persona continúe (urgencias, quejas, descuentos, preguntas médicas, o si el paciente lo pide). Devuelve confirmación.",
+    inputSchema: { type: "object", properties: { motivo: { type: "string" } }, required: ["motivo"] },
+    execute(i) { state.avisos.push({ motivo: String(i.motivo || ""), hora: hhmm(ahora()) }); render(); return { equipo_notificado: true, nota: "Dile al paciente que una persona del equipo le escribirá pronto." }; } },
+];
+
+function reglas() {
+  const n = clinica;
+  const serv = n.servicios.map(s => `- ${s.nombre}: ${s.precio} (duración ${s.duracion_min} min). ${s.descripcion || ""}${s.requiere_valoracion ? " Requiere valoración previa." : ""}`).join("\n");
+  const hor = ORDEN.map(d => n.horario[d] ? `- ${DIAS_TXT[d]}: ${n.horario[d][0]} a ${n.horario[d][1]}` : `- ${DIAS_TXT[d]}: cerrado`).join("\n");
+  const faq = n.faq.map(f => `- P: ${f.pregunta}\n  R: ${f.respuesta}`).join("\n");
+  return `Actúa como ${n.nombre_asistente}, la asistente virtual que atiende el WhatsApp de ${n.nombre} (${n.tipo}) en ${n.ciudad}. Lo que sigue son tus instrucciones permanentes; después vienen los mensajes del paciente. Responde SOLO con el siguiente mensaje de WhatsApp para el paciente.
+
+<negocio>
+Nombre: ${n.nombre}
+Dirección: ${n.direccion}
+Horario:
+${hor}
+Servicios y precios:
+${serv}
+Preguntas frecuentes:
+${faq}
+Políticas:
+${n.politicas.map(p => "- " + p).join("\n")}
+</negocio>
+
+<reglas>
+- Solo hablas de la clínica y sus servicios. Si preguntan otra cosa, explica con amabilidad que solo ayudas con temas de la clínica.
+- Usa solo la información de <negocio> y lo que devuelvan las herramientas. Nunca inventes precios, servicios, promociones ni horarios.
+- Si un servicio requiere valoración previa, no lo agendes directamente: explícalo y ofrece agendar tú misma la valoración.
+- Nunca respondas "sí" o "claro" a un descuento o excepción que no esté en <negocio>; di que lo consultas con el equipo (pasar_a_humano).
+- Para ofrecer horarios usa siempre consultar_disponibilidad. Para agendar necesitas servicio, fecha, hora y nombre completo; luego usa agendar_cita y repite los datos con la dirección.
+- Cada mensaje del paciente empieza con [fecha y hora]; úsala para entender "mañana", "el viernes", etc. No la menciones.
+- Si muestra interés pero no agenda, usa registrar_interes.
+- No ofrezcas acciones que no puedes hacer (recordatorios, llamadas).
+- No das diagnósticos ni consejos médicos.
+- Usa pasar_a_humano cuando:
+${n.pasar_a_humano_si.map(h => "  - " + h).join("\n")}
+  - el paciente lo pide o está molesto.
+</reglas>
+
+<estilo>
+- Tono ${n.tono}. Tutea salvo que el paciente use "usted".
+- Mensajes cortos de WhatsApp (2 a 5 líneas), sin títulos ni tablas; resalta con *asteriscos*; máximo un emoji.
+- Termina con una pregunta o siguiente paso claro cuando tenga sentido.
+</estilo>`;
+}
+
+// --- Interfaz ----------------------------------------------------------------
+const $ = id => document.getElementById(id);
+function bubble(kind, text, time) {
+  const el = document.createElement("div"); el.className = "b " + kind;
+  const body = document.createElement("span"); fmt(body, text); el.append(body);
+  if (time) { const t = document.createElement("span"); t.className = "t"; t.textContent = time; el.append(t); }
+  $("msgs").append(el); $("msgs").scrollTop = $("msgs").scrollHeight; return body;
+}
+function fmt(el, text) { // *negrita* estilo WhatsApp, sin HTML
+  el.textContent = "";
+  String(text).split(/(\*[^*\n]+\*)/g).forEach(part => {
+    if (/^\*[^*\n]+\*$/.test(part)) { const b = document.createElement("strong"); b.textContent = part.slice(1, -1); el.append(b); }
+    else el.append(document.createTextNode(part));
+  });
+}
+function li(parent, html) { const l = document.createElement("li"); html.forEach(([cls, txt]) => { const s = document.createElement("span"); if (cls) s.className = cls; s.textContent = txt; l.append(s); }); parent.append(l); }
+function render() {
+  $("headName").textContent = clinica.nombre;
+  $("headSub").textContent = `${clinica.nombre_asistente} · asistente virtual · responde 24/7`;
+  const C = $("citas"); C.textContent = "";
+  [...state.citas].sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora)).forEach(c => {
+    const d = new Date(c.fecha + "T00:00:00Z");
+    li(C, [["when", `${DIAS_TXT[diaDe(d)]} ${d.getUTCDate()}/${d.getUTCMonth() + 1} · ${c.hora}`], ["", `${c.nombre} — ${c.servicio}`], ["tag ok", "Confirmada"]]);
+  });
+  if (!state.citas.length) li(C, [["empty", "Aún no hay citas. Pídele una a Sofía en el chat."]]);
+  const A = $("avisos"); A.textContent = "";
+  state.avisos.forEach(a => li(A, [["when", a.hora], ["", a.motivo], ["tag alert", "Para atender"]]));
+  if (!state.avisos.length) li(A, [["empty", "Sin avisos. Prueba: «Me duele mucho una muela»."]]);
+  const I = $("interes"); I.textContent = "";
+  state.interes.forEach(p => li(I, [["when", p.nombre || "Sin nombre"], ["", `${p.interes}${p.notas ? " · " + p.notas : ""}`]]));
+  if (!state.interes.length) li(I, [["empty", "Nadie por ahora."]]);
+  $("nCitas").textContent = state.citas.length; $("nAvisos").textContent = state.avisos.length; $("nInteres").textContent = state.interes.length;
+}
+function setBusy(b) { busy = b; $("box").disabled = b; $("sendBtn").disabled = b; document.querySelectorAll("#chips button").forEach(x => x.disabled = b); }
+function welcome() {
+  $("msgs").textContent = "";
+  bubble("sys", "Esta es una demostración. Escribe como si fueras un paciente de la clínica.");
+  bubble("her", `¡Hola! 👋 Soy ${clinica.nombre_asistente}, la asistente virtual de *${clinica.nombre}*. ¿En qué te puedo ayudar: precios, citas o algún tratamiento?`, hhmm(ahora()));
+}
+
+const ERRORES = {
+  not_granted: "Para conversar, permite que esta página use Claude (se pidió al enviar el primer mensaje).",
+  sampling_disabled: "Claude no está disponible en esta cuenta.",
+  rate_limited: "Se enviaron muchos mensajes seguidos. Espera un momento y vuelve a intentar.",
+  session_expired: "Tu sesión de claude.ai expiró. Vuelve a iniciar sesión.",
+  tools_unavailable: "Esta app de Claude todavía no permite la agenda de la demo. Ábrela en claude.ai desde el navegador.",
+};
+
+async function send(text) {
+  text = text.trim(); if (!text || busy) return;
+  if (!sample) { showNotice(); return; }
+  const t = ahora();
+  bubble("me", text, hhmm(t)); $("box").value = "";
+  state.turns.push({ role: "user", content: `[${fechaLarga(t)}/${t.getUTCFullYear()} (${iso(t)}) ${hhmm(t)}] ${text}` });
+  // Mantener el contexto corto: últimas 16 intervenciones.
+  if (state.turns.length > 16) state.turns = state.turns.slice(-16);
+  while (state.turns[0] && state.turns[0].role !== "user") state.turns.shift();
+  setBusy(true);
+  const typing = document.createElement("div"); typing.className = "typing"; typing.textContent = `${clinica.nombre_asistente} está escribiendo…`; $("msgs").append(typing); $("msgs").scrollTop = $("msgs").scrollHeight;
+  ctl = new AbortController();
+  let target = null;
+  try {
+    const { text: reply } = await sample([{ role: "user", content: reglas() }, ...state.turns], {
+      modelTier: "quick", tools: TOOLS, signal: ctl.signal,
+      onText: ({ text }) => { if (!target) { typing.remove(); target = bubble("her", "", hhmm(ahora())); } fmt(target, lastRound(text)); },
+    });
+    typing.remove();
+    const final = lastRound(reply);
+    if (!target) target = bubble("her", final, hhmm(ahora())); else fmt(target, final);
+    state.turns.push({ role: "assistant", content: final });
+  } catch (e) {
+    typing.remove();
+    if (target && e.text) fmt(target, lastRound(e.text));
+    if (e.code !== "cancelled") bubble("sys", ERRORES[e.code] || "No se pudo responder. Intenta de nuevo en un momento.");
+    if (e.code === "not_granted" || e.code === "sampling_disabled") sample = null;
+  } finally { setBusy(false); $("box").focus(); }
+}
+// Con herramientas, el texto puede traer una frase previa ("Déjame revisar…") y la respuesta: se muestra completo.
+function lastRound(t) { return String(t).trim(); }
+
+function showNotice() {
+  $("notice").hidden = false;
+  $("notice").textContent = "Para conversar con Sofía, abre esta página dentro de claude.ai con tu cuenta (desde el navegador o la app). La agenda y los paneles funcionan aquí mismo.";
+}
+
+function loadCfg() {
+  const c = JSON.parse(JSON.stringify(BASE));
+  try { const s = JSON.parse(localStorage.getItem("vertice-demo-cfg") || "null"); if (s) Object.assign(c, s); } catch (e) {}
+  return c;
+}
+$("cfgNombre").value = clinica.nombre; $("cfgDir").value = clinica.direccion; $("cfgAsis").value = clinica.nombre_asistente;
+$("cfgSave").onclick = () => {
+  const s = { nombre: $("cfgNombre").value.trim() || BASE.nombre, direccion: $("cfgDir").value.trim() || BASE.direccion, nombre_asistente: $("cfgAsis").value.trim() || BASE.nombre_asistente };
+  try { localStorage.setItem("vertice-demo-cfg", JSON.stringify(s)); } catch (e) {}
+  Object.assign(clinica, s); reset();
+};
+function reset() { ctl?.abort(); state = { turns: [], citas: [], avisos: [], interes: [], nextId: 1 }; welcome(); render(); setBusy(false); }
+$("resetBtn").onclick = reset;
+$("sendForm").addEventListener("submit", e => { e.preventDefault(); send($("box").value); });
+CHIPS.forEach(c => { const b = document.createElement("button"); b.type = "button"; b.textContent = c; b.onclick = () => send(c); $("chips").append(b); });
+
+welcome(); render();
+(async () => {
+  try { sample = window.claude ? await window.claude.use("sample") : null; } catch (e) { sample = null; }
+  if (!sample) { showNotice(); return; }
+  const lim = await sample.limits().catch(() => null);
+  if (!lim?.tools) { $("notice").hidden = false; $("notice").textContent = ERRORES.tools_unavailable; }
+})();
+</script>

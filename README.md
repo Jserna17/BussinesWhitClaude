@@ -30,6 +30,7 @@ más procesos de cada cliente, con ingresos recurrentes mensuales.
 
 ## Producto
 - [Asistente de WhatsApp — demo v0.1](agente/README.md)
+- [Página demo de Sofía para visitas](https://claude.ai/artifact/QNoA7pa8cbFn5WqLEwce34) (`demo/sofia.html`)
 
 ## Prospectos
 - [Lista de trabajo: 29 clínicas dentales](prospectos/clinicas-dentales.csv) · [base general de 73 negocios](prospectos/README.md)

@@ -32,7 +32,7 @@ más procesos de cada cliente, con ingresos recurrentes mensuales.
 - [Asistente de WhatsApp — demo v0.1](agente/README.md)
 
 ## Prospectos
-- [Base de 62 negocios de Pereira y Dosquebradas](prospectos/README.md)
+- [Lista de trabajo: 29 clínicas dentales](prospectos/clinicas-dentales.csv) · [base general de 73 negocios](prospectos/README.md)
 
 ## Plantillas
 - [Guiones de outreach y ventas](plantillas/guiones-outreach.md)

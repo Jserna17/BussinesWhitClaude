@@ -5,7 +5,7 @@
 > verticales futuras.
 
 Archivo principal: [`prospectos-pereira-dosquebradas.csv`](prospectos-pereira-dosquebradas.csv) (se abre en
-Excel o Google Sheets). Primera versión: 2026-10-27 · **62 negocios**.
+Excel o Google Sheets). Primera versión: 2026-10-27 · **73 negocios** (62 iniciales + 11 clínicas dentales).
 
 ## Cómo se construyó
 - Google Maps está bloqueado por la red de este entorno (proxy 403), y la descarga directa de páginas

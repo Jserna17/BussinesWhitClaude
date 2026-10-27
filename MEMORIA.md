@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-27 · Sesión #7 (foco 100 % clínicas dentales + Sistema de Pacientes Nuevos)
+> Última actualización: 2026-10-27 · Sesión #8 (precios aprobados; batería de pruebas en vivo lista; habilitar OpenAI)
 
 ---
 
@@ -31,6 +31,7 @@
   anuncios Meta "clic a WhatsApp" + asistente IA que responde y agenda 24/7 + ficha de Google y reseñas +
   contenido + reactivación + reporte mensual. COP 1.200.000 setup + 1.500.000/mes (anuncios aparte, los paga
   la clínica a Meta; mínimo recomendado 0,8–1,5 M/mes). El asistente solo (450k) queda como plan de entrada.
+  ✅ **Precios y garantía aprobados por el fundador** (2026-10-27).
 - **Puerta de entrada en frío:** "Auditoría gratis de pacientes perdidos" (`plantillas/auditoria-pacientes-perdidos.md`).
 - **Tecnología:** agente propio "Clara" con **Claude API + Cloud API de Meta** en un VPS barato, multi-cliente;
   n8n solo como puente opcional (análisis en `docs/11-stack-tecnico-agentes-2026.md`).
@@ -99,7 +100,8 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [x] Nombre elegido: Vértice
 - [x] Asistente demo v0.1 (código + pruebas) — `agente/README.md`
 - [x] Motor OpenAI agregado al asistente (para probar con la key que ya tiene el fundador)
-- [ ] Probar la demo en vivo con OpenAI (PC del fundador o red del entorno habilitada para `api.openai.com`)
+- [x] Batería de 20 conversaciones de prueba (`python -m vertice.pruebas_vivo`) lista
+- [ ] Fundador habilita `api.openai.com` + secreto `OPENAI_API_KEY` en el entorno → Claude corre la batería y ajusta a Sofía
 - [ ] Elegir modelo de producción comparando calidad/costo (OpenAI vs Claude Haiku/Opus) con conversaciones reales
 - [ ] Registrar `verticeautomatizacion.com` — **después de la primera venta**
 - [x] Foco definido: clínicas dentales · oferta "Sistema de Pacientes Nuevos" · auditoría gratis · plantillas de anuncios
@@ -139,11 +141,13 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-27 | **Nicho único: clínicas dentales** (reemplaza clínicas estéticas + verticales secundarias por ahora) | Son las más numerosas y necesitan pacientes; foco = mensajes y casos de éxito más rápidos |
 | 2026-10-27 | Oferta principal "Sistema de Pacientes Nuevos" (anuncios + IA + Google + contenido + reactivación), 1,2 M setup + 1,5 M/mes; anuncios pagados por la clínica | La mayoría no hace anuncios ni tiene buena presencia en redes; ticket mayor y más retención |
 | 2026-10-27 | Adquisición 100 % en frío con auditoría gratis como gancho (reemplaza "semi-cálida") | El fundador no ha sido cliente de ninguna clínica |
+| 2026-10-27 | **Precios del Sistema de Pacientes aprobados** (450k / 1,5 M / 2,2 M al mes; setup 0,6 / 1,2 / 1,5 M) y garantía de 20 valoraciones en 60 días | Aprobado por el fundador |
+| 2026-10-27 | Prueba en vivo desde el entorno de Claude con OpenAI (red + secreto), no desde el PC del fundador | Elección del fundador; ahorra su tiempo |
 
 ## 8. Preguntas abiertas para el fundador
 
-1. ¿Cómo prefieres probar la demo: en tu computador (te guío paso a paso) o habilitando `api.openai.com` y la key como secreto en el entorno de Claude?
-2. ¿Apruebas los precios del Sistema de Pacientes (1,2 M + 1,5 M/mes + anuncios) y la garantía de 20 valoraciones en 60 días?
+1. Pendiente: habilitar `api.openai.com` y el secreto `OPENAI_API_KEY` en el entorno (pasos en BITACORA sesión #8).
+2. ¿Ya auditaste las primeras clínicas (mystery shopping a las 7–8 p. m.)?
 3. ¿Tienes conocimientos técnicos o computador disponible para crear la cuenta de Meta for Developers con guía?
 4. ¿Facturarás como persona natural al inicio? (recomendado; SAS después).
 

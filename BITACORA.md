@@ -182,3 +182,28 @@ muchas no hacen anuncios ni tienen buena presencia en redes.
 2. Auditar 10 clínicas (mystery shopping a las 7–8 p. m. + Google + Instagram + Biblioteca de anuncios).
 3. Probar la demo en vivo (pendiente elegir: PC del fundador o habilitar `api.openai.com` en el entorno).
 4. Primeras visitas en Megacentro Pinares con la auditoría impresa.
+
+---
+
+## Sesión #8 — 2026-10-27 — Precios aprobados y pruebas en vivo preparadas
+
+**Pedido del fundador:** aprueba los precios; quiere probar habilitando OpenAI en el entorno de Claude.
+
+**Qué se hizo:**
+- Precios y garantía del Sistema de Pacientes aprobados (MEMORIA §7).
+- Verificado: en esta sesión aún no hay `OPENAI_API_KEY` y `api.openai.com` sigue bloqueado.
+- `agente/vertice/pruebas_vivo.py`: batería de 20 conversaciones (precios, agendar, domingo cerrado, fuera de
+  tema, urgencia, cancelar, financiación, EPS, descuento, usted, cliente molesto, ¿robot?, manipulación,
+  sin nombre, prospecto, pregunta médica, reprogramar…) con verificaciones automáticas (cita creada, pasó a
+  humano, prospecto, palabras clave) y transcripciones en `agente/resultados/`. Probada contra un servidor
+  local simulado; 13 pruebas unitarias OK.
+
+**Pasos para el fundador (habilitar OpenAI):**
+1. En claude.ai/code, menú del entorno en la barra de título de la sesión → **Edit**.
+2. *Network access* → agregar `api.openai.com` en dominios permitidos (dejar marcada la casilla de gestores de paquetes).
+3. Agregar la key como secreto / variable de entorno con el nombre **`OPENAI_API_KEY`** (no pegarla en el chat).
+4. Abrir una sesión nueva y escribir: "Corre las pruebas en vivo".
+
+**Próximos pasos:**
+1. Correr la batería, leer transcripciones y ajustar prompt/negocio demo.
+2. Auditar las primeras 10 clínicas y primeras visitas en Megacentro Pinares.

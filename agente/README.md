@@ -97,8 +97,11 @@ mantenga la calidad. Se mide con `--debug` (muestra tokens por mensaje).
 
 ## Pruebas
 ```bash
-python -m pytest -q
+python -m pytest -q                                   # 13 pruebas sin conexión (gratis)
+python -m vertice.pruebas_vivo --proveedor openai      # 20 conversaciones reales (gasta créditos, ~centavos de USD)
+python -m vertice.pruebas_vivo --proveedor openai --solo 2,5   # solo algunos escenarios
 ```
+La batería en vivo guarda las transcripciones y las verificaciones en `resultados/`.
 
 ## Próximas versiones
 - Google Calendar del negocio en lugar de la agenda interna.

@@ -207,3 +207,16 @@ muchas no hacen anuncios ni tienen buena presencia en redes.
 **Próximos pasos:**
 1. Correr la batería, leer transcripciones y ajustar prompt/negocio demo.
 2. Auditar las primeras 10 clínicas y primeras visitas en Megacentro Pinares.
+
+---
+
+## Sesión #9 — 2026-10-27 — Explicación simple para habilitar OpenAI + Sofía en ChatGPT
+
+**Pedido del fundador:** no entendió los pasos para habilitar OpenAI en el entorno.
+
+**Qué se hizo:**
+- Explicación paso a paso en lenguaje simple (qué es y dónde se hace).
+- Alternativa sin configurar nada: `plantillas/sofia-para-chatgpt.md` — prompt de Sofía para pegar en
+  chatgpt.com y ver cómo responde (sin agenda real), útil también para mostrar en visitas.
+
+**Próximos pasos:** el fundador prueba Sofía en ChatGPT y/o habilita el entorno con ayuda; seguir con auditorías.

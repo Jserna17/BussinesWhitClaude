@@ -160,7 +160,7 @@ sesiones · reactivación de pacientes antiguos.
 | 4. Reprogramar citas | ✅ 2026-10-28 | Atómico (la cita no se duplica ni choca consigo misma); herramienta de Sofía + botón en el panel + mensaje listo para avisar al paciente |
 | 5. Recordatorios con confirmación | ✅ 2026-10-28 (código) | Falta: **aprobar la plantilla en Meta** (`plantillas/plantillas-whatsapp-meta.md`) y probar con un número real |
 | 6. Usuarios con rol + bitácora | ✅ 2026-10-28 | Dueño / Recepción / Odontólogo con permisos que cumple el servidor; historial de quién hizo qué |
-| 7. Modo pre-reserva | ⏳ | |
+| 7. Modo pre-reserva | ✅ 2026-10-28 | `modo_agenda: pre_reserva` en el YAML de la clínica |
 | 8. VPS, respaldos, monitoreo, aviso de privacidad | ⏳ | |
 
 ### P0-2 · cómo funciona
@@ -224,4 +224,20 @@ sesiones · reactivación de pacientes antiguos.
   entrada (Caddy/Nginx) y todo debe ir por HTTPS: sin HTTPS las claves y sesiones viajan sin cifrar.
 - La demo tiene un selector **"Ver como"** (dueño / recepción / odontólogo) para enseñar a cada tipo de persona lo que vería. Las personas de ejemplo
   usan la clave `Demo12345` solo en la base de demostración.
+
+### P0-7 · modo pre-reserva (modo C) y semana de sombra
+- Se activa con `modo_agenda: pre_reserva` en el YAML de la clínica (el normal es `propia`). Sirve para clínicas cuya agenda vive en otro sistema
+  o en un cuaderno, y para la **semana de sombra** de cualquier cliente nuevo (ver sección 1.3).
+- Sofía sigue ofreciendo horarios según el horario, los profesionales, los bloqueos y las citas que Vértice conoce, pero al agendar la cita queda
+  **"por confirmar"**: el horario queda apartado (nadie más lo recibe) y Sofía le dice al paciente que está *solicitada*, no confirmada.
+- Al equipo le llega un aviso (si hay número del dueño configurado), y en el panel aparece un **contador en Agenda**, un aviso arriba del calendario,
+  el recuadro "Requiere atención" del resumen y el calendario con borde punteado ámbar.
+- La recepción **confirma** (con un clic; se arma el mensaje para el paciente), **reprograma** o **rechaza** (libera el horario y se arma el mensaje).
+  Las solicitudes se ordenan por quién lleva más esperando. Todo queda en el historial.
+- Los recordatorios solo salen para citas **confirmadas**. Las citas que la recepción crea en el panel quedan confirmadas directamente.
+- **Límites conocidos:**
+  - Si el paciente no recibe respuesta, la solicitud no caduca sola: acordar con la clínica un tiempo máximo (recomendado: confirmar en menos de 2 h en horario de atención).
+  - El aviso al dueño por WhatsApp (`notificar_dueno`) solo llega si el dueño escribió al número de la clínica en las últimas 24 h; para que llegue siempre hace
+    falta una plantilla de aviso interno (pendiente, junto con P0-8).
+  - Vértice no lee la agenda externa: en este modo la recepción sigue siendo quien verifica contra su agenda real.
 

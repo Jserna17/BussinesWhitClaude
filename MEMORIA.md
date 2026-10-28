@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-28 · Sesión #20 (P0-1 a P0-6: festivos, pausa del chat, voz, reprogramar, recordatorios, usuarios y roles)
+> Última actualización: 2026-10-28 · Sesión #20 (P0-1 a P0-7; falta P0-8)
 
 ---
 
@@ -136,8 +136,8 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [x] P0-3 notas de voz y P0-4 reprogramar citas hechos (2026-10-28); notas de voz probadas con audio sintético, falta con audios reales
 - [x] P0-5 recordatorios con botones de confirmación hechos en código (2026-10-28); **falta que el fundador cree/apruebe la plantilla en Meta** (`plantillas/plantillas-whatsapp-meta.md`)
 - [x] P0-6 usuarios con rol (dueño/recepción/odontólogo), sesiones con vencimiento y bitácora de cambios hechos (2026-10-28)
-- [ ] Pendientes P0 antes del primer cliente:
-  usuarios con rol + bitácora; modo pre-reserva; VPS + respaldos + monitoreo; aviso de privacidad
+- [x] P0-7 modo pre-reserva (agenda en otro sistema / semana de sombra) hecho (2026-10-28)
+- [ ] P0-8 antes del primer cliente: VPS con HTTPS, respaldos diarios, monitoreo y aviso de privacidad (Ley 1581)
 - [ ] Ampliar base a 150 negocios (restaurantes, salones, hoteles/fincas, Santa Rosa, La Virginia)
 - [ ] Primeros 3 clientes piloto
 
@@ -185,6 +185,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-28 | Notas de voz: se transcriben con OpenAI aunque el motor de chat sea Claude, y Sofía confirma nombre/fecha/hora antes de agendar | Claude API no recibe audio; la transcripción puede equivocarse |
 | 2026-10-28 | Recordatorios: día anterior y 2 h antes, solo de 8 a. m. a 8 p. m., con botones Confirmo/Necesito cambiarla; se reservan en la base antes de enviar | Reducir inasistencias sin molestar ni enviar dos veces |
 | 2026-10-28 | Panel con usuarios y roles (dueño, recepción, odontólogo); permisos validados en el servidor; el acceso con la clave de la clínica queda como "Soporte Vértice" y se ve en el historial | Que cada persona vea solo lo suyo, saber quién hizo cada cambio y poder dar soporte con transparencia |
+| 2026-10-28 | Modo pre-reserva: el asistente aparta el horario como "por confirmar" y la recepción confirma o rechaza; es el modo de la semana de sombra y de clínicas con agenda externa | Una sola agenda oficial y cero dobles reservas sin exigir cambiar su sistema |
 | 2026-10-28 | Reprogramar es una sola operación atómica y el panel no avisa solo al paciente: ofrece un mensaje para que el equipo lo envíe | Evitar huecos y no contactar pacientes sin que una persona lo decida |
 
 ## 8. Preguntas abiertas para el fundador

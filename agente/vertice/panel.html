@@ -91,6 +91,7 @@ nav.menu .count { margin-left: auto; min-width: 20px; padding: 0 6px; border-rad
 .pill.confirmada { background: var(--brand-soft); color: var(--brand); }
 .pill.asistio { background: var(--ok-soft); color: var(--ok); }
 .pill.no_asistio { background: var(--warn-soft); color: var(--warn); }
+.pill.por_confirmar { background: var(--warn-soft); color: var(--warn); }
 .pill.cancelada { background: var(--block); color: var(--muted); }
 .pill.abierta { background: var(--bad-soft); color: var(--bad); }
 .pill.resuelta { background: var(--ok-soft); color: var(--ok); }
@@ -123,6 +124,7 @@ nav.menu .count { margin-left: auto; min-width: 20px; padding: 0 6px; border-rad
 .alerts { display: grid; gap: 10px; }
 .alert-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; padding: 10px; border-radius: 10px; background: var(--bad-soft); }
 .alert-row .ic { color: var(--bad); padding-top: 1px; }
+.alert-row.warn { background: var(--warn-soft); cursor: pointer; } .alert-row.warn .ic { color: var(--warn); }
 .alert-row .t { font-size: .88rem; }
 
 /* --- Agenda (calendario) --- */
@@ -158,6 +160,8 @@ nav.menu .count { margin-left: auto; min-width: 20px; padding: 0 6px; border-rad
 .ev .s { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ev.asistio { background: var(--ok-soft); border-left-color: var(--ok); } .ev.asistio .t { color: var(--ok); }
 .ev.no_asistio { background: var(--warn-soft); border-left-color: var(--warn); } .ev.no_asistio .t { color: var(--warn); }
+.ev.por_confirmar { background: var(--warn-soft); border: 1px dashed var(--warn); border-left: 3px solid var(--warn); }
+.ev.por_confirmar .t { color: var(--warn); }
 .ev.cancelada { background: var(--surface); border: 1px dashed var(--line-strong); border-left: 3px solid var(--line-strong); opacity: .7; }
 .ev.cancelada .n { text-decoration: line-through; } .ev.cancelada .t { color: var(--muted); }
 .ev.conflicto { border-color: var(--bad); border-left-color: var(--bad); background: var(--bad-soft); z-index: 2; }
@@ -287,7 +291,7 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
     <div class="clinic-card"><div class="n" id="clinica"></div><div class="s" id="clinicaSub"></div></div>
     <nav class="menu" aria-label="Secciones">
       <button data-tab="resumen" data-perm="resumen" aria-current="page"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span class="lbl">Resumen</span></button>
-      <button data-tab="agenda" data-perm="agenda_ver"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="lbl">Agenda</span></button>
+      <button data-tab="agenda" data-perm="agenda_ver"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="lbl">Agenda</span><span class="count" id="nAgenda" hidden></span></button>
       <button data-tab="chats" data-perm="chats"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="lbl">Conversaciones</span><span class="count" id="nChats" hidden></span></button>
       <button data-tab="casos" data-perm="casos"><svg class="i" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 2.4 17.6A2 2 0 0 0 4.1 21h15.8a2 2 0 0 0 1.7-3.4L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span class="lbl">Casos</span><span class="count" id="nCasos" hidden></span></button>
       <button data-tab="equipo" data-perm="equipo" hidden><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></svg><span class="lbl">Equipo</span></button>
@@ -333,6 +337,7 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
 
       <!-- AGENDA -->
       <section data-view="agenda" hidden>
+        <div class="banner espera" id="solBanner" hidden style="border-radius:12px;margin-bottom:12px;border:1px solid var(--line)"></div>
         <div class="cal-tools">
           <button class="btn" id="semAnt" type="button" aria-label="Anterior"><svg class="i" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
           <button class="btn" id="semHoy" type="button">Hoy</button>
@@ -344,7 +349,7 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
           <div class="cal-scroll"><div class="cal-grid" id="cal"></div></div>
           <div class="cal-legend">
             <span><span class="pill confirmada">Confirmada</span></span><span><span class="pill asistio">Asistió</span></span>
-            <span><span class="pill no_asistio">No asistió</span></span><span><span class="pill cancelada">Cancelada</span></span>
+            <span><span class="pill no_asistio">No asistió</span></span><span><span class="pill por_confirmar">Por confirmar</span></span><span><span class="pill cancelada">Cancelada</span></span>
             <span>Rayado: fuera de horario o bloqueado</span><span><span class="pill abierta">Por reprogramar</span> (festivo o bloqueo)</span>
           </div>
         </div>
@@ -415,7 +420,7 @@ const DIAS = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "s
 const DIA_TXT = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const DIA_CORTO = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-const ESTADO = { confirmada: "Confirmada", asistio: "Asistió", no_asistio: "No asistió", cancelada: "Cancelada" };
+const ESTADO = { por_confirmar: "Por confirmar", confirmada: "Confirmada", asistio: "Asistió", no_asistio: "No asistió", cancelada: "Cancelada" };
 const ICON = {
   cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   msg: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
@@ -492,6 +497,7 @@ async function entrar() {
   const primera = [...document.querySelectorAll("nav.menu [data-perm]")].find(b => !b.hidden).dataset.tab;
   ir(primera);
   if (S.can("casos")) cargarCasos(true);
+  cargarSolicitudes();
   if (S.can("chats")) api("/conversaciones").then(d => { S.convs = d; contarChats(); }).catch(() => {});
 }
 function salir() {
@@ -547,9 +553,12 @@ async function cargarResumen() {
   grafica(r.serie);
   $("graficaNota").textContent = `${asist()} agendó ${r.citas_agendadas_asistente} ${r.citas_agendadas_asistente === 1 ? "cita" : "citas"} en este periodo.`;
   const casos = (await api("/casos")).casos.filter(c => c.estado === "abierta").slice(0, 4);
-  $("atencion").replaceChildren(...(casos.length ? casos.map(c => el("div", { class: "alert-row" }, el("span", { class: "ic", html: ic("alert") }),
+  await cargarSolicitudes();
+  const sol = S.solic.slice(0, 3).map(c => el("div", { class: "alert-row warn", onclick: () => { ir("agenda"); setTimeout(() => { S.desde = lunes(c.inicio); cargarAgenda().then(() => verCita(c)); }, 50); } }, el("span", { class: "ic", html: ic("clock") }),
+    el("div", {}, el("div", { class: "t" }, `Por confirmar: ${c.nombre} · ${c.servicio}`), el("div", { class: "muted small" }, `${fechaCorta(c.inicio)} ${hora(c.inicio)} · pidió hace ${hace(c.espera_min)}`))));
+  $("atencion").replaceChildren(...sol, ...(casos.length ? casos.map(c => el("div", { class: "alert-row" }, el("span", { class: "ic", html: ic("alert") }),
     el("div", {}, el("div", { class: "t" }, c.motivo), el("div", { class: "muted small" }, `${c.nombre || telefono(c.cliente)} · ${c.creado.slice(11, 16)}`))))
-    : [el("p", { class: "empty" }, "No hay casos pendientes.")]));
+    : (sol.length ? [] : [el("p", { class: "empty" }, "No hay casos pendientes.")])));
   $("proximas").replaceChildren(...(r.proximas.length ? r.proximas.slice(0, 6).map(c => el("div", { class: "tl" },
     el("div", {}, el("div", { class: "h" }, hora(c.inicio)), el("div", { class: "muted small" }, fechaCorta(c.inicio))),
     el("div", {}, el("div", { class: "who" }, c.nombre), el("div", { class: "muted small" }, c.servicio + (varios() ? " · " + c.profesional : "")),
@@ -653,6 +662,7 @@ async function cargarAgenda() {
     celdas.push(col);
   });
   cal.replaceChildren(...celdas);
+  cargarSolicitudes();
 }
 
 // --- Panel lateral ------------------------------------------------------------
@@ -669,7 +679,11 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("drawer
 
 function verCita(c) {
   const edita = S.can("agenda_editar");
-  const acciones = c.estado === "confirmada"
+  const acciones = c.estado === "por_confirmar"
+    ? (edita ? [el("button", { class: "btn primary", type: "button", onclick: () => estadoCita(c, "confirmada"), html: ic("check") + "Confirmar cita" }),
+                el("button", { class: "btn", type: "button", onclick: () => abrirReprogramar(c) }, "Reprogramar"),
+                el("button", { class: "btn danger", type: "button", onclick: () => estadoCita(c, "cancelada") }, "Rechazar")] : [])
+    : c.estado === "confirmada"
     ? [el("button", { class: "btn primary", type: "button", onclick: () => estadoCita(c, "asistio"), html: ic("check") + "Asistió" }),
        edita ? el("button", { class: "btn", type: "button", onclick: () => abrirReprogramar(c) }, "Reprogramar") : null,
        el("button", { class: "btn", type: "button", onclick: () => estadoCita(c, "no_asistio") }, "No asistió"),
@@ -681,6 +695,7 @@ function verCita(c) {
   abrirDrawer(c.nombre, [
     choque ? el("div", { class: "note err" }, choque + " Avísale al paciente y reprográmala.") : null,
     c.estado === "confirmada" && c.confirmacion ? el("div", { class: "note " + (c.confirmacion === "confirmo" ? "ok" : "err") }, c.confirmacion === "confirmo" ? "El paciente confirmó que asistirá." : "El paciente pidió cambiar la cita: contáctalo o reprográmala.") : null,
+    c.estado === "por_confirmar" ? el("div", { class: "note err", style: "background:var(--warn-soft);color:var(--warn)" }, `Solicitud apartada por ${asist()}: el horario está reservado, pero el paciente aún no tiene confirmación. Confírmala o recházala.`) : null,
     el("div", {}, el("span", { class: "pill " + c.estado }, ESTADO[c.estado]), " ", el("span", { class: "tag" + (c.origen === "asistente" ? " ia" : "") }, c.origen === "asistente" ? "Agendó " + asist() : "Recepción")),
     el("dl", { class: "kv" },
       el("dt", {}, "Fecha"), el("dd", {}, fechaLarga(c.inicio)),
@@ -694,9 +709,18 @@ function verCita(c) {
   ], acciones);
 }
 async function estadoCita(c, estado) {
-  try { await api(`/citas/${c.id}/estado`, { method: "POST", body: JSON.stringify({ estado }) }); toast(`Cita marcada: ${ESTADO[estado]}`); }
-  catch (e) { toast(e.message); }
-  cerrarDrawer(); cargarAgenda();
+  let ok = true;
+  try { await api(`/citas/${c.id}/estado`, { method: "POST", body: JSON.stringify({ estado }) }); toast(c.estado === "por_confirmar" ? (estado === "confirmada" ? "Cita confirmada" : "Solicitud rechazada") : `Cita marcada: ${ESTADO[estado]}`); }
+  catch (e) { toast(e.message); ok = false; }
+  cargarAgenda();
+  if (ok && c.estado === "por_confirmar") return avisoSolicitud(c, estado === "confirmada");
+  cerrarDrawer();
+}
+function avisoSolicitud(c, confirmada) {
+  const nombre = c.nombre.replace(/^Paciente ejemplo · /, "").split(" ")[0], cuando = `${fechaLarga(c.inicio)} a las ${hora(c.inicio)}`;
+  ofrecerAviso(c, confirmada ? "Cita confirmada" : "Solicitud rechazada", confirmada ? `Confirmada: ${cuando}.` : "La solicitud se rechazó y el horario quedó libre.",
+    confirmada ? `Hola ${nombre}, tu cita de ${c.servicio} en ${S.info.nombre} quedó confirmada para el ${cuando}. ¡Te esperamos!`
+               : `Hola ${nombre}, no pudimos confirmar tu solicitud de ${c.servicio} para el ${cuando}. ¿Te sirve otro horario? Cuéntanos y te ayudamos.`);
 }
 function verBloqueo(b) {
   abrirDrawer("Horario bloqueado", [el("dl", { class: "kv" },
@@ -772,12 +796,16 @@ function abrirReprogramar(c) {
 }
 function avisarCambio(c, r) {
   const nombre = c.nombre.replace(/^Paciente ejemplo · /, "").split(" ")[0];
-  const caja = el("textarea", { id: "avisoTexto", rows: 5, style: "width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:10px;background:var(--surface-2);font:inherit;color:var(--fg)" },
+  ofrecerAviso(c, "Cita reprogramada", `Listo: ${fechaLarga(r.fecha)} a las ${r.hora}${varios() ? " con " + r.profesional : ""}.`,
     `Hola ${nombre}, te escribimos de ${S.info.nombre}. Tu cita de ${r.servicio} quedó reprogramada para el ${fechaLarga(r.fecha)} a las ${r.hora}. ¡Te esperamos! Si no te sirve ese horario, respóndenos por aquí.`);
+}
+// Después de una acción del equipo, deja listo el mensaje para el paciente (no se envía solo).
+function ofrecerAviso(c, titulo, resultado, texto) {
+  const caja = el("textarea", { id: "avisoTexto", rows: 5, style: "width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:10px;background:var(--surface-2);font:inherit;color:var(--fg)" }, texto);
   const nota = el("div", { class: "note", hidden: true });
-  const telefonoOk = /^\d{7,}$/.test(c.cliente || "");
-  abrirDrawer("Cita reprogramada", [
-    el("div", { class: "note ok" }, `Listo: ${fechaLarga(r.fecha)} a las ${r.hora}${varios() ? " con " + r.profesional : ""}.`),
+  const telefonoOk = S.can("chats") && /^\d{7,}$/.test(c.cliente || "");
+  abrirDrawer(titulo, [
+    el("div", { class: "note ok" }, resultado),
     el("p", { class: "muted small", style: "margin:0" }, "El paciente todavía no sabe del cambio. Avísale con este mensaje (puedes editarlo):"), caja, nota,
   ], [telefonoOk ? el("button", { class: "btn primary", type: "button", html: ic("msg") + "Enviar por WhatsApp", onclick: async () => {
         try { await api(`/conversaciones/${encodeURIComponent(c.cliente)}/enviar`, { method: "POST", body: JSON.stringify({ texto: caja.value }) }); toast("Aviso enviado"); cerrarDrawer(); }
@@ -911,6 +939,25 @@ async function cargarCasos(soloContar) {
     : [el("p", { class: "empty" }, "Sin interesados.")]));
 }
 
+// --- Solicitudes por confirmar (modo pre-reserva) --------------------------------
+const hace = min => min < 60 ? `${min} min` : min < 1440 ? `${Math.round(min / 60)} h` : `${Math.round(min / 1440)} d`;
+async function cargarSolicitudes() {
+  if (!S.can("agenda_ver")) return;
+  try { S.solic = await api("/solicitudes"); } catch (_) { S.solic = []; }
+  const n = S.solic.length;
+  $("nAgenda").hidden = !n; $("nAgenda").textContent = n;
+  const b = $("solBanner"); b.hidden = !n;
+  if (n) { b.replaceChildren(el("span", { html: ic("clock") }), el("strong", {}, `${n} ${n === 1 ? "solicitud de cita espera" : "solicitudes de cita esperan"} confirmación`),
+    el("span", { class: "muted" }, `la más antigua hace ${hace(S.solic[0].espera_min)}`), el("button", { class: "btn sm", type: "button", style: "margin-left:auto", onclick: abrirSolicitudes }, "Revisar")); }
+}
+function abrirSolicitudes() {
+  abrirDrawer("Solicitudes por confirmar", [el("p", { class: "muted small", style: "margin:0" }, `${asist()} apartó estos horarios. Confirma o rechaza cada uno para avisarle al paciente.`),
+    el("div", { class: "timeline" }, S.solic.map(c => el("div", { class: "tl", style: "cursor:pointer", onclick: () => { S.desde = S.vista === "semana" ? lunes(c.inicio) : c.inicio.slice(0, 10); cargarAgenda(); verCita(c); } },
+      el("div", {}, el("div", { class: "h" }, hora(c.inicio)), el("div", { class: "muted small" }, fechaCorta(c.inicio))),
+      el("div", {}, el("div", { class: "who" }, c.nombre), el("div", { class: "muted small" }, c.servicio + (varios() ? " · " + c.profesional : "")),
+        el("div", { class: "muted small" }, `Pidió hace ${hace(c.espera_min)}`)))))]);
+}
+
 // --- Equipo ---------------------------------------------------------------------
 async function cargarEquipo() {
   const lista = await api("/usuarios");
@@ -963,7 +1010,7 @@ $("miClave").onclick = () => {
 };
 
 // --- Historial ------------------------------------------------------------------
-const ACCIONES = { cita_creada: "Creó una cita", cita_reprogramada: "Reprogramó una cita", cita_estado: "Cambió el estado de una cita", cita_cancelada: "Canceló una cita",
+const ACCIONES = { solicitud_creada: "Recibió una solicitud de cita", solicitud_confirmada: "Confirmó una solicitud de cita", solicitud_rechazada: "Rechazó una solicitud de cita", cita_creada: "Creó una cita", cita_reprogramada: "Reprogramó una cita", cita_estado: "Cambió el estado de una cita", cita_cancelada: "Canceló una cita",
   cita_confirmada: "Confirmó asistencia", bloqueo_creado: "Bloqueó un horario", bloqueo_quitado: "Quitó un bloqueo", chat_tomado: "Tomó un chat", chat_devuelto: "Devolvió un chat",
   mensaje_enviado: "Escribió a un paciente", caso_resuelto: "Resolvió un caso", caso_abierto: "Pasó un caso al equipo", usuario_creado: "Agregó a una persona",
   usuario_activado: "Activó a una persona", usuario_desactivado: "Desactivó a una persona", clave_cambiada: "Cambió su clave", clave_restablecida: "Restableció una clave",

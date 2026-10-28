@@ -48,6 +48,11 @@ def prompt_sistema(n: Negocio) -> str:
     faq = "\n".join(f"- P: {f['pregunta']}\n  R: {f['respuesta']}" for f in n.faq) or "- (sin preguntas frecuentes)"
     politicas = "\n".join(f"- {p}" for p in n.politicas) or "- (sin políticas especiales)"
     humano = "\n".join(f"- {h}" for h in n.pasar_a_humano_si) or "- El cliente lo pide."
+    pre_reserva = (
+        "- En este negocio la recepción confirma las citas a mano: al agendar, el resultado dice estado 'por_confirmar'. Dile al paciente que su cita quedó "
+        "*solicitada* y el horario *apartado*, que la clínica se la confirmará por este chat en breve (en horario de atención) y NO digas que está confirmada. "
+        "Cuando el paciente pregunte por su cita, usa el estado que devuelve ver_mis_citas."
+        if n.modo_agenda == "pre_reserva" else "")
     recordatorios = (
         "- El sistema envía solo un recordatorio por WhatsApp antes de cada cita (el día anterior y unas horas antes); puedes decírselo al cliente. "
         "Si el cliente confirma que asistirá, usa confirmar_asistencia. Si pide cambiar la fecha, usa reprogramar_cita."
@@ -89,6 +94,7 @@ Políticas:
 - Si el cliente muestra interés pero no agenda, usa registrar_interes antes de despedirte.
 - No ofrezcas acciones que no puedes hacer con tus herramientas (por ejemplo, llamar por teléfono); si el cliente pide algo así, ofrece pasar el caso al equipo.
 {recordatorios}
+{pre_reserva}
 - No das diagnósticos, consejos médicos ni garantías de resultados; para eso está la valoración con el profesional.
 - Usa pasar_a_humano cuando:
 {humano}

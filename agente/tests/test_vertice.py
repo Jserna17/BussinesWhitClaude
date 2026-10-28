@@ -930,3 +930,67 @@ def test_la_bitacora_registra_personas_y_asistente(panel, db):
     assert ("Sofía", "asistente", "cita_creada") in acciones
     assert ("marta", "-", "ingreso_fallido") in acciones and ("Marta Recepción", "recepcion", "ingreso") in acciones
     assert all("Clave1234" not in json.dumps(f) for f in h)
+
+
+# --- Modo pre-reserva ------------------------------------------------------
+def _pre_reserva():
+    from dataclasses import replace
+    return replace(CLINICA, modo_agenda="pre_reserva", whatsapp_phone_number_id="123")
+
+
+def test_en_pre_reserva_el_asistente_aparta_y_la_recepcion_confirma(db):
+    n = _pre_reserva()
+    avisos = []
+    h = Herramientas(db, n, "573001112233", ahora, notificar_dueno=lambda neg, t: avisos.append(t))
+    salida, err = h.ejecutar("agendar_cita", {"nombre": "Ana Gómez", "servicio": "Valoración odontológica", "fecha": "2026-11-10", "hora": "09:00"})
+    cita = json.loads(salida)
+    assert not err and cita["estado"] == "por_confirmar" and "NO confirmada" in cita["nota"]
+    assert len(avisos) == 1 and "Solicitud de cita por confirmar" in avisos[0]
+    # El horario queda apartado: otros pacientes no lo ven y solo queda un cupo (el otro odontólogo)
+    libres = Agenda(db, n, ahora).libres(date(2026, 11, 10), Agenda(db, n, ahora).servicio("Valoración odontológica"))
+    assert len(libres["09:00"]) == 1
+    # La recepción (panel) agenda directo y queda confirmada, sin pasar por solicitud
+    directa = Agenda(db, n, ahora).reservar("573009998877", "Luis Pérez", "Valoración odontológica", "2026-11-10", "10:00", origen="panel")
+    assert directa["estado"] == "confirmada"
+    # El paciente ve el estado, puede moverla y cancelarla
+    citas = json.loads(h.ejecutar("ver_mis_citas", {})[0])["citas"]
+    assert citas[0]["estado"] == "por_confirmar"
+    movida = json.loads(h.ejecutar("reprogramar_cita", {"cita_id": cita["cita_id"], "fecha": "2026-11-10", "hora": "11:00"})[0])
+    assert movida["estado"] == "por_confirmar"
+    assert not h.ejecutar("cancelar_cita", {"cita_id": cita["cita_id"]})[1]
+
+
+def test_panel_solicitudes_confirmar_y_rechazar(panel, db):
+    n = _pre_reserva()
+    marta, laura = entrar(panel, "marta"), entrar(panel, "laura")
+    # El panel de la prueba usa CLINICA; creamos las solicitudes directo en la agenda de la clínica en pre-reserva
+    ag = Agenda(db, n, ahora)
+    a = ag.reservar("573001112233", "Ana Gómez", "Valoración odontológica", "2026-11-10", "09:00", profesional="Dra. Laura Gómez")["cita_id"]
+    b = ag.reservar("573001112244", "Luis Pérez", "Valoración odontológica", "2026-11-10", "09:00", profesional="Dr. Andrés Ríos")["cita_id"]
+    lista = panel.get("/panel/api/solicitudes", headers=marta).json()
+    assert [c["nombre"] for c in lista] == ["Ana Gómez", "Luis Pérez"] and lista[0]["estado"] == "por_confirmar"
+    assert [c["nombre"] for c in panel.get("/panel/api/solicitudes", headers=laura).json()] == ["Ana Gómez"]  # el odontólogo, solo las suyas
+    assert panel.post(f"/panel/api/citas/{a}/estado", headers=marta, json={"estado": "confirmada"}).status_code == 200
+    assert panel.post(f"/panel/api/citas/{b}/estado", headers=marta, json={"estado": "cancelada"}).status_code == 200
+    assert panel.get("/panel/api/solicitudes", headers=marta).json() == []
+    # Rechazar libera el horario
+    assert "09:00" in ag.libres(date(2026, 11, 10), ag.servicio("Valoración odontológica"))
+    dueno = entrar(panel, "dueno1")
+    acciones = [f["accion"] for f in panel.get("/panel/api/bitacora", headers=dueno).json()]
+    assert "solicitud_confirmada" in acciones and "solicitud_rechazada" in acciones
+
+
+def test_recordatorios_ignoran_solicitudes_sin_confirmar(db):
+    n = _pre_reserva()
+    Agenda(db, n, ahora).reservar("573001112233", "Ana Gómez", "Valoración odontológica", "2026-11-10", "15:00")  # asistente: por confirmar
+    enviados = []
+    assert recordatorios.ciclo(db, {n.id: n}, lambda *a: enviados.append(a) or "w", datetime(2026, 11, 9, 15, 30))["enviados"] == 0
+
+
+def test_prompt_y_configuracion_de_pre_reserva(tmp_path):
+    assert "solicitada" in prompt_sistema(_pre_reserva()) and "solicitada" not in prompt_sistema(CLINICA)
+    from vertice.negocio import cargar_negocio
+    ruta = tmp_path / "malo.yaml"
+    ruta.write_text((Path(__file__).parent.parent / "negocios" / "clinica-demo.yaml").read_text(encoding="utf-8") + "\nmodo_agenda: manual\n", encoding="utf-8")
+    with pytest.raises(ValueError):
+        cargar_negocio(ruta)

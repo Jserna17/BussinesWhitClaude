@@ -116,8 +116,11 @@ MIGRACIONES = {
 }
 
 # Estados que ocupan la silla. "cancelada" la libera.
-ESTADOS_OCUPAN = ("confirmada", "asistio", "no_asistio")
+# "por_confirmar": la clínica lleva su agenda en otro sistema; Sofía aparta el horario y la recepción lo confirma.
+ESTADOS_OCUPAN = ("por_confirmar", "confirmada", "asistio", "no_asistio")
 ESTADOS_CITA = ESTADOS_OCUPAN + ("cancelada",)
+ESTADOS_ACTIVOS = ("por_confirmar", "confirmada")  # citas futuras que el paciente puede ver, mover o cancelar
+_ACTIVOS_SQL = "estado IN ('por_confirmar','confirmada')"
 
 
 class CitaNoEncontrada(Exception):
@@ -249,7 +252,7 @@ class BaseDatos:
         return [dict(r) for r in citas] + [dict(r) for r in bloqueos]
 
     def reservar(self, negocio_id: str, candidatos: list[str], cliente: str, nombre: str, servicio: str,
-                 inicio: str, fin: str, origen: str) -> tuple[int, str]:
+                 inicio: str, fin: str, origen: str, estado: str = "confirmada") -> tuple[int, str]:
         """Crea la cita con el primer profesional libre. Revisa y escribe en la misma transacción
         exclusiva, así dos pacientes simultáneos nunca reciben la misma silla."""
         with self.transaccion() as con:
@@ -259,9 +262,9 @@ class BaseDatos:
                 if todos_bloqueados or any(o["profesional"] == prof for o in ocupados):
                     continue
                 cur = con.execute(
-                    "INSERT INTO citas (negocio_id, cliente, nombre, servicio, inicio, fin, creado, profesional, origen) "
-                    "VALUES (?,?,?,?,?,?,?,?,?)",
-                    (negocio_id, cliente, nombre, servicio, inicio, fin, self._ahora(), prof, origen),
+                    "INSERT INTO citas (negocio_id, cliente, nombre, servicio, inicio, fin, creado, profesional, origen, estado) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    (negocio_id, cliente, nombre, servicio, inicio, fin, self._ahora(), prof, origen, estado),
                 )
                 return cur.lastrowid, prof
         raise Conflicto("Ese horario ya no está disponible.")
@@ -274,10 +277,10 @@ class BaseDatos:
         """Mueve una cita confirmada a otro horario en una sola transacción: el horario viejo se libera y el nuevo se
         ocupa sin que otro paciente pueda colarse entre medio. Devuelve el profesional."""
         with self.transaccion() as con:
-            cita = con.execute("SELECT * FROM citas WHERE id=? AND negocio_id=? AND estado='confirmada'",
+            cita = con.execute(f"SELECT * FROM citas WHERE id=? AND negocio_id=? AND {_ACTIVOS_SQL}",
                                (cita_id, negocio_id)).fetchone()
             if cita is None or (cliente is not None and cita["cliente"] != cliente):
-                raise CitaNoEncontrada("No encontré una cita confirmada con ese id.")
+                raise CitaNoEncontrada("No encontré una cita vigente con ese id.")
             ocupados = self.ocupaciones(negocio_id, inicio, fin, con, excluir_cita=cita_id)
             if not any(o["profesional"] == "" for o in ocupados):
                 for prof in candidatos:
@@ -314,15 +317,14 @@ class BaseDatos:
 
     def citas_de_cliente(self, negocio_id: str, cliente: str, desde: str | None = None) -> list[sqlite3.Row]:
         return self.con.execute(
-            "SELECT * FROM citas WHERE negocio_id=? AND cliente=? AND estado='confirmada' "
+            f"SELECT * FROM citas WHERE negocio_id=? AND cliente=? AND {_ACTIVOS_SQL} "
             "AND inicio >= ? ORDER BY inicio",
             (negocio_id, cliente, desde or self._ahora()),
         ).fetchall()
 
     def cancelar_cita(self, negocio_id: str, cliente: str, cita_id: int) -> bool:
         cur = self._escribir(
-            "UPDATE citas SET estado='cancelada' WHERE id=? AND negocio_id=? AND cliente=? "
-            "AND estado='confirmada'",
+            f"UPDATE citas SET estado='cancelada' WHERE id=? AND negocio_id=? AND cliente=? AND {_ACTIVOS_SQL}",
             (cita_id, negocio_id, cliente),
         )
         return cur.rowcount == 1

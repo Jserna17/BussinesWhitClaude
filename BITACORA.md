@@ -416,3 +416,9 @@ P0/P1/P2. Checklist de onboarding actualizado; la pregunta "¿dónde llevan la a
 - 57 pruebas OK (incluye permisos por rol, sesiones, bloqueo por intentos y bitácora). Demo con selector "Ver como".
 **Siguiente:** P0-7 modo pre-reserva.
 
+### P0-7 (misma sesión)
+- Estado de cita **"por confirmar"** (ocupa el horario): `modo_agenda: pre_reserva` en el YAML; Sofía dice "solicitada", avisa al equipo y el paciente puede ver/mover/cancelar su solicitud.
+- Panel: contador en Agenda, aviso sobre el calendario, "Requiere atención" en el resumen, confirmar / reprogramar / rechazar con mensaje listo para el paciente; todo en el historial. Recordatorios solo para citas confirmadas.
+- Demo con dos solicitudes de ejemplo. 61 pruebas OK. Demo republicada.
+**Siguiente:** P0-8 (VPS, respaldos, monitoreo, privacidad).
+

@@ -52,6 +52,12 @@ SIMULADOR = r"""
     if (metodo === "GET") {
       if (ruta === "/sesion") return R({ ...F["/sesion"], usuario: { nombre: ROL.nombre, rol: ROL.rol, rol_texto: ROL.rol_texto, profesional: ROL.profesional, soporte: false }, permisos: ROL.p });
       if (ruta === "/usuarios") return R(usuarios);
+      if (ruta === "/solicitudes") {  // la espera se toma de la foto (la demo no tiene reloj propio)
+        const esperas = Object.fromEntries((F["/solicitudes"] || []).map(c => [c.id, c.espera_min]));
+        const lista = [...citas.values()].filter(c => c.estado === "por_confirmar" && (ROL.rol !== "odontologo" || c.profesional === ROL.profesional))
+          .map(c => ({ ...c, espera_min: esperas[c.id] ?? 0 }));
+        return R(lista.sort((a, b) => b.espera_min - a.espera_min));
+      }
       if (ruta === "/bitacora") { const dias = +(q.get("dias") || 7), corte = new Date(Date.now() - dias * 86400000).toISOString().slice(0, 10); return R(bitacora.filter(f => f.creado.slice(0, 10) >= (dias >= 30 ? "0000" : F["/sesion"].hoy.slice(0, 8) + String(Math.max(1, +F["/sesion"].hoy.slice(8) - dias)).padStart(2, "0")))); }
       if (ruta === "/resumen") return R(F["/resumen?dias=" + q.get("dias")] || F["/resumen?dias=7"]);
       if (ruta === "/agenda") {

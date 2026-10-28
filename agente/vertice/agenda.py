@@ -97,17 +97,18 @@ class Agenda:
         inicio = _hora(dia, hora)
         fin = inicio + timedelta(minutes=s.duracion_min)
         # La reserva vuelve a comprobar dentro de una transacción exclusiva (dos pacientes a la vez).
+        estado = "por_confirmar" if origen == "asistente" and self.negocio.modo_agenda == "pre_reserva" else "confirmada"
         cita_id, prof = self.db.reservar(self.negocio.id, candidatos, cliente, nombre.strip(), s.nombre,
-                                         inicio.isoformat(), fin.isoformat(), origen)
-        return {"cita_id": cita_id, "estado": "confirmada", "servicio": s.nombre, "fecha": fecha,
+                                         inicio.isoformat(), fin.isoformat(), origen, estado)
+        return {"cita_id": cita_id, "estado": estado, "servicio": s.nombre, "fecha": fecha,
                 "dia": DIAS[dia.weekday()], "hora": hora, "profesional": prof, "direccion": self.negocio.direccion}
 
     def reprogramar(self, cita_id: int, fecha: str, hora: str, cliente: str | None = None, profesional: str = "",
                     anticipacion_min: int | None = None) -> dict:
         """Mueve una cita confirmada. Con `cliente`, solo si es de ese paciente. Conserva el profesional si puede."""
         cita = self.db.cita(self.negocio.id, cita_id)
-        if cita is None or cita["estado"] != "confirmada" or (cliente is not None and cita["cliente"] != cliente):
-            raise CitaNoEncontrada("No encontré una cita confirmada con ese id.")
+        if cita is None or cita["estado"] not in ("confirmada", "por_confirmar") or (cliente is not None and cita["cliente"] != cliente):
+            raise CitaNoEncontrada("No encontré una cita vigente con ese id.")
         s = self.servicio(cita["servicio"])
         dia = self.fecha(fecha)
         hora = hora.strip().zfill(5)
@@ -124,6 +125,6 @@ class Agenda:
         inicio = _hora(dia, hora)
         fin = inicio + timedelta(minutes=s.duracion_min)
         prof = self.db.reprogramar(self.negocio.id, cita_id, candidatos, inicio.isoformat(), fin.isoformat(), cliente)
-        return {"cita_id": cita_id, "estado": "confirmada", "servicio": s.nombre, "fecha": fecha,
+        return {"cita_id": cita_id, "estado": cita["estado"], "servicio": s.nombre, "fecha": fecha,
                 "dia": DIAS[dia.weekday()], "hora": hora, "profesional": prof, "direccion": self.negocio.direccion,
                 "antes": cita["inicio"]}

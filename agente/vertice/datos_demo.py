@@ -13,6 +13,7 @@ from pathlib import Path
 from .agenda import Agenda, Conflicto
 from .agente import ahora_bogota
 from .db import BaseDatos
+from .festivos import festivo
 from .negocio import cargar_negocios
 from .usuarios import hashear
 
@@ -50,6 +51,29 @@ def sembrar_equipo(db: BaseDatos, negocio_id: str = "clinica-demo") -> None:
         (3, "Dr. Juan Pérez", "dueno", "usuario_creado", "Agregó a Marta Gil como Recepción"),
     ]:
         db.registrar_bitacora(negocio_id, quien, rol, accion, detalle, hace(horas))
+
+
+def sembrar_solicitudes(db: BaseDatos, negocio_id: str = "clinica-demo") -> None:
+    """Dos solicitudes de ejemplo "por confirmar" (así se ve el modo pre-reserva, para clínicas con agenda en otro sistema)."""
+    from dataclasses import replace
+    n = replace(cargar_negocios(RAIZ / "negocios")[negocio_id], modo_agenda="pre_reserva")
+    ag = Agenda(db, n, ahora_bogota)
+    hoy = ahora_bogota().date()
+    ahora = ahora_bogota().replace(tzinfo=None)
+    for i, (nombre, servicio, dias, hora, minutos) in enumerate([
+        ("Paciente ejemplo · Valentina R.", "Valoración odontológica", 2, "10:00", 25),
+        ("Paciente ejemplo · Camilo A.", "Limpieza dental (profilaxis)", 3, "09:00", 190),
+    ]):
+        if db.con.execute("SELECT 1 FROM citas WHERE negocio_id=? AND nombre=?", (negocio_id, nombre)).fetchone():
+            continue
+        d = hoy + timedelta(days=dias)
+        while d.weekday() == 6 or festivo(d):
+            d += timedelta(days=1)
+        try:
+            cita = ag.reservar(f"57300000009{i}", nombre, servicio, d.isoformat(), hora, origen="asistente", anticipacion_min=0)
+        except Conflicto:
+            continue
+        db.con.execute("UPDATE citas SET creado=? WHERE id=?", ((ahora - timedelta(minutes=minutos)).isoformat(timespec="seconds"), cita["cita_id"]))
 
 
 def sembrar(ruta: str, negocio_id: str = "clinica-demo") -> None:
@@ -98,6 +122,7 @@ def sembrar(ruta: str, negocio_id: str = "clinica-demo") -> None:
         if "Jorge" in fila["nombre"]:
             db.marcar_confirmacion(n.id, fila["id"], fila["cliente"], "cambiar")
     sembrar_equipo(db, negocio_id)
+    sembrar_solicitudes(db, negocio_id)
     print("Datos de ejemplo agregados a", ruta)
 
 

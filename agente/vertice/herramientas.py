@@ -43,7 +43,7 @@ DEFINICIONES = [
     {
         "name": "agendar_cita",
         "description": (
-            "Agenda una cita confirmada. Úsala solo cuando el cliente ya eligió servicio, fecha y hora "
+            "Agenda una cita (o la deja solicitada, si el negocio confirma a mano; mira el campo estado). Úsala solo cuando el cliente ya eligió servicio, fecha y hora "
             "(de los horarios que devolvió consultar_disponibilidad) y dio su nombre."
         ),
         "strict": True,
@@ -198,7 +198,14 @@ class Herramientas:
                                    "Consulta la disponibilidad de nuevo y ofrece otras horas.")
         except ErrorAgenda as e:
             raise ErrorHerramienta(str(e))
-        self._anotar("cita_creada", f"{nombre.strip()} · {cita['servicio']} · {cita['fecha']} {cita['hora']} (paciente {self.cliente})")
+        self._anotar("solicitud_creada" if cita["estado"] == "por_confirmar" else "cita_creada",
+                     f"{nombre.strip()} · {cita['servicio']} · {cita['fecha']} {cita['hora']} (paciente {self.cliente})")
+        if cita["estado"] == "por_confirmar":
+            cita["nota"] = ("Quedó SOLICITADA y apartada, todavía NO confirmada: dile al cliente que la clínica se la confirma "
+                            "por este mismo chat en breve y que el horario queda apartado mientras tanto.")
+            if self.notificar_dueno:
+                self.notificar_dueno(self.negocio, f"🗓️ Solicitud de cita por confirmar: {nombre.strip()} · {cita['servicio']} · "
+                                                    f"{cita['dia']} {cita['fecha']} {cita['hora']} (WhatsApp {self.cliente})")
         if len(self.negocio.nombres_profesionales()) == 1:
             cita.pop("profesional")
         return cita
@@ -206,7 +213,7 @@ class Herramientas:
     def _ver_mis_citas(self) -> dict:
         citas = self.db.citas_de_cliente(self.negocio.id, self.cliente, self.ahora().isoformat(timespec="seconds"))
         return {"citas": [
-            {"cita_id": c["id"], "servicio": c["servicio"], "inicio": c["inicio"], "nombre": c["nombre"]}
+            {"cita_id": c["id"], "servicio": c["servicio"], "inicio": c["inicio"], "nombre": c["nombre"], "estado": c["estado"]}
             for c in citas
         ]}
 

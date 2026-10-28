@@ -238,6 +238,18 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
             bloqueos = [b for b in bloqueos if b["profesional"] in ("", s.profesional)]
         return {"desde": inicio.isoformat(), "dias": dias, "citas": citas, "bloqueos": bloqueos}
 
+    @api.get("/solicitudes")
+    def solicitudes(s: Sesion = Depends(permiso("agenda_ver"))):
+        """Citas apartadas por el asistente que la recepción todavía no confirma (modo pre-reserva), las más antiguas primero."""
+        n = s.negocio
+        desde = ahora().isoformat(timespec="minutes")
+        filas = [dict(c) for c in db.citas_entre(n.id, desde, "9999") if c["estado"] == "por_confirmar"]
+        if s.rol == "odontologo":
+            filas = [c for c in filas if c["profesional"] == s.profesional]
+        for c in filas:
+            c["espera_min"] = max(0, int((ahora() - datetime.fromisoformat(c["creado"])).total_seconds() // 60))
+        return sorted(filas, key=lambda c: c["creado"])
+
     @api.get("/disponibilidad")
     def disponibilidad(fecha: str, servicio: str, excluir: int = 0, s: Sesion = Depends(permiso("agenda_editar"))):
         n = s.negocio
@@ -291,7 +303,12 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
         if "agenda_editar" not in s.permisos and datos.estado == "cancelada":
             raise HTTPException(status_code=403, detail="Tu usuario no puede cancelar citas.")
         db.cambiar_estado_cita(n.id, cita_id, datos.estado)
-        anotar(s, "cita_estado", f"Cita #{cita_id} ({cita['nombre']}) marcada: {datos.estado}")
+        if cita["estado"] == "por_confirmar" and datos.estado == "confirmada":
+            anotar(s, "solicitud_confirmada", f"Cita #{cita_id} ({cita['nombre']} · {cita['servicio']} · {cita['inicio'][:16].replace('T', ' ')})")
+        elif cita["estado"] == "por_confirmar" and datos.estado == "cancelada":
+            anotar(s, "solicitud_rechazada", f"Cita #{cita_id} ({cita['nombre']} · {cita['servicio']} · {cita['inicio'][:16].replace('T', ' ')})")
+        else:
+            anotar(s, "cita_estado", f"Cita #{cita_id} ({cita['nombre']}) marcada: {datos.estado}")
         return {"ok": True}
 
     @api.post("/bloqueos")
@@ -315,7 +332,7 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
                f"{' · ' + datos.motivo if datos.motivo else ''}")
         # Citas ya confirmadas dentro del bloqueo: hay que reprogramarlas (el bloqueo no las borra).
         afectadas = [dict(c) for c in db.citas_entre(n.id, inicio.isoformat(), fin.isoformat())
-                     if c["estado"] == "confirmada" and c["fin"] > inicio.isoformat()
+                     if c["estado"] in ("confirmada", "por_confirmar") and c["fin"] > inicio.isoformat()
                      and (not datos.profesional or c["profesional"] == datos.profesional)]
         return {"bloqueo_id": bid, "citas_afectadas": afectadas}
 
@@ -332,7 +349,7 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
         n = s.negocio
         nombres = nombres_por_cliente(n)
         casos = {c["cliente"] for c in db.filas("escalaciones", n.id) if c["estado"] == "abierta"}
-        con_cita = {c["cliente"] for c in db.citas_entre(n.id, "0000", "9999") if c["estado"] == "confirmada"}
+        con_cita = {c["cliente"] for c in db.citas_entre(n.id, "0000", "9999") if c["estado"] in ("confirmada", "por_confirmar")}
         lista = []
         for c in conversaciones_leidas(n):
             ultimo = next((m for m in reversed(c["mensajes"]) if m["rol"] != "evento"), None)

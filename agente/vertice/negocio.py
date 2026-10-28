@@ -45,6 +45,7 @@ class Negocio:
     intervalo_min: int = 30      # cada cuánto empieza un turno
     panel_clave: str = ""        # clave del panel del médico (o variable VERTICE_PANEL_CLAVE_<ID>)
     abre_festivos: bool = False  # festivos de Colombia: cerrado salvo que la clínica diga lo contrario
+    modo_agenda: str = "propia"  # "propia": Vértice es la agenda · "pre_reserva": Sofía aparta y la recepción confirma
     recordatorios: bool = True   # recordatorio con botones por WhatsApp (plantilla aprobada por Meta)
     plantilla_recordatorio: str = "recordatorio_cita"
     pausa_horas: float = 12      # si una persona del equipo escribe en un chat, el asistente se calla este tiempo
@@ -91,6 +92,8 @@ def texto_franjas(franjas: list[tuple[str, str]]) -> str:
 def cargar_negocio(ruta: Path) -> Negocio:
     datos = yaml.safe_load(ruta.read_text(encoding="utf-8"))
     datos["servicios"] = [Servicio(**s) for s in datos["servicios"]]
+    if datos.get("modo_agenda", "propia") not in ("propia", "pre_reserva"):
+        raise ValueError(f"{ruta.name}: modo_agenda debe ser 'propia' o 'pre_reserva'.")
     datos["whatsapp_phone_number_id"] = str(datos.get("whatsapp_phone_number_id") or "")
     datos["telefono_dueno"] = str(datos.get("telefono_dueno") or "")
     datos["panel_clave"] = str(datos.get("panel_clave") or os.environ.get(f"VERTICE_PANEL_CLAVE_{datos['id'].upper().replace('-', '_')}", ""))

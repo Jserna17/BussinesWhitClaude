@@ -27,6 +27,7 @@ más procesos de cada cliente, con ingresos recurrentes mensuales.
 | 11 | [Stack técnico de agentes 2026](docs/11-stack-tecnico-agentes-2026.md) | n8n vs plataformas vs agente propio |
 | 12 | [Marca](docs/12-marca.md) | Nombres y dominios |
 | 13 | [Sistema de Pacientes Nuevos](docs/13-sistema-pacientes-dentales.md) | Oferta principal para clínicas dentales |
+| 14 | [Integración de agenda y operación](docs/14-integracion-agenda-y-operacion.md) | Cómo incorporar la agenda de la clínica, riesgos y prioridades |
 
 ## Producto
 - [Asistente de WhatsApp — demo v0.1](agente/README.md)

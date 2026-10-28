@@ -358,3 +358,16 @@ libres, sin errores. Panel con modo claro/oscuro según elección del usuario.
 - Capturas nuevas en `demo/capturas/` (incluye detalle de cita, nueva cita, modo oscuro y celular).
 
 **Próximos pasos:** hojas de auditoría para las 5 clínicas prioritarias y visitas; luego VPS + Meta.
+
+---
+
+## Sesión #19 — 2026-10-28 — Integración de agenda y riesgos de operación
+
+**Pregunta del fundador:** qué falta al panel para garantizar el funcionamiento, cómo incorporar la agenda de un médico
+que se vuelva cliente y qué factores no estamos viendo.
+**Qué se hizo:** `docs/14-integracion-agenda-y-operacion.md`: regla de una sola agenda; tres modos de integración
+(A Vértice es la agenda, B sincronizada, C pre-reserva); proceso de incorporación con semana de sombra; riesgos no
+cubiertos (número de WhatsApp y coexistencia, choque bot/recepcionista, notas de voz, festivos, horario por profesional,
+sillas, recordatorios, reprogramar, roles, atribución para la garantía, respaldos/monitoreo, Ley 1581). Prioridades
+P0/P1/P2. Checklist de onboarding actualizado; la pregunta "¿dónde llevan la agenda?" pasa a la visita.
+**Próximo paso:** aprobación del fundador para construir los P0 en orden.

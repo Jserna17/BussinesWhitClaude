@@ -12,8 +12,12 @@
 - [ ] Políticas: cancelación, pagos, seguros/convenios, promociones vigentes
 - [ ] Tono deseado (formal/cercano), emojis sí/no
 - [ ] Casos que SIEMPRE pasan a humano (urgencias, quejas, temas clínicos)
-- [ ] Acceso a calendario / software de agenda
-- [ ] Número de WhatsApp a usar (nuevo o migración) y verificación de Meta Business
+- [ ] ¿Dónde vive hoy la agenda? (cuaderno/Excel → modo A · Google Calendar o software con API → modo B · software sin API → modo C pre-reserva). Ver `docs/14-integracion-agenda-y-operacion.md`
+- [ ] Profesionales, sillas, horario y vacaciones de cada uno; duración real de cada servicio; días festivos que abren
+- [ ] Citas de los próximos 60 días para la carga inicial
+- [ ] ¿Atienden EPS/prepagadas/pólizas? Formas de pago, parqueadero, niños
+- [ ] Número de WhatsApp a usar (coexistencia con la app actual o número nuevo) y verificación de Meta Business
+- [ ] Usuarios del panel con rol (dueño, recepción, odontólogos)
 - [ ] Base de pacientes antiguos para reactivación (con consentimiento)
 
 ## Construcción (Claude)
@@ -24,6 +28,8 @@
 - [ ] 30 conversaciones de prueba (incluye casos difíciles y fuera de tema)
 
 ## Lanzamiento
+- [ ] Semana de sombra: Sofía deja citas "por confirmar" y recepción aprueba; revisión diaria
+- [ ] Acuerdo escrito: desde la fecha X la agenda oficial es una sola
 - [ ] Llamada de revisión con el cliente (30 min)
 - [ ] Puesta en marcha y monitoreo intensivo 48 h
 - [ ] Enviar "primera victoria" (captura de primera cita agendada)

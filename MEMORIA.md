@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-28 · Sesión #18 (rediseño del panel del médico)
+> Última actualización: 2026-10-28 · Sesión #19 (integración de agenda y riesgos de operación)
 
 ---
 
@@ -130,6 +130,9 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [ ] RUT + cuenta separada para el negocio
 - [x] Agenda sin cruces (multi-profesional, almuerzo, bloqueos, reservas atómicas) y panel del médico — 22 pruebas OK
 - [ ] Publicar el servidor (webhook + panel) en un VPS con HTTPS
+- [x] Análisis de integración de agenda y riesgos de operación (`docs/14-integracion-agenda-y-operacion.md`)
+- [ ] Pendientes P0 antes del primer cliente: festivos y horario por profesional; pausa/tomar control del chat (coexistencia);
+  notas de voz; reprogramar; recordatorios con plantillas; usuarios con rol + bitácora; modo pre-reserva; VPS + respaldos + monitoreo; aviso de privacidad
 - [ ] Ampliar base a 150 negocios (restaurantes, salones, hoteles/fincas, Santa Rosa, La Virginia)
 - [ ] Primeros 3 clientes piloto
 
@@ -170,6 +173,8 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-28 | Panel del médico servido por la misma app (`/panel`), con clave por clínica | Sin costo extra; el médico ve agenda, conversaciones e indicadores |
 | 2026-10-28 | Dato de venta principal: "respondieron unas 11 horas después" (mediana real del mystery shopping) | Las clínicas sí quieren pacientes (responden, ofrecen citas) pero tarde y a mano |
 | 2026-10-28 | Toda consulta a SQLite pasa por un candado (lecturas incluidas) | El panel pide datos en paralelo y la conexión compartida fallaba (error 500) |
+| 2026-10-28 | Regla: una sola agenda oficial por clínica. Tres modos: A) Vértice es la agenda, B) sincronizada (Google Calendar / software con API), C) pre-reserva con confirmación humana; siempre semana de sombra antes de encender | Evitar dobles reservas con cuadernos o software existentes |
+| 2026-10-28 | No manejar historia clínica; solo agenda y conversación | Carga legal (Ley 2015/2020, Res. 866/2021) fuera de nuestro alcance |
 
 ## 8. Preguntas abiertas para el fundador
 
@@ -177,6 +182,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 2. ¿Ya auditaste las primeras clínicas (mystery shopping a las 7–8 p. m.)?
 3. ¿Tienes conocimientos técnicos o computador disponible para crear la cuenta de Meta for Developers con guía?
 4. ¿Facturarás como persona natural al inicio? (recomendado; SAS después).
+5. ¿Arrancamos a construir los pendientes P0 de `docs/14` (en el orden propuesto)?
 
 ## 9. Reglas de operación para Claude
 
@@ -203,6 +209,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - `docs/11-stack-tecnico-agentes-2026.md` — cómo se montan hoy los agentes; por qué agente propio y no n8n
 - `docs/12-marca.md` — nombres propuestos y dominios verificados
 - `docs/13-sistema-pacientes-dentales.md` — oferta principal para clínicas dentales (sistema de adquisición)
+- `docs/14-integracion-agenda-y-operacion.md` — incorporar la agenda de la clínica, riesgos de operación y prioridades P0/P1/P2
 - `prospectos/` — base de prospectos (CSV) y guía de uso
 - `agente/` — código del asistente de WhatsApp (README con instalación, conexión a Meta y costos)
 - `plantillas/` — guiones, propuesta, contrato, onboarding, **auditoría gratis** y **anuncios dentales**

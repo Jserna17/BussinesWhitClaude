@@ -49,13 +49,15 @@ SIMULADOR = r"""
   function libres(fecha, servicio, excluir = 0) {
     const base = {}, dur = F.duraciones[servicio] || 30, out = {};
     const nombres = new Set(PROFS.profesionales.filter(x => x.activo).map(x => x.nombre));
-    for (const [hora, profs] of Object.entries(F.dispo[fecha + "|" + servicio] || {})) { const ok = profs.filter(p => nombres.has(p) && !editados.has(p)); if (ok.length) base[hora] = ok; }
-    for (const nombre of editados) for (const hora of generar(fecha, servicio, nombre, dur)) (base[hora] = base[hora] || []).push(nombre);
+    // "Hoy" se calcula con el horario (la foto de datos depende de la hora a la que se tomó y de noche saldría vacía)
+    const calculados = fecha === sesion.hoy ? nombres : editados;
+    for (const [hora, profs] of Object.entries(F.dispo[fecha + "|" + servicio] || {})) { const ok = profs.filter(p => nombres.has(p) && !calculados.has(p)); if (ok.length) base[hora] = ok; }
+    for (const nombre of calculados) for (const hora of generar(fecha, servicio, nombre, dur)) (base[hora] = base[hora] || []).push(nombre);
     for (const [hora, profs] of Object.entries(base)) {
       const ini = `${fecha}T${hora}:00`, fin = mas(ini, dur);
       const libresAqui = profs.filter(p =>
-        ![...citas.values()].some(c => (c.id >= 100000 || c.movida || editados.has(p)) && c.id !== excluir && c.estado !== "cancelada" && c.profesional === p && cruza(ini, fin, c.inicio, c.fin)) &&
-        ![...bloqueos.values()].some(b => (b.id >= 100000 || editados.has(p)) && (b.profesional === "" || b.profesional === p) && cruza(ini, fin, b.inicio, b.fin)));
+        ![...citas.values()].some(c => (c.id >= 100000 || c.movida || calculados.has(p)) && c.id !== excluir && c.estado !== "cancelada" && c.profesional === p && cruza(ini, fin, c.inicio, c.fin)) &&
+        ![...bloqueos.values()].some(b => (b.id >= 100000 || calculados.has(p)) && (b.profesional === "" || b.profesional === p) && cruza(ini, fin, b.inicio, b.fin)));
       if (libresAqui.length) out[hora] = libresAqui;
     }
     return Object.fromEntries(Object.entries(out).sort());

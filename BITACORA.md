@@ -326,3 +326,14 @@ sepa qué está disponible) y un dashboard para el médico con datos y las conve
   OpenAI 20/20, capturas del panel sin errores de consola (`demo/capturas/`).
 
 **Próximos pasos:** publicar en un VPS (webhook + panel); número de prueba de Meta; hojas de auditoría y visitas.
+
+---
+
+## Sesión #17 — 2026-10-28 — Panel visible desde el equipo del fundador
+
+**Pedido:** ver el sistema en su propio equipo. No tiene carpetas conectadas por Remote Control.
+**Qué se hizo:** `vertice/exportar_demo.py` genera una copia del panel que funciona sola en el navegador (foto de
+los datos del servidor + simulador de la API: agenda sin cruces, bloqueos, estados). Publicada (privada):
+https://claude.ai/artifact/WaS72eAXnZiXdQcAqS82sR. Probada con navegador automático: agendar quita la hora de las
+libres, sin errores. Panel con modo claro/oscuro según elección del usuario.
+**Próximo paso:** si quiere correr el sistema completo en su PC, guía según su sistema operativo; luego VPS + Meta.

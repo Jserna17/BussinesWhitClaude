@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-28 · Sesión #16 (agenda sin cruces + panel del médico)
+> Última actualización: 2026-10-28 · Sesión #17 (panel demo publicado para verlo sin servidor)
 
 ---
 
@@ -48,6 +48,8 @@
   atómicas (probado con 20 pacientes simultáneos); panel web `/panel` con indicadores, agenda semanal (asistió/no
   asistió/cancelar, nueva cita, bloqueos), conversaciones completas y casos/interesados. Capturas en `demo/capturas/`.
   Probado en vivo con OpenAI: 20/20. Falta: publicarlo en un servidor (VPS) para que el médico lo abra desde su celular.
+- **Panel demo sin servidor:** https://claude.ai/artifact/WaS72eAXnZiXdQcAqS82sR (`demo/panel-demo.html`, generado con
+  `python -m vertice.exportar_demo`): foto de los datos + simulador; se puede agendar/bloquear/marcar, los cambios no se guardan. Privado.
 - **Página demo para visitas:** https://claude.ai/artifact/QNoA7pa8cbFn5WqLEwce34 (`demo/sofia.html`): chat tipo
   WhatsApp con Sofía (corre con Claude dentro de claude.ai, con la cuenta de quien la abre) + panel "lo que ve la
   clínica" (agenda, avisos al equipo, interesados) + personalizar nombre/dirección de la clínica visitada. Privada.

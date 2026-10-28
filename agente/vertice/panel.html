@@ -18,11 +18,15 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #0e1513; --surface: #16201e; --fg: #e2ebe8; --muted: #94a5a0; --line: #283533;
+  :root:not([data-theme="light"]) { --bg: #0e1513; --surface: #16201e; --fg: #e2ebe8; --muted: #94a5a0; --line: #283533;
     --brand: #3aa58f; --brand-soft: #173a33; --brand-ink: #04110e; --bar: #46b39c; --mine: #1c473c; --theirs: #1d2927; --chat: #101917;
     --ok: #5fd08a; --ok-soft: #173525; --warn: #f0b45a; --warn-soft: #3a2a12; --bad: #f2867c; --bad-soft: #3d1a17; --block: #222c2a;
     color-scheme: dark; }
 }
+:root[data-theme="dark"] { --bg: #0e1513; --surface: #16201e; --fg: #e2ebe8; --muted: #94a5a0; --line: #283533;
+    --brand: #3aa58f; --brand-soft: #173a33; --brand-ink: #04110e; --bar: #46b39c; --mine: #1c473c; --theirs: #1d2927; --chat: #101917;
+    --ok: #5fd08a; --ok-soft: #173525; --warn: #f0b45a; --warn-soft: #3a2a12; --bad: #f2867c; --bad-soft: #3d1a17; --block: #222c2a;
+    color-scheme: dark; }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--fg); font: 15px/1.45 var(--body); }

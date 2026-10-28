@@ -26,6 +26,33 @@ class MensajeEntrante:
     tipo: str
 
 
+@dataclass(frozen=True)
+class EcoEnviado:
+    """Mensaje que una persona de la clínica escribió desde la app de WhatsApp Business (coexistencia)."""
+    id: str
+    phone_number_id: str
+    para: str  # número del paciente
+    texto: str
+
+
+def extraer_ecos(payload: dict) -> list[EcoEnviado]:
+    """Webhook `smb_message_echoes` de Meta. Formato según la documentación de coexistencia; se lee de forma
+    tolerante (destinatario en `to` o `recipient_id`) y debe confirmarse con el primer número real conectado."""
+    ecos = []
+    for entrada in payload.get("entry", []):
+        for cambio in entrada.get("changes", []):
+            if cambio.get("field") != "smb_message_echoes":
+                continue
+            valor = cambio.get("value", {})
+            phone_number_id = str(valor.get("metadata", {}).get("phone_number_id", ""))
+            for m in valor.get("message_echoes", []):
+                tipo = m.get("type", "")
+                texto = m.get("text", {}).get("body", "") if tipo == "text" else f"[{tipo or 'mensaje'}]"
+                ecos.append(EcoEnviado(id=m.get("id", ""), phone_number_id=phone_number_id,
+                                       para=str(m.get("to") or m.get("recipient_id") or ""), texto=texto))
+    return ecos
+
+
 def firma_valida(cuerpo: bytes, firma_cabecera: str | None, app_secret: str) -> bool:
     """Valida la cabecera X-Hub-Signature-256 que Meta envía en cada webhook."""
     if not firma_cabecera or not firma_cabecera.startswith("sha256="):
@@ -53,7 +80,8 @@ def extraer_mensajes(payload: dict) -> list[MensajeEntrante]:
     return mensajes
 
 
-def enviar_texto(phone_number_id: str, para: str, texto: str, token: str | None = None) -> None:
+def enviar_texto(phone_number_id: str, para: str, texto: str, token: str | None = None) -> str | None:
+    """Envía un texto. Devuelve el id del mensaje en WhatsApp (para no confundirlo con un mensaje del equipo)."""
     token = token or os.environ["WHATSAPP_TOKEN"]
     url = f"https://graph.facebook.com/{GRAPH_VERSION}/{phone_number_id}/messages"
     cuerpo = json.dumps({
@@ -69,5 +97,10 @@ def enviar_texto(phone_number_id: str, para: str, texto: str, token: str | None 
     try:
         with urllib.request.urlopen(peticion, timeout=15) as r:
             log.info("WhatsApp enviado a %s (%s)", para, r.status)
+            try:
+                return json.load(r)["messages"][0]["id"]
+            except (KeyError, IndexError, ValueError):
+                return None
     except urllib.error.HTTPError as e:
         log.error("WhatsApp rechazó el envío a %s: %s %s", para, e.code, e.read()[:300])
+        raise

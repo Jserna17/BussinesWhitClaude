@@ -6,7 +6,7 @@ import json
 import sqlite3
 import threading
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -58,6 +58,24 @@ CREATE TABLE IF NOT EXISTS escalaciones (
 CREATE TABLE IF NOT EXISTS mensajes_procesados (
     id TEXT PRIMARY KEY
 );
+CREATE TABLE IF NOT EXISTS pausas (
+    negocio_id TEXT NOT NULL,
+    cliente TEXT NOT NULL,
+    hasta TEXT NOT NULL,
+    motivo TEXT NOT NULL,
+    creado TEXT NOT NULL,
+    PRIMARY KEY (negocio_id, cliente)
+);
+CREATE TABLE IF NOT EXISTS mensajes_chat (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    negocio_id TEXT NOT NULL,
+    cliente TEXT NOT NULL,
+    rol TEXT NOT NULL,
+    texto TEXT NOT NULL,
+    origen TEXT NOT NULL,
+    creado TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_mensajes_chat ON mensajes_chat (negocio_id, cliente, creado);
 """
 
 ZONA = ZoneInfo("America/Bogota")
@@ -281,6 +299,40 @@ class BaseDatos:
         return self.con.execute(
             f"SELECT * FROM {tabla} WHERE negocio_id=? AND creado >= ? ORDER BY creado DESC", (negocio_id, desde)
         ).fetchall()
+
+    # --- Pausa del asistente y mensajes fuera de su historial ----------
+    def pausar(self, negocio_id: str, cliente: str, horas: float, motivo: str) -> str:
+        """El asistente se calla en este chat hasta `hasta` (hora de Bogotá). Devuelve ese instante."""
+        ahora = datetime.fromisoformat(self._ahora())
+        hasta = (ahora + timedelta(hours=horas)).isoformat(timespec="seconds")
+        self._escribir("INSERT OR REPLACE INTO pausas (negocio_id, cliente, hasta, motivo, creado) VALUES (?,?,?,?,?)",
+                       (negocio_id, cliente, hasta, motivo, ahora.isoformat(timespec="seconds")))
+        return hasta
+
+    def reanudar(self, negocio_id: str, cliente: str) -> bool:
+        return self._escribir("DELETE FROM pausas WHERE negocio_id=? AND cliente=?", (negocio_id, cliente)).rowcount == 1
+
+    def pausa_vigente(self, negocio_id: str, cliente: str) -> sqlite3.Row | None:
+        return self.con.execute("SELECT * FROM pausas WHERE negocio_id=? AND cliente=? AND hasta > ?",
+                                (negocio_id, cliente, self._ahora())).fetchone()
+
+    def pausas_vigentes(self, negocio_id: str) -> dict[str, sqlite3.Row]:
+        filas = self.con.execute("SELECT * FROM pausas WHERE negocio_id=? AND hasta > ?",
+                                 (negocio_id, self._ahora())).fetchall()
+        return {f["cliente"]: f for f in filas}
+
+    def guardar_mensaje_chat(self, negocio_id: str, cliente: str, rol: str, texto: str, origen: str) -> int:
+        """rol: 'paciente' (escrito mientras el asistente estaba en pausa) o 'equipo' (persona de la clínica)."""
+        return self._escribir(
+            "INSERT INTO mensajes_chat (negocio_id, cliente, rol, texto, origen, creado) VALUES (?,?,?,?,?,?)",
+            (negocio_id, cliente, rol, texto, origen, self._ahora())).lastrowid
+
+    def mensajes_chat(self, negocio_id: str, cliente: str | None = None, desde: str = "") -> list[sqlite3.Row]:
+        if cliente is None:
+            return self.con.execute("SELECT * FROM mensajes_chat WHERE negocio_id=? AND creado >= ? ORDER BY id",
+                                    (negocio_id, desde)).fetchall()
+        return self.con.execute("SELECT * FROM mensajes_chat WHERE negocio_id=? AND cliente=? AND creado >= ? ORDER BY id",
+                                (negocio_id, cliente, desde)).fetchall()
 
     # --- Idempotencia del webhook (Meta reintenta entregas) -------------
     def marcar_procesado(self, mensaje_id: str) -> bool:

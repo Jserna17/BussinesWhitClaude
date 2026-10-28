@@ -210,6 +210,12 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
 .b { max-width: 74%; padding: 8px 11px 5px; border-radius: 12px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .9rem; box-shadow: 0 1px 1px rgb(0 0 0 / .05); }
 .b.paciente { align-self: flex-start; background: var(--theirs); border-top-left-radius: 4px; }
 .b.asistente { align-self: flex-end; background: var(--mine); border-top-right-radius: 4px; }
+.b.equipo { align-self: flex-end; background: var(--surface); border: 1px solid var(--brand); border-top-right-radius: 4px; }
+.b .quien { display: block; font-size: .68rem; font-weight: 700; color: var(--brand); margin-bottom: 2px; }
+.banner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 9px 16px; font-size: .84rem; background: var(--warn-soft); color: var(--fg); border-bottom: 1px solid var(--line); }
+.banner.espera { background: var(--bad-soft); }
+.composer { display: flex; gap: 8px; align-items: flex-end; padding: 10px 12px; background: var(--surface); border-top: 1px solid var(--line); }
+.composer textarea { flex: 1; resize: none; border: 1px solid var(--line-strong); border-radius: 10px; padding: 9px 11px; background: var(--surface-2); min-height: 40px; max-height: 120px; font: inherit; color: var(--fg); }
 .b .h { display: block; text-align: right; font-size: .68rem; color: var(--faint); margin-top: 2px; }
 .sys { align-self: center; display: inline-flex; align-items: center; gap: 6px; font-size: .76rem; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; text-align: center; max-width: 92%; }
 .sys.day { font-weight: 700; }
@@ -270,7 +276,7 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
     <nav class="menu" aria-label="Secciones">
       <button data-tab="resumen" aria-current="page"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span class="lbl">Resumen</span></button>
       <button data-tab="agenda"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="lbl">Agenda</span></button>
-      <button data-tab="chats"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="lbl">Conversaciones</span></button>
+      <button data-tab="chats"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="lbl">Conversaciones</span><span class="count" id="nChats" hidden></span></button>
       <button data-tab="casos"><svg class="i" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 2.4 17.6A2 2 0 0 0 4.1 21h15.8a2 2 0 0 0 1.7-3.4L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span class="lbl">Casos</span><span class="count" id="nCasos" hidden></span></button>
     </nav>
     <div class="side-foot">
@@ -340,8 +346,14 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
               <button class="btn ghost sm" id="volver" type="button" hidden aria-label="Volver"><svg class="i" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
               <div class="avatar" id="convAv">–</div>
               <div style="min-width:0"><div style="font-weight:700" id="convTitulo">Elige una conversación</div><div class="muted small" id="convInfo"></div></div>
+              <button class="btn sm" id="btnControl" type="button" style="margin-left:auto" hidden></button>
             </div>
+            <div class="banner" id="convBanner" hidden></div>
             <div class="thread-b" id="hilo"><p class="empty">Aquí ves lo que escribió el paciente, lo que respondió el asistente y cada acción que tomó.</p></div>
+            <form class="composer" id="composer" hidden>
+              <textarea id="msgEquipo" rows="1" placeholder="Escribe como la clínica (el asistente se pausa en este chat)" aria-label="Mensaje"></textarea>
+              <button class="btn primary" type="submit">Enviar</button>
+            </form>
           </div>
           <div class="info" id="convFicha"></div>
         </div>
@@ -431,7 +443,7 @@ async function entrar() {
   $("clinicaSub").textContent = `Asistente: ${asist()} · ${S.info.profesionales.length} ${S.info.profesionales.length === 1 ? "consultorio" : "profesionales"}`;
   S.desde = lunes(S.info.hoy);
   if (matchMedia("(max-width: 900px)").matches) { S.vista = "dia"; S.desde = S.info.hoy; marcarVista(); }
-  ir("resumen"); cargarCasos(true);
+  ir("resumen"); cargarCasos(true); api("/conversaciones").then(d => { S.convs = d; contarChats(); }).catch(() => {});
 }
 function salir() { try { sessionStorage.removeItem("vp"); } catch (_) {} location.reload(); }
 $("salir").onclick = salir;
@@ -699,8 +711,9 @@ function abrirBloqueo() {
 // --- Conversaciones -----------------------------------------------------------
 $("buscar").oninput = pintarConvs;
 $("volver").onclick = () => $("chatsBox").classList.remove("open");
+function contarChats() { const n = S.convs.filter(c => c.sin_responder).length; $("nChats").hidden = !n; $("nChats").textContent = n; }
 async function cargarConvs() {
-  S.convs = await api("/conversaciones");
+  S.convs = await api("/conversaciones"); contarChats();
   pintarConvs();
   if (!S.conv && S.convs[0] && !matchMedia("(max-width: 900px)").matches) abrir(S.convs[0].cliente);
 }
@@ -712,7 +725,8 @@ function pintarConvs() {
     el("div", { style: "min-width:0" },
       el("div", { class: "top" }, el("span", { class: "n" }, c.nombre || telefono(c.cliente)), el("span", { class: "w" }, c.actualizado.slice(11, 16))),
       el("div", { class: "p" }, c.ultimo ? (c.ultimo.rol === "asistente" ? asist() + ": " : "") + c.ultimo.texto.replace(/\*/g, "") : ""),
-      el("div", { class: "tags" }, c.tiene_cita ? el("span", { class: "pill confirmada" }, "Con cita") : null, c.caso_abierto ? el("span", { class: "pill abierta" }, "Caso abierto") : null))))
+      el("div", { class: "tags" }, c.sin_responder ? el("span", { class: "pill abierta" }, "Esperando al equipo") : c.pausada ? el("span", { class: "pill no_asistio" }, "Atiende el equipo") : null,
+        c.tiene_cita ? el("span", { class: "pill confirmada" }, "Con cita") : null, c.caso_abierto ? el("span", { class: "pill abierta" }, "Caso abierto") : null))))
     : [el("p", { class: "empty" }, q ? "Sin resultados." : "Todavía no hay conversaciones.")]));
 }
 async function abrir(cliente) {
@@ -727,16 +741,42 @@ async function abrir(cliente) {
   for (const m of c.mensajes) {
     if (m.fecha && m.fecha !== dia) { dia = m.fecha; nodos.push(el("div", { class: "sys day" }, fechaLarga(m.fecha))); }
     if (m.rol === "evento") nodos.push(el("div", { class: "sys" + (m.texto.startsWith("Intentó") ? " fail" : ""), html: ic(m.texto.startsWith("Intentó") ? "alert" : m.texto.startsWith("Pasó") ? "user" : m.texto.startsWith("Agendó") ? "cal" : "spark") }, m.texto));
-    else nodos.push(el("div", { class: "b " + m.rol }, negritas(m.texto), m.hora ? el("span", { class: "h" }, m.hora) : null));
+    else nodos.push(el("div", { class: "b " + m.rol }, m.rol === "equipo" ? el("span", { class: "quien" }, "Equipo de la clínica") : null, negritas(m.texto), m.hora ? el("span", { class: "h" }, m.hora) : null));
   }
   $("hilo").replaceChildren(...nodos); $("hilo").scrollTop = 0;
+  pintarControl(cliente, c);
   const citas = (S.agenda ? S.agenda.citas : []).filter(x => x.cliente === cliente);
   const acciones = c.mensajes.filter(m => m.rol === "evento" && !m.texto.startsWith("Revisó"));
   $("convFicha").replaceChildren(
     el("div", {}, el("h3", {}, "Paciente"), el("dl", { class: "kv", style: "grid-template-columns:80px 1fr" },
       el("dt", {}, "Nombre"), el("dd", {}, c.nombre || "—"), el("dt", {}, "WhatsApp"), el("dd", {}, telefono(cliente)),
-      el("dt", {}, "Estado"), el("dd", {}, resumen.tiene_cita ? el("span", { class: "pill confirmada" }, "Con cita") : resumen.caso_abierto ? el("span", { class: "pill abierta" }, "Caso abierto") : "Sin cita"))),
+      el("dt", {}, "Estado"), el("dd", {}, resumen.sin_responder ? el("span", { class: "pill abierta" }, "Esperando al equipo") : resumen.pausada ? el("span", { class: "pill no_asistio" }, "Atiende el equipo") : resumen.tiene_cita ? el("span", { class: "pill confirmada" }, "Con cita") : resumen.caso_abierto ? el("span", { class: "pill abierta" }, "Caso abierto") : "Sin cita"))),
     el("div", {}, el("h3", {}, `Acciones de ${asist()}`), acciones.length ? el("div", { style: "display:grid;gap:6px" }, acciones.map(a => el("div", { class: "small" + (a.texto.startsWith("Intentó") ? " muted" : "") }, "• " + a.texto))) : el("p", { class: "muted small", style: "margin:0" }, "Solo respondió preguntas.")));
+}
+function pintarControl(cliente, c) {
+  const btn = $("btnControl"), banner = $("convBanner");
+  btn.hidden = false; $("composer").hidden = false;
+  const ultimo = [...c.mensajes].reverse().find(m => m.rol !== "evento");
+  const espera = c.pausada && ultimo && ultimo.rol === "paciente";
+  if (c.pausada) {
+    btn.className = "btn sm primary"; btn.textContent = `Devolver a ${asist()}`;
+    btn.onclick = async () => { await api(`/conversaciones/${encodeURIComponent(cliente)}/devolver`, { method: "POST" }); toast(`${asist()} vuelve a atender este chat`); await cargarConvs(); abrir(cliente); };
+    banner.hidden = false; banner.className = "banner" + (espera ? " espera" : "");
+    banner.textContent = (espera ? "El paciente escribió y espera respuesta del equipo. " : "") + `${asist()} no responde en este chat. Se reactiva sola a las ${c.pausada_hasta.slice(11, 16)} del ${fechaCorta(c.pausada_hasta)} o cuando se la devuelvas.`;
+  } else {
+    btn.className = "btn sm"; btn.textContent = "Tomar control";
+    btn.onclick = async () => { await api(`/conversaciones/${encodeURIComponent(cliente)}/tomar`, { method: "POST" }); toast(`${asist()} se pausó en este chat`); await cargarConvs(); abrir(cliente); };
+    banner.hidden = true;
+  }
+  $("composer").onsubmit = async e => {
+    e.preventDefault();
+    const t = $("msgEquipo").value.trim(); if (!t) return;
+    try {
+      const r = await api(`/conversaciones/${encodeURIComponent(cliente)}/enviar`, { method: "POST", body: JSON.stringify({ texto: t }) });
+      $("msgEquipo").value = ""; toast(r.enviado ? "Mensaje enviado" : "Mensaje guardado (esta clínica no tiene WhatsApp conectado)");
+      await cargarConvs(); await abrir(cliente); $("hilo").scrollTop = $("hilo").scrollHeight;
+    } catch (err) { toast(err.message); }
+  };
 }
 function irAChat(cliente) { S.conv = cliente; ir("chats"); setTimeout(() => abrir(cliente), 60); }
 

@@ -36,6 +36,10 @@ class NuevaCita(BaseModel):
     profesional: str = ""
 
 
+class MensajeEquipo(BaseModel):
+    texto: str
+
+
 class NuevoEstado(BaseModel):
     estado: str
 
@@ -57,8 +61,11 @@ def _en_horario(negocio: Negocio, fecha: str, hora: str) -> bool:
     return any(a <= hora < b for a, b in negocio.franjas(dia))
 
 
+VENTANA_WHATSAPP = timedelta(hours=24)  # fuera de esta ventana Meta solo permite plantillas aprobadas
+
+
 def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
-                 ahora: Callable[[], datetime] = datetime.now) -> None:
+                 ahora: Callable[[], datetime] = datetime.now, enviar: Callable | None = None) -> None:
     api = APIRouter(prefix="/panel/api")
 
     def negocio_autorizado(x_negocio: str = Header(""), x_clave: str = Header("")) -> Negocio:
@@ -71,13 +78,40 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
         return [n.id, f"{n.id}@openai"]
 
     def conversaciones_leidas(n: Negocio) -> list[dict]:
+        """Conversaciones del asistente + lo que pasó fuera de su historial (equipo y pausas), con estado de pausa."""
         por_cliente: dict[str, dict] = {}
         for fila in db.conversaciones(claves(n)):
             leido = transcripcion.leer(json.loads(fila["mensajes"]))
             actual = por_cliente.get(fila["cliente"])
             if actual is None or fila["actualizado"] > actual["actualizado"]:
                 por_cliente[fila["cliente"]] = {"cliente": fila["cliente"], "actualizado": fila["actualizado"], **leido}
+        extras: dict[str, list] = {}
+        for f in db.mensajes_chat(n.id):
+            extras.setdefault(f["cliente"], []).append(f)
+        for cliente, filas in extras.items():
+            c = por_cliente.setdefault(cliente, {"cliente": cliente, "actualizado": filas[0]["creado"], "mensajes": [], "nombre_perfil": ""})
+            c["actualizado"] = max(c["actualizado"], filas[-1]["creado"])
+            for f in filas:  # cada mensaje va después del último que ya ocurrió antes que él
+                nuevo = {"rol": f["rol"], "texto": f["texto"], "fecha": f["creado"][:10], "hora": f["creado"][11:16], "origen": f["origen"]}
+                pos = len(c["mensajes"])
+                while pos > 0 and (c["mensajes"][pos - 1].get("fecha", ""), c["mensajes"][pos - 1].get("hora", "")) > (nuevo["fecha"], nuevo["hora"]):
+                    pos -= 1
+                c["mensajes"].insert(pos, nuevo)
+        pausas = db.pausas_vigentes(n.id)
+        for cliente, c in por_cliente.items():
+            c["pausada"] = cliente in pausas
+            c["pausada_hasta"] = pausas[cliente]["hasta"] if cliente in pausas else ""
+            ultimo = next((m for m in reversed(c["mensajes"]) if m["rol"] != "evento"), None)
+            c["sin_responder"] = bool(c["pausada"] and ultimo and ultimo["rol"] == "paciente")
         return sorted(por_cliente.values(), key=lambda c: c["actualizado"], reverse=True)
+
+    def ultimo_mensaje_paciente(n: Negocio, cliente: str) -> datetime | None:
+        for c in conversaciones_leidas(n):
+            if c["cliente"] == cliente:
+                momentos = [datetime.fromisoformat(f'{m["fecha"]}T{m["hora"]}') for m in c["mensajes"]
+                            if m["rol"] == "paciente" and m.get("fecha") and m.get("hora")]
+                return max(momentos) if momentos else None
+        return None
 
     def nombres_por_cliente(n: Negocio) -> dict[str, str]:
         nombres = {}
@@ -208,7 +242,8 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
             lista.append({"cliente": c["cliente"], "nombre": nombres.get(c["cliente"]) or c["nombre_perfil"],
                           "actualizado": c["actualizado"], "ultimo": ultimo,
                           "mensajes": sum(1 for m in c["mensajes"] if m["rol"] == "paciente"),
-                          "caso_abierto": c["cliente"] in casos, "tiene_cita": c["cliente"] in con_cita})
+                          "caso_abierto": c["cliente"] in casos, "tiene_cita": c["cliente"] in con_cita,
+                          "pausada": c["pausada"], "pausada_hasta": c["pausada_hasta"], "sin_responder": c["sin_responder"]})
         return lista
 
     @api.get("/conversaciones/{cliente}")
@@ -217,6 +252,37 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
             if c["cliente"] == cliente:
                 return {**c, "nombre": nombres_por_cliente(n).get(cliente) or c["nombre_perfil"]}
         raise HTTPException(status_code=404, detail="Conversación no encontrada.")
+
+    @api.post("/conversaciones/{cliente}/tomar")
+    def tomar_control(cliente: str, n: Negocio = Depends(negocio_autorizado)):
+        return {"pausada_hasta": db.pausar(n.id, cliente, n.pausa_horas, "Tomada desde el panel")}
+
+    @api.post("/conversaciones/{cliente}/devolver")
+    def devolver_a_asistente(cliente: str, n: Negocio = Depends(negocio_autorizado)):
+        db.reanudar(n.id, cliente)
+        return {"ok": True}
+
+    @api.post("/conversaciones/{cliente}/enviar")
+    def responder_como_clinica(cliente: str, datos: MensajeEquipo, n: Negocio = Depends(negocio_autorizado)):
+        texto = datos.texto.strip()
+        if not texto:
+            raise HTTPException(status_code=400, detail="Escribe un mensaje.")
+        ultimo = ultimo_mensaje_paciente(n, cliente)
+        if ultimo is None or ahora().replace(tzinfo=None) - ultimo > VENTANA_WHATSAPP:
+            raise HTTPException(status_code=409, detail="Pasaron más de 24 horas desde el último mensaje del paciente: "
+                                "WhatsApp solo permite enviar una plantilla aprobada. Llámalo o espera a que escriba.")
+        enviado = False
+        if enviar and n.whatsapp_phone_number_id:
+            try:
+                wamid = enviar(n.whatsapp_phone_number_id, cliente, texto[:4096])
+            except Exception as e:  # noqa: BLE001 - el envío falló: no lo registramos como enviado
+                raise HTTPException(status_code=502, detail=f"WhatsApp no aceptó el mensaje: {e}")
+            if wamid:
+                db.marcar_procesado(wamid)
+            enviado = True
+        db.guardar_mensaje_chat(n.id, cliente, "equipo", texto, "panel")
+        hasta = db.pausar(n.id, cliente, n.pausa_horas, "El equipo respondió desde el panel")
+        return {"ok": True, "enviado": enviado, "pausada_hasta": hasta}
 
     @api.get("/casos")
     def casos(n: Negocio = Depends(negocio_autorizado)):

@@ -63,6 +63,19 @@ SIMULADOR = r"""
       return R({ cita_id: c.id, fecha: cuerpo.fecha, hora: cuerpo.hora, profesional: prof });
     }
     let m;
+    if (metodo === "POST" && (m = ruta.match(/^\/conversaciones\/([^/]+)\/(tomar|devolver|enviar)$/))) {
+      const cli = decodeURIComponent(m[1]), hilo = F.hilos[cli], item = F["/conversaciones"].find(x => x.cliente === cli);
+      if (!hilo) return R({ detail: "Conversación no encontrada." }, 404);
+      const hasta = F["/sesion"].hoy + "T23:59:00";
+      const marcar = (pausada) => { hilo.pausada = item.pausada = pausada; hilo.pausada_hasta = item.pausada_hasta = pausada ? hasta : ""; hilo.sin_responder = item.sin_responder = false; };
+      if (m[2] === "tomar") { marcar(true); return R({ pausada_hasta: hasta }); }
+      if (m[2] === "devolver") { marcar(false); return R({ ok: true }); }
+      if (!(cuerpo.texto || "").trim()) return R({ detail: "Escribe un mensaje." }, 400);
+      const ahora = new Date(), hh = String(ahora.getHours()).padStart(2, "0") + ":" + String(ahora.getMinutes()).padStart(2, "0");
+      const msg = { rol: "equipo", texto: cuerpo.texto.trim(), fecha: F["/sesion"].hoy, hora: hh, origen: "panel" };
+      hilo.mensajes.push(msg); item.ultimo = msg; marcar(true);
+      return R({ ok: true, enviado: false, pausada_hasta: hasta });
+    }
     if (metodo === "POST" && (m = ruta.match(/^\/citas\/(\d+)\/estado$/))) { const c = citas.get(+m[1]); if (c) c.estado = cuerpo.estado; return R({ ok: true }); }
     if (metodo === "POST" && ruta === "/bloqueos") {
       if (`${cuerpo.fecha_fin || cuerpo.fecha}T${cuerpo.hasta}` <= `${cuerpo.fecha}T${cuerpo.desde}`) return R({ detail: "El final del bloqueo debe ser posterior al inicio." }, 400);

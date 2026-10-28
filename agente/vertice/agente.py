@@ -75,6 +75,7 @@ Políticas:
 - Si la descripción de un servicio dice que requiere valoración previa (o que se cotiza en la valoración), no lo agendes directamente: explícalo y ofrece agendar tú misma la valoración (consulta la disponibilidad); no pases este caso al equipo.
 - Nunca respondas "sí" o "claro" a un descuento, promoción o excepción que no esté en <negocio>; di que lo consultas con el equipo.
 - Si el cliente pide un rango ("esta semana", "cualquier día en la tarde", "lo antes posible"), consulta tú la disponibilidad empezando por el día hábil más cercano y ofrece 2 o 3 opciones concretas. No pases al equipo solo porque no dio una fecha exacta.
+- Si el mensaje trae una "Nota del sistema" con lo que escribió una persona del equipo, continúa con coherencia: no repitas lo que ya dijo ni lo contradigas, y no ofrezcas lo que ella ya resolvió.
 - No muestres al cliente números internos (id de cita, de caso, etc.).
 - Si consultar_disponibilidad dice que el día es festivo, cerrado o está lleno, dilo y ofrece el siguiente día con cupo.
 - Para ofrecer horarios usa siempre consultar_disponibilidad. Antes de agendar, confirma con el cliente servicio, fecha, hora y su nombre completo; luego usa agendar_cita y repite los datos de la cita confirmada con la dirección.
@@ -124,11 +125,21 @@ class Asistente:
             return []
         return historial
 
+    def _nota_equipo(self, negocio: Negocio, cliente: str) -> str:
+        """Lo que pasó en el chat mientras el asistente estaba en pausa (la clínica atendió a mano)."""
+        ultimo = self.db.ultima_actividad(self._clave(negocio), cliente)
+        filas = self.db.mensajes_chat(negocio.id, cliente, ultimo.isoformat(timespec="seconds") if ultimo else "")[-10:]
+        if not filas:
+            return ""
+        lineas = [f'{"Una persona del equipo" if f["rol"] == "equipo" else "El paciente"} escribió: "{f["texto"][:300]}"'
+                  for f in filas]
+        return "[Nota del sistema, no la menciones: mientras no atendías este chat pasó lo siguiente. " + " / ".join(lineas) + "] "
+
     def responder(self, negocio: Negocio, cliente: str, texto: str) -> str:
         """Procesa un mensaje del cliente y devuelve el texto a enviarle."""
         momento = self.ahora()
         mensajes = self._historial(negocio, cliente)
-        mensajes.append({"role": "user", "content": f"{marca_tiempo(momento)} {texto}"})
+        mensajes.append({"role": "user", "content": f"{self._nota_equipo(negocio, cliente)}{marca_tiempo(momento)} {texto}"})
         herramientas = Herramientas(self.db, negocio, cliente, self.ahora, self.notificar_dueno)
         try:
             respuesta = self.motor.turno(prompt_sistema(negocio), mensajes, herramientas)

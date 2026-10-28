@@ -147,3 +147,33 @@ sesiones · reactivación de pacientes antiguos.
   [Medesk](https://www.medesk.net/es/solutiones/odontologia), [Dentalink planes](https://web-es.softwaredentalink.com/en/planes)
 - Historia clínica interoperable: [Resolución 866 de 2021 (MinSalud)](https://www.minsalud.gov.co/sites/rid/Lists/BibliotecaDigital/RIDE/DE/DIJ/resolucion-866-de-2021.pdf),
   [Impacto TIC](https://impactotic.co/historia-clinica-interoperable-en-colombia-avanza-en-normatividad-pero-falta-en-ejecucion/)
+
+---
+
+## 4. Estado de construcción (se actualiza en cada avance)
+
+| P0 | Estado | Notas |
+|---|---|---|
+| 1. Festivos y horario/vacaciones por profesional | ✅ 2026-10-28 | `vertice/festivos.py`; horario propio por profesional; bloqueos de varios días; citas "por reprogramar" |
+| 2. Pausa automática y tomar control del chat | ✅ 2026-10-28 | Ver detalle abajo |
+| 3. Notas de voz | ⏳ | |
+| 4. Reprogramar citas | ⏳ | |
+| 5. Recordatorios con confirmación | ⏳ | |
+| 6. Usuarios con rol + bitácora | ⏳ | |
+| 7. Modo pre-reserva | ⏳ | |
+| 8. VPS, respaldos, monitoreo, aviso de privacidad | ⏳ | |
+
+### P0-2 · cómo funciona
+- Si una persona de la clínica escribe desde la app de WhatsApp Business, Meta avisa por el webhook `smb_message_echoes`;
+  Sofía se pausa en ese chat `pausa_horas` (12 por defecto, configurable por clínica) y se reactiva sola. El equipo también puede
+  **tomar control** o **devolver a Sofía** desde el panel, y **responder desde el panel**.
+- Mientras Sofía está en pausa **no contesta**, pero los mensajes del paciente se guardan; el panel los marca "Esperando al equipo"
+  (con contador en el menú) para que nadie quede sin respuesta.
+- Al reactivarse, Sofía recibe una nota con lo que se habló mientras estaba en pausa, para no repetir ni contradecir.
+- Respuestas desde el panel: WhatsApp solo permite texto libre dentro de las **24 h** posteriores al último mensaje del
+  paciente; fuera de ese plazo el panel lo dice (hace falta una plantilla aprobada).
+- Lo que envía Sofía se registra por su id para no confundirlo con un mensaje del equipo si Meta lo devuelve como eco.
+- ⚠️ **Por confirmar con el primer número real:** el formato exacto del aviso `smb_message_echoes` (no pude consultar la
+  documentación oficial desde este entorno). El lector es tolerante (acepta el destinatario en `to` o `recipient_id`), pero hay que
+  probarlo con un mensaje real escrito desde el celular antes de dar por cerrado este punto.
+

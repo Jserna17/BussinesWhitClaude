@@ -46,7 +46,7 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
     por_numero = {n.whatsapp_phone_number_id: n for n in negocios.values() if n.whatsapp_phone_number_id}
 
     app = FastAPI(title="Vértice · Asistente de WhatsApp")
-    montar_panel(app, db, negocios, asistente.ahora)
+    montar_panel(app, db, negocios, asistente.ahora, enviar)
 
     @app.get("/salud")
     def salud():
@@ -59,20 +59,36 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
             return PlainTextResponse(q.get("hub.challenge", ""))
         raise HTTPException(status_code=403)
 
+    def enviar_y_registrar(negocio: Negocio, para: str, texto: str) -> None:
+        wamid = enviar(negocio.whatsapp_phone_number_id, para, texto)
+        if wamid:
+            db.marcar_procesado(wamid)  # si Meta lo "ecoa" de vuelta no es un mensaje del equipo
+
     def atender(m: whatsapp.MensajeEntrante, negocio: Negocio) -> None:
+        if db.pausa_vigente(negocio.id, m.de):
+            # Una persona atiende este chat: guardamos el mensaje para que el equipo lo vea y no respondemos.
+            db.guardar_mensaje_chat(negocio.id, m.de, "paciente", m.texto or f"[{m.tipo}]", "whatsapp")
+            return
         if m.texto is None:
-            enviar(negocio.whatsapp_phone_number_id, m.de, NO_TEXTO)
+            enviar_y_registrar(negocio, m.de, NO_TEXTO)
             return
         texto = m.texto if not m.nombre_perfil else f"(Nombre en WhatsApp: {m.nombre_perfil}) {m.texto}"
         respuesta = asistente.responder(negocio, m.de, texto)
-        enviar(negocio.whatsapp_phone_number_id, m.de, respuesta)
+        enviar_y_registrar(negocio, m.de, respuesta)
 
     @app.post("/webhook")
     async def recibir(request: Request, tareas: BackgroundTasks):
         cuerpo = await request.body()
         if APP_SECRET and not whatsapp.firma_valida(cuerpo, request.headers.get("X-Hub-Signature-256"), APP_SECRET):
             raise HTTPException(status_code=401)
-        for m in whatsapp.extraer_mensajes(json.loads(cuerpo or b"{}")):
+        payload = json.loads(cuerpo or b"{}")
+        for e in whatsapp.extraer_ecos(payload):
+            negocio = por_numero.get(e.phone_number_id)
+            if negocio is None or not e.para or (e.id and not db.marcar_procesado(e.id)):
+                continue
+            db.guardar_mensaje_chat(negocio.id, e.para, "equipo", e.texto, "app")
+            db.pausar(negocio.id, e.para, negocio.pausa_horas, "El equipo escribió desde la app de WhatsApp")
+        for m in whatsapp.extraer_mensajes(payload):
             negocio = por_numero.get(m.phone_number_id)
             if negocio is None:
                 log.warning("Mensaje para un número no configurado: %s", m.phone_number_id)

@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-28 · Sesión #20 (P0-1: festivos y horarios por profesional)
+> Última actualización: 2026-10-28 · Sesión #20 (P0-1 y P0-2: festivos/horarios y pausa del asistente)
 
 ---
 
@@ -132,7 +132,8 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [ ] Publicar el servidor (webhook + panel) en un VPS con HTTPS
 - [x] Análisis de integración de agenda y riesgos de operación (`docs/14-integracion-agenda-y-operacion.md`)
 - [x] P0-1 hecho (2026-10-28): festivos de Colombia calculados, horario y vacaciones por profesional, bloqueos de varios días, aviso de citas por reprogramar
-- [ ] Pendientes P0 antes del primer cliente: pausa/tomar control del chat (coexistencia);
+- [x] P0-2 hecho (2026-10-28): Sofía se pausa si el equipo escribe (aviso de Meta o desde el panel), tomar control/devolver, responder desde el panel; falta confirmar el formato real del aviso con un número conectado
+- [ ] Pendientes P0 antes del primer cliente:
   notas de voz; reprogramar; recordatorios con plantillas; usuarios con rol + bitácora; modo pre-reserva; VPS + respaldos + monitoreo; aviso de privacidad
 - [ ] Ampliar base a 150 negocios (restaurantes, salones, hoteles/fincas, Santa Rosa, La Virginia)
 - [ ] Primeros 3 clientes piloto
@@ -177,6 +178,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-28 | Regla: una sola agenda oficial por clínica. Tres modos: A) Vértice es la agenda, B) sincronizada (Google Calendar / software con API), C) pre-reserva con confirmación humana; siempre semana de sombra antes de encender | Evitar dobles reservas con cuadernos o software existentes |
 | 2026-10-28 | No manejar historia clínica; solo agenda y conversación | Carga legal (Ley 2015/2020, Res. 866/2021) fuera de nuestro alcance |
 | 2026-10-28 | Las clínicas cierran en festivos colombianos por defecto (`abre_festivos: false`, configurable); cada profesional puede tener horario propio | Evitar agendar festivos y horarios que el odontólogo no atiende |
+| 2026-10-28 | Si una persona del equipo escribe en un chat, Sofía se pausa 12 h (configurable) y el paciente que escribe en pausa queda "esperando al equipo" | Evitar que bot y recepcionista respondan al mismo paciente sin dejar a nadie sin respuesta |
 
 ## 8. Preguntas abiertas para el fundador
 

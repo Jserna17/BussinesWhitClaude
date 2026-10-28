@@ -475,3 +475,67 @@ def test_vacaciones_de_varios_dias_y_citas_afectadas(db):
     sesion = c.get("/panel/api/sesion", headers=H).json()
     assert sesion["festivos"]["2026-11-16"] == "Independencia de Cartagena"
     assert sesion["horario_profesionales"]["Dr. Andrés Ríos"]["lunes"] == []
+
+
+def eco(para="573001112233", texto_="Hola, soy Marta de la clínica", msg_id="wamid.eco1", phone_number_id="123"):
+    return {"entry": [{"changes": [{"field": "smb_message_echoes", "value": {
+        "metadata": {"phone_number_id": phone_number_id},
+        "message_echoes": [{"id": msg_id, "to": para, "type": "text", "text": {"body": texto_}}]}}]}]}
+
+
+def test_el_equipo_escribe_y_el_asistente_se_calla(db):
+    from dataclasses import replace
+    negocio = replace(CLINICA, whatsapp_phone_number_id="123")
+    api = APIFalsa([respuesta(texto("Claro, te ayudo.")), respuesta(texto("Listo, sigo yo."))])
+    enviados = []
+    app = crear_app(Asistente(db, api, ahora), {negocio.id: negocio},
+                    enviar=lambda pid, para, t: enviados.append(t) or f"wamid.sofia{len(enviados)}")
+    c = TestClient(app)
+    c.post("/webhook", json=eco())                      # la recepcionista escribe desde su celular
+    assert db.pausa_vigente(negocio.id, "573001112233")
+    c.post("/webhook", json=eco())                      # el mismo aviso repetido no cambia nada
+    assert len(db.mensajes_chat(negocio.id, "573001112233")) == 1
+    c.post("/webhook", json=payload(msg_id="wamid.p1"))  # el paciente responde: Sofía NO contesta
+    assert enviados == [] and api.peticiones == []
+    chat = [(m["rol"], m["texto"]) for m in db.mensajes_chat(negocio.id, "573001112233")]
+    assert chat[0] == ("equipo", "Hola, soy Marta de la clínica") and chat[1][0] == "paciente"
+    # Se devuelve el chat a Sofía: responde y sabe lo que habló el equipo.
+    db.reanudar(negocio.id, "573001112233")
+    c.post("/webhook", json=payload(msg_id="wamid.p2"))
+    assert enviados == ["Claro, te ayudo."]
+    pedido = json.dumps(api.peticiones[0]["messages"], ensure_ascii=False)
+    assert "Una persona del equipo escribió" in pedido and "Hola, soy Marta" in pedido
+
+
+def test_pausa_vence_sola(db):
+    from datetime import timedelta
+    db.pausar(CLINICA.id, "573001112233", 12, "prueba")
+    assert db.pausa_vigente(CLINICA.id, "573001112233")
+    futuro = (datetime.fromisoformat(db._ahora()) + timedelta(hours=13)).isoformat(timespec="seconds")
+    db._ahora = lambda: futuro
+    assert db.pausa_vigente(CLINICA.id, "573001112233") is None
+
+
+def test_panel_tomar_control_responder_y_devolver(db):
+    from dataclasses import replace
+    negocio = replace(CLINICA, whatsapp_phone_number_id="123")
+    enviados = []
+    c = TestClient(crear_app(Asistente(db, APIFalsa([]), ahora), {negocio.id: negocio},
+                             enviar=lambda pid, para, t: enviados.append((para, t)) or "wamid.x"))
+    H = {"X-Negocio": negocio.id, "X-Clave": "demo123"}
+    cli = "573001112233"
+    # Sin mensaje reciente del paciente no se puede escribir (ventana de 24 h de WhatsApp)
+    assert c.post(f"/panel/api/conversaciones/{cli}/enviar", headers=H, json={"texto": "Hola"}).status_code == 409
+    db.guardar_mensaje_chat(negocio.id, cli, "paciente", "¿Tienen cita hoy?", "whatsapp")
+    assert c.post(f"/panel/api/conversaciones/{cli}/enviar", headers=H, json={"texto": "  "}).status_code == 400
+    r = c.post(f"/panel/api/conversaciones/{cli}/enviar", headers=H, json={"texto": "Sí, a las 3 p. m."}).json()
+    assert r["enviado"] is True and enviados == [(cli, "Sí, a las 3 p. m.")]
+    lista = c.get("/panel/api/conversaciones", headers=H).json()
+    assert lista[0]["pausada"] is True and lista[0]["sin_responder"] is False
+    hilo = c.get(f"/panel/api/conversaciones/{cli}", headers=H).json()
+    assert [m["rol"] for m in hilo["mensajes"]] == ["paciente", "equipo"] and hilo["pausada"]
+    # El paciente escribe mientras la atiende una persona: queda "sin responder"
+    db.guardar_mensaje_chat(negocio.id, cli, "paciente", "Perfecto, gracias", "whatsapp")
+    assert c.get("/panel/api/conversaciones", headers=H).json()[0]["sin_responder"] is True
+    assert c.post(f"/panel/api/conversaciones/{cli}/devolver", headers=H).status_code == 200
+    assert c.get("/panel/api/conversaciones", headers=H).json()[0]["pausada"] is False

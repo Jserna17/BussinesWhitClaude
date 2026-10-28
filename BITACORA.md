@@ -385,3 +385,10 @@ P0/P1/P2. Checklist de onboarding actualizado; la pregunta "¿dónde llevan la a
 - Corregido de paso: la base devolvía la hora real del servidor en las pruebas; ahora las pruebas usan reloj fijo. 28 pruebas OK.
 - Demo publicada de nuevo (misma URL, versión 3).
 **Siguiente:** P0-2 pausa automática y tomar control del chat.
+
+### P0-2 (misma sesión)
+- Webhook `smb_message_echoes`: si el equipo escribe desde el celular, Sofía se pausa; mensajes del paciente en pausa se guardan y quedan "esperando al equipo".
+- Panel: Tomar control / Devolver a Sofía, caja para responder como la clínica (ventana de 24 h de WhatsApp), mensajes del equipo en el chat, contador en el menú.
+- Al reactivarse, Sofía recibe una nota con lo que habló el equipo. `enviar_texto` devuelve el id para no confundir sus mensajes con ecos.
+- 31 pruebas OK; demo republicada. **Por confirmar:** formato real del eco con un número conectado.
+**Siguiente:** P0-3 notas de voz.

@@ -43,7 +43,7 @@ ESCENARIOS = [
               espera_humano=True),
     Escenario("Ver y cancelar cita",
               ["Hola, quiero valoración el próximo lunes a las 9 de la mañana, soy Andrés Gómez",
-               "Sí, confírmala", "Ups, ya no puedo. ¿Qué citas tengo?", "Cancela esa cita por favor"],
+               "Sí, confírmala", "Ups, ya no puedo. ¿Qué citas tengo?", "Cancela esa cita por favor", "Sí, cancélala"],
               espera_cita=False),
     Escenario("Financiación", ["¿Puedo pagar un diseño de sonrisa a cuotas?"], contiene=["cuotas"]),
     Escenario("EPS", ["¿Atienden por la EPS Sanitas?"], contiene=["particular"]),
@@ -103,11 +103,12 @@ def main() -> None:
     p.add_argument("--proveedor", default=None, help="claude u openai (por defecto: VERTICE_PROVEEDOR)")
     p.add_argument("--negocio", default="clinica-demo")
     p.add_argument("--solo", default="", help="números de escenario separados por coma, ej. 2,5")
+    p.add_argument("--db", default="", help="guardar las conversaciones en esta base (para ver el panel)")
     args = p.parse_args()
 
     negocio = cargar_negocios(RAIZ / "negocios")[args.negocio]
     elegidos = {int(x) for x in args.solo.split(",") if x.strip()}
-    db = BaseDatos(Path(tempfile.mkdtemp()) / "pruebas.db")
+    db = BaseDatos(args.db or Path(tempfile.mkdtemp()) / "pruebas.db")
     asistente = Asistente(db, proveedor=args.proveedor)
 
     salida = [f"# Pruebas en vivo — {negocio.nombre} — {datetime.now():%Y-%m-%d %H:%M}",

@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-28 · Sesión #15 (mystery shopping #1 completo: espera típica ~11 h)
+> Última actualización: 2026-10-28 · Sesión #16 (agenda sin cruces + panel del médico)
 
 ---
 
@@ -44,6 +44,10 @@
   OpenAI que ya tiene el fundador. ✅ **Probado en vivo** (2026-10-27) con `gpt-5.4-mini` desde el entorno de Claude
   (red y secreto `OPENAI_API_KEY` habilitados): 20/20 escenarios de la batería; transcripción en
   `agente/resultados/`. Falta: conectar el número de prueba de Meta (WhatsApp real).
+- **Agenda sin cruces + panel del médico (v0.2, 2026-10-28):** varios odontólogos, almuerzo, bloqueos, reservas
+  atómicas (probado con 20 pacientes simultáneos); panel web `/panel` con indicadores, agenda semanal (asistió/no
+  asistió/cancelar, nueva cita, bloqueos), conversaciones completas y casos/interesados. Capturas en `demo/capturas/`.
+  Probado en vivo con OpenAI: 20/20. Falta: publicarlo en un servidor (VPS) para que el médico lo abra desde su celular.
 - **Página demo para visitas:** https://claude.ai/artifact/QNoA7pa8cbFn5WqLEwce34 (`demo/sofia.html`): chat tipo
   WhatsApp con Sofía (corre con Claude dentro de claude.ai, con la cuenta de quien la abre) + panel "lo que ve la
   clínica" (agenda, avisos al equipo, interesados) + personalizar nombre/dirección de la clínica visitada. Privada.
@@ -120,7 +124,8 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [ ] Ampliar lista dental a 60+ clínicas (cuando haya acceso a Google Maps o con ayuda del fundador)
 - [ ] Fundador crea cuenta en Meta for Developers (número de prueba de WhatsApp)
 - [ ] RUT + cuenta separada para el negocio
-- [ ] Construir demo funcional del agente
+- [x] Agenda sin cruces (multi-profesional, almuerzo, bloqueos, reservas atómicas) y panel del médico — 22 pruebas OK
+- [ ] Publicar el servidor (webhook + panel) en un VPS con HTTPS
 - [ ] Ampliar base a 150 negocios (restaurantes, salones, hoteles/fincas, Santa Rosa, La Virginia)
 - [ ] Primeros 3 clientes piloto
 
@@ -157,6 +162,8 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-27 | Reglas de negocio críticas se validan en las herramientas, no solo en el prompt (p. ej. `requiere_valoracion`) | El modelo a veces ignora instrucciones; el código no |
 | 2026-10-27 | Demo para visitas = página web en claude.ai (artifact) que el fundador abre en su celular | No requiere servidor ni WhatsApp conectado; muestra chat + agenda en vivo |
 | 2026-10-27 | Mensaje central de venta: "de 20 clínicas, ninguna me dejó una cita agendada de noche" (dato propio del mystery shopping) | Evidencia real y local; más fuerte que cifras de internet |
+| 2026-10-28 | Agenda: reglas en `vertice/agenda.py` (una sola fuente para asistente y panel); reserva re-validada en transacción exclusiva; nombre y apellido obligatorios para agendar | Evitar cruces y citas con datos basura; lo pidió el fundador |
+| 2026-10-28 | Panel del médico servido por la misma app (`/panel`), con clave por clínica | Sin costo extra; el médico ve agenda, conversaciones e indicadores |
 | 2026-10-28 | Dato de venta principal: "respondieron unas 11 horas después" (mediana real del mystery shopping) | Las clínicas sí quieren pacientes (responden, ofrecen citas) pero tarde y a mano |
 
 ## 8. Preguntas abiertas para el fundador

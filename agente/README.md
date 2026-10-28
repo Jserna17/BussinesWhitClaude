@@ -18,7 +18,11 @@ Un solo servidor atiende a **muchos negocios**: cada cliente es un archivo en `n
 | `negocios/clinica-demo.yaml` | Clínica dental ficticia ("Sofía") para demos |
 | `negocios/taller-demo.yaml` | Taller de motos ficticio ("Max") para demos |
 | `vertice/motores.py` | Motores intercambiables: Claude u OpenAI |
-| `tests/` | 13 pruebas sin conexión |
+| `vertice/agenda.py` | Motor de agenda sin cruces (profesionales, almuerzo, bloqueos, reservas atómicas) |
+| `vertice/panel.py` + `panel.html` | Panel web del médico (API + página) |
+| `vertice/transcripcion.py` | Convierte el historial en chat legible para el panel |
+| `vertice/datos_demo.py` | Datos de ejemplo para mostrar el panel |
+| `tests/` | 22 pruebas sin conexión |
 
 ## Decisiones técnicas
 - **Modelo:** `claude-opus-5-5` con esfuerzo `low` (respuestas rápidas). Se cambia con las variables
@@ -32,6 +36,37 @@ Un solo servidor atiende a **muchos negocios**: cada cliente es un archivo en `n
 - **Historial:** se guarda completo; tras 24 h sin mensajes o 60 mensajes empieza una conversación nueva.
 - **Seguridad:** valida la firma de Meta, ignora entregas duplicadas, nunca agenda horas ocupadas ni
   cancela citas de otro número.
+
+## Agenda sin cruces (v0.2)
+Motor en `vertice/agenda.py`, compartido por el asistente y el panel, así ambos aplican las mismas reglas:
+- **Varios odontólogos/sillas** (`profesionales` en el YAML; cada uno puede limitarse a ciertos servicios).
+  Una hora está libre si **algún** profesional que hace ese servicio está libre durante **toda** la duración.
+- **Horario partido** (almuerzo): `lunes: [["08:00","12:00"],["14:00","18:00"]]`. Un servicio nunca se cruza
+  con el cierre ni con el almuerzo.
+- **Bloqueos** desde el panel (toda la clínica o un profesional): festivos, congresos, reuniones.
+- **Sin dobles reservas**: la reserva se vuelve a comprobar dentro de una transacción exclusiva de SQLite
+  (`BEGIN IMMEDIATE`), así dos pacientes escribiendo al mismo tiempo nunca reciben la misma silla. Probado con
+  20 reservas simultáneas → solo entran las que caben.
+- Cancelar libera el horario; "asistió / no asistió" queda registrado para medir inasistencia.
+- El asistente solo agenda con **nombre y apellido** reales (regla en el código).
+
+## Panel del médico (`/panel`)
+Mismo servidor del webhook: `http://SERVIDOR/panel`. Entra con el código de la clínica (`clinica-demo`) y su
+clave (`panel_clave` en el YAML o variable `VERTICE_PANEL_CLAVE_<ID>`; la demo usa `demo123`).
+- **Resumen:** mensajes atendidos, % fuera de horario, citas agendadas por el asistente, citas de hoy,
+  casos abiertos, interesados, inasistencia, gráfica de mensajes por día y próximas citas.
+- **Agenda semanal:** citas por día con su origen (asistente o recepción), botones Asistió / No asistió /
+  Cancelar, nueva cita (solo muestra horas realmente libres) y bloqueos de horario.
+- **Conversaciones:** cada chat completo como en WhatsApp, con las acciones del asistente (citas agendadas,
+  avisos al equipo, intentos que el sistema frenó).
+- **Casos e interesados:** lo que el asistente pasó al equipo (marcar resuelto) y pacientes para seguimiento.
+
+Ver capturas en `../demo/capturas/`. Para una base de demostración con datos:
+```bash
+python -m vertice.pruebas_vivo --proveedor openai --db demo.db   # 20 conversaciones reales
+python -m vertice.datos_demo demo.db                              # citas y bloqueo de ejemplo
+VERTICE_DB=demo.db uvicorn vertice.app:app --port 8000            # abrir http://localhost:8000/panel
+```
 
 ## Motores de IA: Claude u OpenAI
 El asistente funciona con dos proveedores; se elige con `VERTICE_PROVEEDOR`:
@@ -97,7 +132,7 @@ mantenga la calidad. Se mide con `--debug` (muestra tokens por mensaje).
 
 ## Pruebas
 ```bash
-python -m pytest -q                                   # 13 pruebas sin conexión (gratis)
+python -m pytest -q                                   # 22 pruebas sin conexión (gratis)
 python -m vertice.pruebas_vivo --proveedor openai      # 20 conversaciones reales (gasta créditos, ~centavos de USD)
 python -m vertice.pruebas_vivo --proveedor openai --solo 2,5   # solo algunos escenarios
 ```

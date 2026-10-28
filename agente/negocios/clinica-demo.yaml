@@ -9,13 +9,18 @@ nombre_asistente: Sofía
 tono: cálido, profesional y tranquilizador
 telefono_dueno: ""            # WhatsApp del dueño para avisos, formato 57XXXXXXXXXX
 whatsapp_phone_number_id: ""  # ID del número en Meta (lo da la Cloud API)
-horario:
-  lunes: ["08:00", "18:00"]
-  martes: ["08:00", "18:00"]
-  miercoles: ["08:00", "18:00"]
-  jueves: ["08:00", "18:00"]
-  viernes: ["08:00", "18:00"]
+panel_clave: "demo123"        # clave del panel de la demo (en clientes reales: variable de entorno)
+horario:                      # franjas; el espacio entre ellas es el almuerzo
+  lunes: [["08:00", "12:00"], ["14:00", "18:00"]]
+  martes: [["08:00", "12:00"], ["14:00", "18:00"]]
+  miercoles: [["08:00", "12:00"], ["14:00", "18:00"]]
+  jueves: [["08:00", "12:00"], ["14:00", "18:00"]]
+  viernes: [["08:00", "12:00"], ["14:00", "18:00"]]
   sabado: ["08:00", "12:00"]
+profesionales:                # sillas que atienden en paralelo; sin "servicios" = atiende todo
+  - nombre: Dra. Laura Gómez
+  - nombre: Dr. Andrés Ríos
+    servicios: ["Valoración de ortodoncia", "Ortodoncia (control)", "Valoración odontológica", "Limpieza dental (profilaxis)"]
 servicios:
   - nombre: Valoración odontológica
     precio: "$50.000 (se descuenta si haces el tratamiento)"

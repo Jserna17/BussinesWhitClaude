@@ -302,3 +302,27 @@ Sonrisa, @Richo5555.
 **Qué se hizo:** tabla completa en `prospectos/mystery-shopping-2026-10-27.md`, CSV actualizados, MEMORIA (nuevo dato
 de venta: espera típica ~11 h).
 **Próximos pasos:** cerrar con amabilidad los chats con cita ofrecida; elegir 5 clínicas para visitar; hojas de auditoría.
+
+---
+
+## Sesión #16 — 2026-10-28 — Agenda sin cruces y panel del médico
+
+**Pedido del fundador:** antes de las visitas, armar todo el sistema de agendamiento sin cruces (que el agente
+sepa qué está disponible) y un dashboard para el médico con datos y las conversaciones.
+
+**Qué se hizo:**
+- `agente/vertice/agenda.py`: motor único de agenda (asistente + panel): varios profesionales con sus servicios,
+  horario partido (almuerzo), bloqueos generales o por profesional, intervalo y anticipación configurables.
+- `db.py`: reservas re-validadas dentro de `BEGIN IMMEDIATE` (sin dobles reservas aunque haya varios procesos),
+  estados asistió/no asistió, origen (asistente/panel), bloqueos, casos resueltos, hora de Bogotá, migración automática.
+- `panel.py` + `panel.html` + `transcripcion.py`: panel web con login por clínica; resumen con 8 indicadores y
+  gráfica; agenda semanal con acciones; nueva cita y bloqueos; conversaciones legibles con acciones del asistente;
+  casos e interesados.
+- Errores reales encontrados con la batería en vivo y corregidos: el asistente agendaba con nombre "Cliente"
+  (ahora el código exige nombre y apellido); pasaba al equipo cuando pedían "esta semana" (ahora ofrece 2–3
+  horarios); mostraba IDs internos; hora UTC en registros.
+- Demo `clinica-demo` con 2 odontólogos y almuerzo; `datos_demo.py` para poblar el panel.
+- Verificación: 22 pruebas (incluye 20 reservas simultáneas, repetida 15 veces sin fallas), batería en vivo
+  OpenAI 20/20, capturas del panel sin errores de consola (`demo/capturas/`).
+
+**Próximos pasos:** publicar en un VPS (webhook + panel); número de prueba de Meta; hojas de auditoría y visitas.

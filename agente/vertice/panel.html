@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Panel de la clínica · Vértice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra superior con pestañas; cada pestaña es una vista de trabajo (resumen, agenda, chats, casos). */
+:root {
+  --bg: #f1f4f3; --surface: #ffffff; --fg: #15201d; --muted: #5d6c68; --line: #d9e1de;
+  --brand: #0e5c4f; --brand-soft: #e3f1ed; --brand-ink: #ffffff;
+  --bar: #2a8c78; --mine: #d7f1e4; --theirs: #ffffff; --chat: #e8ede9;
+  --ok: #157a3c; --ok-soft: #e2f4e8; --warn: #a15c07; --warn-soft: #fbefd9; --bad: #b42318; --bad-soft: #fde7e5;
+  --block: #eceff1;
+  --display: "Manrope", "Segoe UI", system-ui, sans-serif; --body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0e1513; --surface: #16201e; --fg: #e2ebe8; --muted: #94a5a0; --line: #283533;
+    --brand: #3aa58f; --brand-soft: #173a33; --brand-ink: #04110e; --bar: #46b39c; --mine: #1c473c; --theirs: #1d2927; --chat: #101917;
+    --ok: #5fd08a; --ok-soft: #173525; --warn: #f0b45a; --warn-soft: #3a2a12; --bad: #f2867c; --bad-soft: #3d1a17; --block: #222c2a;
+    color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.45 var(--body); }
+button, input, select { font: inherit; color: inherit; }
+header.top { position: sticky; top: 0; z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line);
+  padding: 10px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
+.marca { font: 800 1rem var(--display); color: var(--brand); letter-spacing: .04em; }
+.clinica { font: 700 1.05rem var(--display); }
+nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+nav.tabs button { border: 0; background: transparent; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--muted); }
+nav.tabs button[aria-selected="true"] { background: var(--brand-soft); color: var(--brand); }
+.badge { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--bad); color: #fff; font: 700 .72rem var(--display); text-align: center; margin-left: 4px; }
+main { max-width: 1200px; margin: 0 auto; padding: 20px max(16px, env(safe-area-inset-left, 0px)) 40px; }
+h2 { font: 700 1.1rem var(--display); margin: 0 0 12px; }
+h3 { font: 700 .95rem var(--display); margin: 0 0 8px; }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
+.grid { display: grid; gap: 14px; }
+.kpis { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.kpi .v { font: 800 1.9rem var(--display); font-variant-numeric: tabular-nums; }
+.kpi .l { color: var(--muted); font-size: .85rem; }
+.two { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+@media (max-width: 900px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--muted); font: 11px var(--body); }
+ul.plain { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ul.plain li { border-top: 1px solid var(--line); padding-top: 8px; }
+ul.plain li:first-child { border-top: 0; padding-top: 0; }
+.chip { display: inline-block; font: 700 .7rem var(--display); letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+.chip.confirmada { background: var(--brand-soft); color: var(--brand); }
+.chip.asistio { background: var(--ok-soft); color: var(--ok); }
+.chip.no_asistio { background: var(--warn-soft); color: var(--warn); }
+.chip.cancelada { background: var(--block); color: var(--muted); text-decoration: line-through; }
+.chip.abierta { background: var(--bad-soft); color: var(--bad); }
+.chip.resuelta { background: var(--ok-soft); color: var(--ok); }
+.chip.sofia { background: var(--brand-soft); color: var(--brand); text-transform: none; letter-spacing: 0; }
+.chip.panel { background: var(--block); color: var(--muted); text-transform: none; letter-spacing: 0; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 12px; cursor: pointer; font-weight: 600; font-size: .88rem; }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.btn.danger { color: var(--bad); }
+.btn:disabled { opacity: .5; cursor: default; }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 1000px) { .week { grid-template-columns: minmax(0, 1fr); } }
+.day { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; min-width: 0; }
+.day.hoy { border-color: var(--brand); }
+.day h3 { display: grid; gap: 2px; }
+.slot { border-radius: 8px; padding: 8px; margin-top: 8px; background: var(--bg); border-left: 3px solid var(--brand); font-size: .85rem; display: grid; gap: 2px; }
+.slot.cancelada { opacity: .55; border-left-color: var(--line); }
+.slot.no_asistio { border-left-color: var(--warn); }
+.slot.asistio { border-left-color: var(--ok); }
+.slot.bloqueo { border-left-color: var(--muted); background: var(--block); }
+.slot .t { font-weight: 700; font-variant-numeric: tabular-nums; }
+.slot .acts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.slot .acts button { font-size: .75rem; padding: 3px 6px; }
+.form { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); align-items: end; }
+.form label { display: grid; gap: 4px; font-size: .82rem; color: var(--muted); }
+.form input, .form select { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 8px; min-width: 0; }
+.msg { font-size: .88rem; min-height: 1.2em; }
+.msg.err { color: var(--bad); } .msg.ok { color: var(--ok); }
+.chats { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 14px; min-height: 60vh; }
+@media (max-width: 800px) { .chats { grid-template-columns: minmax(0, 1fr); } }
+.lista { padding: 0; overflow: auto; max-height: 75vh; }
+.conv { display: grid; gap: 2px; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: transparent; padding: 10px 14px; cursor: pointer; }
+.conv[aria-current="true"] { background: var(--brand-soft); }
+.conv .n { font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+.conv .p { color: var(--muted); font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hilo { background: var(--chat); border-radius: 12px; border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 6px; overflow: auto; max-height: 75vh; min-width: 0; }
+.b { max-width: 80%; padding: 7px 10px 5px; border-radius: 10px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .92rem; }
+.b.paciente { align-self: flex-start; background: var(--theirs); }
+.b.asistente { align-self: flex-end; background: var(--mine); }
+.b .h { display: block; text-align: right; font-size: .68rem; color: var(--muted); }
+.ev { align-self: center; font-size: .78rem; color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: 999px; padding: 3px 10px; text-align: center; }
+.login { max-width: 380px; margin: 12vh auto; }
+.empty { color: var(--muted); font-size: .9rem; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<section id="login" class="card login">
+  <div class="marca">VÉRTICE</div>
+  <h2 style="margin-top:8px">Panel de la clínica</h2>
+  <form id="loginForm" class="form" style="grid-template-columns:1fr">
+    <label for="lgNegocio">Código de la clínica<input id="lgNegocio" autocomplete="username" required></label>
+    <label for="lgClave">Clave<input id="lgClave" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary" type="submit">Entrar</button>
+    <div id="lgMsg" class="msg err"></div>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header class="top">
+    <span class="marca">VÉRTICE</span>
+    <span class="clinica" id="clinica"></span>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="resumen" aria-selected="true">Resumen</button>
+      <button role="tab" data-tab="agenda">Agenda</button>
+      <button role="tab" data-tab="chats">Conversaciones</button>
+      <button role="tab" data-tab="casos">Casos e interesados <span id="nCasos" class="badge" hidden></span></button>
+      <button class="btn" id="salir" type="button">Salir</button>
+    </nav>
+  </header>
+  <main>
+    <section data-view="resumen">
+      <div class="toolbar"><h2 style="margin:0">Últimos <select id="periodo"><option value="7">7 días</option><option value="30">30 días</option></select></h2><span class="muted small" id="actualizado"></span></div>
+      <div class="grid kpis" id="kpis"></div>
+      <div class="grid two" style="margin-top:14px">
+        <div class="card chart"><h3>Mensajes de pacientes por día</h3><div id="grafica"></div><p class="muted small" id="graficaNota"></p></div>
+        <div class="card"><h3>Próximas citas</h3><ul class="plain" id="proximas"></ul></div>
+      </div>
+    </section>
+
+    <section data-view="agenda" hidden>
+      <div class="toolbar">
+        <button class="btn" id="semAnt" type="button">← Semana anterior</button>
+        <button class="btn" id="semHoy" type="button">Hoy</button>
+        <button class="btn" id="semSig" type="button">Semana siguiente →</button>
+        <span class="muted small" id="rango"></span>
+      </div>
+      <div class="week" id="semana"></div>
+      <div class="grid two" style="margin-top:14px">
+        <div class="card">
+          <h3>Nueva cita (llamada o recepción)</h3>
+          <form id="citaForm" class="form">
+            <label for="ncServicio">Servicio<select id="ncServicio" required></select></label>
+            <label for="ncFecha">Fecha<input id="ncFecha" type="date" required></label>
+            <label for="ncHora">Hora libre<select id="ncHora" required><option value="">Elige servicio y fecha</option></select></label>
+            <label for="ncProf" id="ncProfWrap">Profesional<select id="ncProf"><option value="">Cualquiera libre</option></select></label>
+            <label for="ncNombre">Nombre del paciente<input id="ncNombre" required></label>
+            <label for="ncTel">Teléfono (opcional)<input id="ncTel" inputmode="tel"></label>
+            <button class="btn primary" type="submit">Agendar</button>
+          </form>
+          <div class="msg" id="ncMsg"></div>
+        </div>
+        <div class="card">
+          <h3>Bloquear horario (almuerzo, festivo, congreso…)</h3>
+          <form id="bloqForm" class="form">
+            <label for="bqFecha">Fecha<input id="bqFecha" type="date" required></label>
+            <label for="bqDesde">Desde<input id="bqDesde" type="time" required value="12:00"></label>
+            <label for="bqHasta">Hasta<input id="bqHasta" type="time" required value="14:00"></label>
+            <label for="bqProf" id="bqProfWrap">Profesional<select id="bqProf"><option value="">Toda la clínica</option></select></label>
+            <label for="bqMotivo">Motivo<input id="bqMotivo" placeholder="Ej.: almuerzo"></label>
+            <button class="btn" type="submit">Bloquear</button>
+          </form>
+          <div class="msg" id="bqMsg"></div>
+        </div>
+      </div>
+    </section>
+
+    <section data-view="chats" hidden>
+      <div class="chats">
+        <div class="card lista" id="convs"></div>
+        <div>
+          <div class="toolbar"><h2 id="convTitulo" style="margin:0">Elige una conversación</h2><span class="muted small" id="convInfo"></span></div>
+          <div class="hilo" id="hilo"><p class="empty">Aquí ves exactamente lo que el paciente escribió y lo que respondió el asistente, con las acciones que tomó (citas, avisos al equipo).</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section data-view="casos" hidden>
+      <div class="grid two">
+        <div class="card"><h3>Casos para atender</h3><p class="muted small">Urgencias, quejas, descuentos o preguntas médicas que el asistente pasó al equipo.</p><ul class="plain" id="casos"></ul></div>
+        <div class="card"><h3>Interesados para seguimiento</h3><p class="muted small">Preguntaron pero no agendaron. Buen momento para escribirles.</p><ul class="plain" id="interesados"></ul></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const S = { negocio: "", clave: "", info: null, semana: null, conv: null };
+const DIAS_TXT = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const ESTADO_TXT = { confirmada: "Confirmada", asistio: "Asistió", no_asistio: "No asistió", cancelada: "Cancelada" };
+
+async function api(ruta, opts = {}) {
+  const r = await fetch("/panel/api" + ruta, { ...opts, headers: { "Content-Type": "application/json", "X-Negocio": S.negocio, "X-Clave": S.clave, ...(opts.headers || {}) } });
+  if (r.status === 401) { salir(); throw new Error("Sesión no válida"); }
+  const datos = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(datos.detail || "Error " + r.status);
+  return datos;
+}
+function el(tag, attrs = {}, ...hijos) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) { if (k === "class") e.className = v; else if (k.startsWith("on")) e[k] = v; else e.setAttribute(k, v); }
+  for (const h of hijos.flat()) if (h != null) e.append(h instanceof Node ? h : document.createTextNode(String(h)));
+  return e;
+}
+const fechaTxt = iso => { const d = new Date(iso.slice(0, 10) + "T00:00:00"); return `${DIAS_TXT[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`; };
+const hora = iso => iso.slice(11, 16);
+const addDias = (iso, n) => { const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+
+// --- Sesión ---------------------------------------------------------------
+$("loginForm").onsubmit = async e => {
+  e.preventDefault();
+  S.negocio = $("lgNegocio").value.trim(); S.clave = $("lgClave").value;
+  try { await entrar(); try { sessionStorage.setItem("vp", JSON.stringify([S.negocio, S.clave])); } catch (_) {} }
+  catch (err) { $("lgMsg").textContent = "Código o clave incorrectos."; }
+};
+async function entrar() {
+  S.info = await api("/sesion");
+  $("login").hidden = true; $("app").hidden = false;
+  $("clinica").textContent = S.info.nombre;
+  const varios = S.info.profesionales.length > 1;
+  $("ncProfWrap").hidden = !varios; $("bqProfWrap").hidden = !varios;
+  for (const sel of [$("ncProf"), $("bqProf")]) S.info.profesionales.forEach(p => sel.append(el("option", { value: p }, p)));
+  S.info.servicios.forEach(s => $("ncServicio").append(el("option", { value: s }, s)));
+  $("ncFecha").value = $("bqFecha").value = S.info.hoy;
+  S.semana = S.info.hoy;
+  cargarResumen(); cargarCasos();
+}
+function salir() { try { sessionStorage.removeItem("vp"); } catch (_) {} location.reload(); }
+$("salir").onclick = salir;
+
+// --- Pestañas ---------------------------------------------------------------
+document.querySelectorAll("nav.tabs [data-tab]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav.tabs [data-tab]").forEach(x => x.setAttribute("aria-selected", x === b));
+  document.querySelectorAll("[data-view]").forEach(v => v.hidden = v.dataset.view !== b.dataset.tab);
+  ({ resumen: cargarResumen, agenda: cargarAgenda, chats: cargarConvs, casos: cargarCasos })[b.dataset.tab]();
+});
+
+// --- Resumen ----------------------------------------------------------------
+$("periodo").onchange = cargarResumen;
+async function cargarResumen() {
+  const r = await api("/resumen?dias=" + $("periodo").value);
+  const pct = r.mensajes_pacientes ? Math.round(100 * r.fuera_de_horario / r.mensajes_pacientes) : 0;
+  const total = r.inasistencia.asistio + r.inasistencia.no_asistio;
+  const kpis = [
+    [r.mensajes_pacientes, "Mensajes de pacientes atendidos"],
+    [pct + " %", `Llegaron fuera del horario (${r.fuera_de_horario})`],
+    [r.citas_agendadas_asistente, "Citas agendadas por " + S.info.asistente],
+    [r.citas_hoy, "Citas para hoy"],
+    [r.casos_abiertos, "Casos abiertos para el equipo"],
+    [r.interesados, "Interesados sin agendar"],
+    [total ? Math.round(100 * r.inasistencia.no_asistio / total) + " %" : "—", "Inasistencia (citas marcadas)"],
+    [r.conversaciones, "Conversaciones"],
+  ];
+  $("kpis").replaceChildren(...kpis.map(([v, l]) => el("div", { class: "card kpi" }, el("div", { class: "v" }, v), el("div", { class: "l" }, l))));
+  grafica(r.serie);
+  $("graficaNota").textContent = `Citas agendadas por ${S.info.asistente} en el periodo: ${r.citas_agendadas_asistente}.`;
+  $("proximas").replaceChildren(...(r.proximas.length ? r.proximas.map(c => el("li", {},
+    el("div", {}, el("strong", {}, `${fechaTxt(c.inicio)} · ${hora(c.inicio)}`), " ", el("span", { class: "chip " + (c.origen === "asistente" ? "sofia" : "panel") }, c.origen === "asistente" ? S.info.asistente : "Recepción")),
+    el("div", {}, `${c.nombre} — ${c.servicio}`), S.info.profesionales.length > 1 ? el("div", { class: "muted small" }, c.profesional) : null))
+    : [el("li", { class: "empty" }, "No hay citas próximas.")]));
+  $("actualizado").textContent = "Actualizado " + new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+}
+function grafica(serie) {
+  const W = 600, H = 200, P = { l: 28, r: 8, t: 14, b: 26 };
+  const max = Math.max(4, ...serie.map(s => s.mensajes));
+  const paso = Math.ceil(max / 4); const tope = paso * 4;
+  const bw = (W - P.l - P.r) / serie.length;
+  const y = v => P.t + (H - P.t - P.b) * (1 - v / tope);
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "Mensajes de pacientes por día: " + serie.map(s => `${s.fecha} ${s.mensajes}`).join(", "));
+  const add = (tag, a, txt) => { const e = document.createElementNS(ns, tag); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; svg.append(e); return e; };
+  for (let v = 0; v <= tope; v += paso) { add("line", { x1: P.l, x2: W - P.r, y1: y(v), y2: y(v), stroke: "var(--line)", "stroke-width": 1 }); add("text", { x: P.l - 6, y: y(v) + 4, "text-anchor": "end" }, v); }
+  const cada = Math.ceil(serie.length / 10);
+  serie.forEach((s, i) => {
+    const x = P.l + i * bw + bw * 0.18, w = bw * 0.64, h = H - P.b - y(s.mensajes);
+    if (s.mensajes > 0) {
+      const r = add("path", { d: `M${x},${H - P.b} v${-(h - 4)} q0,-4 4,-4 h${w - 8} q4,0 4,4 v${h - 4} z`, fill: "var(--bar)" });
+      const t = document.createElementNS(ns, "title"); t.textContent = `${fechaTxt(s.fecha)}: ${s.mensajes} mensajes · ${s.citas} citas`; r.append(t);
+    }
+    if (i % cada === 0) { const d = new Date(s.fecha + "T00:00:00"); add("text", { x: x + w / 2, y: H - 8, "text-anchor": "middle" }, `${d.getDate()}/${d.getMonth() + 1}`); }
+  });
+  $("grafica").replaceChildren(svg);
+}
+
+// --- Agenda -----------------------------------------------------------------
+$("semAnt").onclick = () => { S.semana = addDias(S.semana, -7); cargarAgenda(); };
+$("semSig").onclick = () => { S.semana = addDias(S.semana, 7); cargarAgenda(); };
+$("semHoy").onclick = () => { S.semana = S.info.hoy; cargarAgenda(); };
+async function cargarAgenda() {
+  const a = await api(`/agenda?desde=${S.semana}&dias=7`);
+  $("rango").textContent = `${fechaTxt(a.desde)} a ${fechaTxt(addDias(a.desde, 6))}`;
+  const varios = S.info.profesionales.length > 1;
+  const dias = [...Array(7)].map((_, i) => addDias(a.desde, i));
+  $("semana").replaceChildren(...dias.map(f => {
+    const items = [
+      ...a.citas.filter(c => c.inicio.startsWith(f)).map(c => ({ t: c.inicio, nodo: slotCita(c, varios) })),
+      ...a.bloqueos.filter(b => b.inicio.startsWith(f)).map(b => ({ t: b.inicio, nodo: slotBloqueo(b) })),
+    ].sort((x, y) => x.t.localeCompare(y.t));
+    const activas = a.citas.filter(c => c.inicio.startsWith(f) && c.estado !== "cancelada").length;
+    return el("div", { class: "day" + (f === S.info.hoy ? " hoy" : "") },
+      el("h3", {}, fechaTxt(f), el("span", { class: "muted small" }, activas + (activas === 1 ? " cita" : " citas"))),
+      items.length ? items.map(i => i.nodo) : el("div", { class: "empty small" }, horarioTxt(f)));
+  }));
+}
+function horarioTxt(f) {
+  const nombres = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+  const franjas = S.info.horario[nombres[new Date(f + "T00:00:00").getDay()]] || [];
+  return franjas.length ? "Libre · " + franjas.map(x => x.join("–")).join(", ") : "Cerrado";
+}
+function slotCita(c, varios) {
+  const acts = c.estado === "confirmada"
+    ? [["asistio", "Asistió"], ["no_asistio", "No asistió"], ["cancelada", "Cancelar"]]
+    : [["confirmada", "Reabrir"]];
+  return el("div", { class: "slot " + c.estado },
+    el("span", { class: "t" }, `${hora(c.inicio)}–${hora(c.fin)}`),
+    el("span", {}, el("strong", {}, c.nombre)),
+    el("span", { class: "muted" }, c.servicio + (varios ? " · " + c.profesional : "")),
+    el("span", {}, el("span", { class: "chip " + c.estado }, ESTADO_TXT[c.estado]), " ", el("span", { class: "chip " + (c.origen === "asistente" ? "sofia" : "panel") }, c.origen === "asistente" ? S.info.asistente : "Recepción")),
+    el("div", { class: "acts" }, acts.map(([e, t]) => el("button", { class: "btn" + (e === "cancelada" ? " danger" : ""), type: "button", onclick: () => cambiarEstado(c.id, e) }, t))));
+}
+function slotBloqueo(b) {
+  return el("div", { class: "slot bloqueo" },
+    el("span", { class: "t" }, `${hora(b.inicio)}–${hora(b.fin)} · Bloqueado`),
+    el("span", { class: "muted" }, (b.motivo || "Sin motivo") + (b.profesional ? " · " + b.profesional : "")),
+    el("div", { class: "acts" }, el("button", { class: "btn", type: "button", onclick: () => borrarBloqueo(b.id) }, "Quitar bloqueo")));
+}
+async function cambiarEstado(id, estado) {
+  try { await api(`/citas/${id}/estado`, { method: "POST", body: JSON.stringify({ estado }) }); }
+  catch (e) { alert(e.message); }
+  cargarAgenda();
+}
+async function borrarBloqueo(id) { await api(`/bloqueos/${id}`, { method: "DELETE" }); cargarAgenda(); }
+
+for (const id of ["ncServicio", "ncFecha", "ncProf"]) $(id).onchange = cargarHoras;
+async function cargarHoras() {
+  const sel = $("ncHora"); sel.replaceChildren(el("option", { value: "" }, "Cargando…"));
+  try {
+    const d = await api(`/disponibilidad?fecha=${$("ncFecha").value}&servicio=${encodeURIComponent($("ncServicio").value)}`);
+    const prof = $("ncProf").value;
+    const horas = Object.entries(d.libres).filter(([, ps]) => !prof || ps.includes(prof)).map(([h]) => h).sort();
+    sel.replaceChildren(...(horas.length ? horas.map(h => el("option", { value: h }, h)) : [el("option", { value: "" }, "Sin horas libres")]));
+  } catch (e) { sel.replaceChildren(el("option", { value: "" }, e.message)); }
+}
+$("citaForm").onsubmit = async e => {
+  e.preventDefault();
+  const m = $("ncMsg");
+  try {
+    const c = await api("/citas", { method: "POST", body: JSON.stringify({ servicio: $("ncServicio").value, fecha: $("ncFecha").value, hora: $("ncHora").value, profesional: $("ncProf").value, nombre: $("ncNombre").value, telefono: $("ncTel").value }) });
+    m.className = "msg ok"; m.textContent = `Cita agendada: ${fechaTxt(c.fecha)} a las ${c.hora}${S.info.profesionales.length > 1 ? " con " + c.profesional : ""}.`;
+    $("ncNombre").value = $("ncTel").value = ""; S.semana = c.fecha; cargarAgenda(); cargarHoras();
+  } catch (err) { m.className = "msg err"; m.textContent = err.message; cargarHoras(); }
+};
+$("bloqForm").onsubmit = async e => {
+  e.preventDefault();
+  const m = $("bqMsg");
+  try {
+    await api("/bloqueos", { method: "POST", body: JSON.stringify({ fecha: $("bqFecha").value, desde: $("bqDesde").value, hasta: $("bqHasta").value, profesional: $("bqProf").value, motivo: $("bqMotivo").value }) });
+    m.className = "msg ok"; m.textContent = "Horario bloqueado. El asistente ya no lo ofrecerá.";
+    S.semana = $("bqFecha").value; cargarAgenda();
+  } catch (err) { m.className = "msg err"; m.textContent = err.message; }
+};
+
+// --- Conversaciones ---------------------------------------------------------
+async function cargarConvs() {
+  const lista = await api("/conversaciones");
+  $("convs").replaceChildren(...(lista.length ? lista.map(c => el("button", { class: "conv", type: "button", "aria-current": String(c.cliente === S.conv), onclick: () => abrir(c.cliente) },
+    el("span", { class: "n" }, el("span", {}, c.nombre || "+" + c.cliente), el("span", { class: "muted small" }, c.actualizado.slice(5, 16).replace("T", " "))),
+    el("span", { class: "p" }, c.ultimo ? (c.ultimo.rol === "asistente" ? S.info.asistente + ": " : "") + c.ultimo.texto.replace(/\*/g, "") : ""),
+    el("span", {}, c.tiene_cita ? el("span", { class: "chip confirmada" }, "Con cita") : null, " ", c.caso_abierto ? el("span", { class: "chip abierta" }, "Caso abierto") : null)))
+    : [el("p", { class: "empty", style: "padding:14px" }, "Todavía no hay conversaciones.")]));
+  if (!S.conv && lista[0]) abrir(lista[0].cliente);
+}
+async function abrir(cliente) {
+  S.conv = cliente;
+  document.querySelectorAll(".conv").forEach(b => b.setAttribute("aria-current", "false"));
+  const c = await api("/conversaciones/" + encodeURIComponent(cliente));
+  $("convTitulo").textContent = c.nombre || "+" + cliente;
+  $("convInfo").textContent = /^\d+$/.test(cliente) ? "WhatsApp +" + cliente : cliente;
+  let dia = "";
+  const nodos = [];
+  for (const m of c.mensajes) {
+    if (m.fecha && m.fecha !== dia) { dia = m.fecha; nodos.push(el("div", { class: "ev" }, fechaTxt(m.fecha))); }
+    if (m.rol === "evento") nodos.push(el("div", { class: "ev" }, "⚙ " + m.texto));
+    else nodos.push(el("div", { class: "b " + m.rol }, negritas(m.texto), m.hora ? el("span", { class: "h" }, m.hora) : null));
+  }
+  $("hilo").replaceChildren(...nodos);
+  cargarConvsMarcar(cliente);
+}
+// *texto* de WhatsApp → negrita, sin interpretar HTML
+function negritas(t) { return String(t).split(/(\*[^*\n]+\*)/g).map(p => /^\*[^*\n]+\*$/.test(p) ? el("strong", {}, p.slice(1, -1)) : p); }
+function cargarConvsMarcar(cliente) { document.querySelectorAll(".conv").forEach(b => { if (b.onclick && b.textContent.includes(cliente)) b.setAttribute("aria-current", "true"); }); }
+
+// --- Casos ------------------------------------------------------------------
+async function cargarCasos() {
+  const d = await api("/casos");
+  const abiertos = d.casos.filter(c => c.estado === "abierta").length;
+  $("nCasos").hidden = !abiertos; $("nCasos").textContent = abiertos;
+  $("casos").replaceChildren(...(d.casos.length ? d.casos.map(c => el("li", {},
+    el("div", {}, el("span", { class: "chip " + c.estado }, c.estado === "abierta" ? "Abierto" : "Resuelto"), " ", el("span", { class: "muted small" }, c.creado.replace("T", " ").slice(0, 16))),
+    el("div", {}, c.motivo),
+    el("div", { class: "muted small" }, (c.nombre ? c.nombre + " · " : "") + (/^\d+$/.test(c.cliente) ? "+" + c.cliente : c.cliente)),
+    el("div", { class: "acts", style: "display:flex;gap:6px;margin-top:4px" },
+      el("button", { class: "btn", type: "button", onclick: () => irAChat(c.cliente) }, "Ver conversación"),
+      c.estado === "abierta" ? el("button", { class: "btn primary", type: "button", onclick: async () => { await api(`/casos/${c.id}/resolver`, { method: "POST" }); cargarCasos(); } }, "Marcar resuelto") : null)))
+    : [el("li", { class: "empty" }, "Sin casos.")]));
+  $("interesados").replaceChildren(...(d.interesados.length ? d.interesados.map(p => el("li", {},
+    el("div", {}, el("strong", {}, p.nombre || "Sin nombre"), " ", el("span", { class: "muted small" }, p.creado.replace("T", " ").slice(0, 16))),
+    el("div", {}, p.interes + (p.notas ? " · " + p.notas : "")),
+    el("div", { class: "acts", style: "margin-top:4px" }, el("button", { class: "btn", type: "button", onclick: () => irAChat(p.cliente) }, "Ver conversación"))))
+    : [el("li", { class: "empty" }, "Sin interesados.")]));
+}
+function irAChat(cliente) { S.conv = cliente; document.querySelector('[data-tab="chats"]').click(); setTimeout(() => abrir(cliente), 50); }
+
+// Sesión guardada en esta pestaña
+try { const g = JSON.parse(sessionStorage.getItem("vp") || "null"); if (g) { [S.negocio, S.clave] = g; entrar().catch(() => {}); } } catch (_) {}
+</script>
+</body>
+</html>

@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timedelta
+from datetime import datetime
 from typing import Callable
 
+from .agenda import Agenda, Conflicto, ErrorAgenda
 from .db import BaseDatos
 from .negocio import DIAS, Negocio
 
-INTERVALO_MIN = 30
 MAX_HORARIOS = 24
+NOMBRES_GENERICOS = {"cliente", "paciente", "usuario", "sin nombre", "nombre", "cliente nuevo", "paciente nuevo"}
 
 
 def _esquema(propiedades: dict, requeridas: list[str]) -> dict:
@@ -115,6 +116,7 @@ class Herramientas:
         self.cliente = cliente
         self.ahora = ahora
         self.notificar_dueno = notificar_dueno
+        self.agenda = Agenda(db, negocio, ahora)
 
     def ejecutar(self, nombre: str, entrada: dict) -> tuple[str, bool]:
         """Devuelve (contenido, es_error)."""
@@ -126,40 +128,13 @@ class Herramientas:
         except ErrorHerramienta as e:
             return str(e), True
 
-    # --- Agenda ---------------------------------------------------------
-    def _horarios_libres(self, fecha: date, duracion: int) -> list[str]:
-        dia = DIAS[fecha.weekday()]
-        franjas = self.negocio.horario.get(dia)
-        if not franjas:
-            return []
-        apertura = datetime.combine(fecha, datetime.strptime(franjas[0], "%H:%M").time())
-        cierre = datetime.combine(fecha, datetime.strptime(franjas[1], "%H:%M").time())
-        ocupadas = [
-            (datetime.fromisoformat(c["inicio"]), datetime.fromisoformat(c["fin"]))
-            for c in self.db.citas_del_dia(self.negocio.id, fecha.isoformat())
-        ]
-        minimo = self.ahora() + timedelta(hours=1)
-        libres = []
-        inicio = apertura
-        while inicio + timedelta(minutes=duracion) <= cierre:
-            fin = inicio + timedelta(minutes=duracion)
-            choca = any(inicio < o_fin and fin > o_ini for o_ini, o_fin in ocupadas)
-            if not choca and inicio >= minimo:
-                libres.append(inicio.strftime("%H:%M"))
-            inicio += timedelta(minutes=INTERVALO_MIN)
-        return libres
-
+    # --- Agenda (reglas en vertice/agenda.py, compartidas con el panel) ---
     def _validar(self, servicio: str, fecha: str):
-        s = self.negocio.servicio(servicio)
-        if s is None:
-            nombres = ", ".join(x.nombre for x in self.negocio.servicios)
-            raise ErrorHerramienta(f"Servicio '{servicio}' no existe. Servicios disponibles: {nombres}.")
         try:
-            dia = date.fromisoformat(fecha)
-        except ValueError:
-            raise ErrorHerramienta("Fecha inválida; usa el formato AAAA-MM-DD.")
-        if dia < self.ahora().date():
-            raise ErrorHerramienta("Esa fecha ya pasó.")
+            s = self.agenda.servicio(servicio)
+            dia = self.agenda.fecha(fecha)
+        except ErrorAgenda as e:
+            raise ErrorHerramienta(str(e))
         if s.requiere_valoracion:
             valoraciones = [x.nombre for x in self.negocio.servicios if "valoraci" in x.nombre.lower()]
             raise ErrorHerramienta(
@@ -170,7 +145,7 @@ class Herramientas:
 
     def _consultar_disponibilidad(self, fecha: str, servicio: str) -> dict:
         s, dia = self._validar(servicio, fecha)
-        libres = self._horarios_libres(dia, s.duracion_min)
+        libres = sorted(self.agenda.libres(dia, s))
         if not libres:
             return {"fecha": fecha, "dia": DIAS[dia.weekday()], "horarios_libres": [],
                     "nota": "No hay horarios libres ese día (cerrado o lleno). Ofrece otro día."}
@@ -181,24 +156,24 @@ class Herramientas:
                 "horarios_libres": libres}
 
     def _agendar_cita(self, nombre: str, servicio: str, fecha: str, hora: str) -> dict:
-        s, dia = self._validar(servicio, fecha)
-        if not nombre.strip():
-            raise ErrorHerramienta("Falta el nombre del cliente.")
-        if hora not in self._horarios_libres(dia, s.duracion_min):
-            raise ErrorHerramienta(
-                f"La hora {hora} no está disponible el {fecha}. Consulta la disponibilidad de nuevo."
-            )
-        inicio = datetime.combine(dia, datetime.strptime(hora, "%H:%M").time())
-        fin = inicio + timedelta(minutes=s.duracion_min)
-        cita_id = self.db.crear_cita(
-            self.negocio.id, self.cliente, nombre.strip(), s.nombre, inicio.isoformat(), fin.isoformat()
-        )
-        return {"cita_id": cita_id, "estado": "confirmada", "servicio": s.nombre,
-                "fecha": fecha, "dia": DIAS[dia.weekday()], "hora": hora,
-                "direccion": self.negocio.direccion}
+        s, _ = self._validar(servicio, fecha)
+        palabras = [p for p in nombre.replace(".", " ").split() if len(p) > 1]
+        if len(palabras) < 2 or nombre.strip().lower() in NOMBRES_GENERICOS:
+            raise ErrorHerramienta("Antes de agendar pide al cliente su nombre y apellido; no inventes ni uses "
+                                   "nombres genéricos. Todavía no se agendó nada.")
+        try:
+            cita = self.agenda.reservar(self.cliente, nombre, s.nombre, fecha, hora)
+        except Conflicto as e:
+            raise ErrorHerramienta(f"{e} Otro paciente acaba de tomarla o no está libre. "
+                                   "Consulta la disponibilidad de nuevo y ofrece otras horas.")
+        except ErrorAgenda as e:
+            raise ErrorHerramienta(str(e))
+        if len(self.negocio.nombres_profesionales()) == 1:
+            cita.pop("profesional")
+        return cita
 
     def _ver_mis_citas(self) -> dict:
-        citas = self.db.citas_de_cliente(self.negocio.id, self.cliente)
+        citas = self.db.citas_de_cliente(self.negocio.id, self.cliente, self.ahora().isoformat(timespec="seconds"))
         return {"citas": [
             {"cita_id": c["id"], "servicio": c["servicio"], "inicio": c["inicio"], "nombre": c["nombre"]}
             for c in citas

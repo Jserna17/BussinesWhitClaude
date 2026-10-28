@@ -17,6 +17,7 @@ from . import whatsapp
 from .agente import Asistente
 from .db import BaseDatos
 from .negocio import Negocio, cargar_negocios
+from .panel import montar_panel
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger("vertice")
@@ -45,6 +46,7 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
     por_numero = {n.whatsapp_phone_number_id: n for n in negocios.values() if n.whatsapp_phone_number_id}
 
     app = FastAPI(title="Vértice · Asistente de WhatsApp")
+    montar_panel(app, db, negocios, asistente.ahora)
 
     @app.get("/salud")
     def salud():

@@ -261,3 +261,12 @@ muchas no hacen anuncios ni tienen buena presencia en redes.
   clínica. Sintaxis del script verificada; la conversación no se pudo probar desde el entorno (requiere abrirla en claude.ai).
 
 **Próximos pasos:** el fundador la prueba en su celular y la usa en las primeras visitas.
+
+---
+
+## Sesión #12 — 2026-10-28 — Lista para mystery shopping
+
+**Pedido del fundador:** la lista de clínicas para escribirles en ese momento (~9:30 p. m., fuera de horario).
+**Qué se hizo:** se le entregaron las 13 clínicas dentales con WhatsApp de `prospectos/clinicas-dentales.csv` y el
+mensaje de paciente para la auditoría. **Próximo paso:** el fundador anota hora de envío y de respuesta de cada una;
+Claude arma las hojas de auditoría.

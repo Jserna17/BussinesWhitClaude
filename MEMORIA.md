@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-27 · Sesión #13 (mystery shopping #1: ~20 clínicas)
+> Última actualización: 2026-10-28 · Sesión #15 (mystery shopping #1 completo: espera típica ~11 h)
 
 ---
 
@@ -112,7 +112,10 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [x] Foco definido: clínicas dentales · oferta "Sistema de Pacientes Nuevos" · auditoría gratis · plantillas de anuncios
 - [x] Mystery shopping #1 (27-oct, 9:37–10:19 p. m.): ~20 clínicas; solo 3 respondieron algo útil de noche y **ninguna agendó**;
   la única con IA (Ortocentro, "Ana") no ve la agenda. Detalle: `prospectos/mystery-shopping-2026-10-27.md`
-- [ ] Revisar respuestas del día siguiente y completar Google/Instagram/anuncios de cada clínica (auditoría completa)
+- [x] Respuestas del día siguiente: 16 de ~20 respondieron entre 7:56 y 11:38 a. m. (mediana ≈ 10,8 h, casi todas personas,
+  varias con notas de voz); 3 nunca respondieron (Proced, Odontología y Sonrisa, @Richo5555)
+- [ ] Cerrar con amabilidad los chats donde ofrecieron cita (no dejar cupos apartados)
+- [ ] Completar Google/Instagram/anuncios de las clínicas prioritarias y armar hojas de auditoría
 - [ ] Primeras 5 visitas con la auditoría impresa (ruta Megacentro Pinares)
 - [ ] Ampliar lista dental a 60+ clínicas (cuando haya acceso a Google Maps o con ayuda del fundador)
 - [ ] Fundador crea cuenta en Meta for Developers (número de prueba de WhatsApp)
@@ -154,6 +157,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-27 | Reglas de negocio críticas se validan en las herramientas, no solo en el prompt (p. ej. `requiere_valoracion`) | El modelo a veces ignora instrucciones; el código no |
 | 2026-10-27 | Demo para visitas = página web en claude.ai (artifact) que el fundador abre en su celular | No requiere servidor ni WhatsApp conectado; muestra chat + agenda en vivo |
 | 2026-10-27 | Mensaje central de venta: "de 20 clínicas, ninguna me dejó una cita agendada de noche" (dato propio del mystery shopping) | Evidencia real y local; más fuerte que cifras de internet |
+| 2026-10-28 | Dato de venta principal: "respondieron unas 11 horas después" (mediana real del mystery shopping) | Las clínicas sí quieren pacientes (responden, ofrecen citas) pero tarde y a mano |
 
 ## 8. Preguntas abiertas para el fundador
 

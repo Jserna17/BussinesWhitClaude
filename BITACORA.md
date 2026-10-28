@@ -290,3 +290,15 @@ auditoría y la ruta de visitas (prioridad: Megacentro Pinares — PB Odontolog�
 
 El fundador reporta que una clínica le respondió a las 6:00 a. m. en punto (≈8 h después). Pendiente: qué clínica y
 qué dijo (captura). Registrado en `prospectos/mystery-shopping-2026-10-27.md`.
+
+---
+
+## Sesión #15 — 2026-10-28 — Respuestas del día siguiente
+
+**Qué pasó:** capturas a la 1:39 p. m. 16 de ~20 clínicas respondieron entre 7:56 y 11:38 a. m. (mediana ≈ 10,8 h
+después del mensaje de las ~10 p. m.); casi todas personas (notas de voz de hasta 1:41 min, ofertas de hora, precios
+de valoración $90.000–$97.000). DentalEs ofreció cita para el viernes 2:30 p. m. Sin respuesta: Proced, Odontología y
+Sonrisa, @Richo5555.
+**Qué se hizo:** tabla completa en `prospectos/mystery-shopping-2026-10-27.md`, CSV actualizados, MEMORIA (nuevo dato
+de venta: espera típica ~11 h).
+**Próximos pasos:** cerrar con amabilidad los chats con cita ofrecida; elegir 5 clínicas para visitar; hojas de auditoría.

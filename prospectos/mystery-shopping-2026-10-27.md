@@ -31,11 +31,42 @@ Fuente: capturas de pantalla compartidas el 2026-10-27. **Pendiente:** revisar m
 
 No contactadas aún (de la lista): Arte Dental DG (320 856 7282), Dr. Roberto Granados (304 237 2914), Clident (312 337 3960) — confirmar con el fundador.
 
-## Respuestas del día siguiente (28-oct)
+## Respuestas del día siguiente (28-oct, revisado a la 1:39 p. m.)
 
-| Hora | Clínica | Respuesta |
-|---|---|---|
-| 6:00 a. m. en punto | Pendiente identificar | Respondió alguien. Una hora exacta sugiere mensaje programado o automático al abrir; verificar con la captura. **Paciente que escribió a las ~10 p. m. esperó ~8 horas.** |
+Hora = hora del **último** mensaje visible en la lista de chats (la primera respuesta pudo ser un poco antes).
+
+| Clínica | Enviado (27-oct) | Respuesta visible (28-oct) | Espera aprox. | Qué respondieron |
+|---|---|---|---|---|
+| Clínica Sonreír (313 652 1108) | 10:14 p. m. | 7:56 a. m. | ~9,7 h | Foto (ya había dejado mensaje de ausencia) |
+| DentalEs (322 560 3840) | 10:18 p. m. | 8:14 a. m. | ~9,9 h | **Ofrece cita: "viernes 2:30 p. m., ¿le queda bien?"** |
+| PB Odontología | 9:52 p. m. | 8:15 a. m. | ~10,4 h | Valoración $90.000 abonable al tratamiento |
+| Oral Center Pereira | 9:49 p. m. | 8:17 a. m. | ~10,5 h | Valoración $97.000 con la doctora |
+| "ORAL" (315 573 8359) | 9:58 p. m. | 8:33 a. m. | ~10,6 h | "Hola, buen día" |
+| Oral Estética Pradera | 10:19 p. m. | 8:41 a. m. | ~10,4 h | "¿Cuándo puedes asistir a la valoración?" |
+| Odontología Pereira AGB (320 761 5254) | 9:55 p. m. | 8:41 a. m. | ~10,8 h | "Claro que sí, ¿en horas de la tarde?" |
+| Oral Estética (310 897 6603) | 10:08 p. m. | 8:44 a. m. | ~10,6 h | Propone hora ("a las 9 a. m.") |
+| Del Castillo (314 814 2403) | 9:39 p. m. | 8:52 a. m. | ~11,2 h | Explica el proceso de valoración de ortodoncia (4 mensajes) |
+| Dr. Ricardo Orozco (311 841 7498) | — | 9:02 a. m. | — | "Te habla Laura, asistente del Dr. Ricardo Orozco…" |
+| Maxisonrisas (320 792 4477) | 10:17 p. m. | 9:04 a. m. | ~10,8 h | **Nota de voz de 1:41 min** |
+| Odontología Integral Dosquebradas (316 479 2379) | 10:18 p. m. | 9:14 a. m. | ~11 h | Nota de voz de 0:18 |
+| iBocca (310 781 2957) | 9:43 p. m. | 9:29 a. m. | ~11,8 h | 4 mensajes ("…por favor") |
+| Oral Center Comercial | 9:48 p. m. | 9:41 a. m. | ~11,9 h | Foto + 4 mensajes |
+| Tu Odontólogo Pereira (320 761 1546) | 9:49 p. m. | 9:47 a. m. | ~12 h | "Juan, ¿en qué te podemos ayudar?" |
+| 315 512 1717 (sin identificar) | 10:12 p. m. | 11:38 a. m. | ≤13,4 h | "Quedamos pendientes a confirmación" (5 mensajes) |
+| Una clínica (sin identificar) | — | 6:00 a. m. en punto | ~8 h | Reportado por el fundador; probablemente programado |
+| **Proced Odontología** | 9:37 p. m. | — | **sin respuesta** a la 1:39 p. m. | — |
+| **Odontología y Sonrisa (322 414 1781)** | 10:12 p. m. | — | **sin respuesta** | — |
+| **@Richo5555** | 9:40 p. m. | — | **sin respuesta** | — |
+| Dra. Johanna Calderón | 9:54 p. m. | — | sin respuesta nueva | Quedó en "mañana revisamos la agenda" |
+| 310 375 8984 | 10:12 p. m. | (la noche anterior) | minutos | "160.000" |
+| Ortocentro (IA "Ana") | 10:00 p. m. | (la noche anterior) | segundos | No agenda; "una asesora te contactará" |
+
+### Números del día siguiente
+- **De ~20 clínicas: ninguna agendó de noche; la espera típica fue de ~10 a 12 horas** (mediana ≈ 10,8 h).
+- 16 respondieron en la mañana (casi todas personas: notas de voz, preguntas, ofertas de hora) → **sí quieren
+  los pacientes, pero los atienden tarde y a mano**.
+- 3 nunca respondieron (Proced, Odontología y Sonrisa, @Richo5555) a las 15 horas.
+- Precios de valoración reales vistos: $90.000 (PB), $97.000 (Oral Center); ortodoncia valoración gratis (Ortocentro).
 
 ## Lo que aprendimos
 1. **De ~20 clínicas, solo 3 respondieron algo útil de noche** (Ortocentro con IA, la auxiliar de la Dra. Calderón y una que dio el precio). El resto: nada, mensaje de ausencia o mensaje sin entregar.
@@ -44,7 +75,12 @@ No contactadas aún (de la lista): Arte Dental DG (320 856 7282), Dr. Roberto Gr
 4. Varias clínicas tienen **números de WhatsApp distintos** a los publicados en directorios (actualizados arriba).
 5. Nota para próximas rondas: no dar la cédula real; basta un nombre.
 
-## Ángulo de venta que sale de aquí
+## Ángulo de venta (actualizado con el día siguiente)
+> "Le escribí a 20 clínicas de Pereira y Dosquebradas un martes a las 10 de la noche pidiendo cita. La mayoría
+> respondió al otro día entre las 8 y las 10 de la mañana, unas 11 horas después. A esa hora el paciente ya
+> escribió a otras tres clínicas. Su clínica me respondió a las [hora]. Con Sofía, a las 10:01 p. m. ya tenía mi cita."
+
+### Ángulo anterior
 > "Le escribí a su clínica el martes a las 9:52 p. m. pidiendo una cita lo antes posible. A la mañana siguiente
 > todavía no tenía respuesta. Le escribí a otras 19 clínicas de Pereira y Dosquebradas: ninguna me dejó una cita
 > agendada esa noche. La primera que lo haga se queda con esos pacientes."

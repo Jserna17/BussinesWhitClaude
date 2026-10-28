@@ -1227,3 +1227,43 @@ def test_demasiados_intentos_desde_una_misma_red_se_bloquean(panel):
     for _ in range(30):
         assert panel.get("/panel/api/sesion", headers={"X-Negocio": CLINICA.id, "X-Clave": "mala"}).status_code == 401
     assert panel.get("/panel/api/sesion", headers={"X-Negocio": CLINICA.id, "X-Clave": "demo123"}).status_code == 429
+
+
+# --- Varios odontólogos: el paciente puede pedir uno ---------------------------
+def test_paciente_pide_un_odontologo_en_particular(db):
+    h = Herramientas(db, CLINICA, "573001112233", ahora)
+    # Martes: los dos atienden. Con "Andrés" (solo una parte del nombre) se filtran sus horarios y se agenda con él.
+    d = json.loads(h.ejecutar("consultar_disponibilidad", {"fecha": "2026-11-10", "servicio": "Valoración odontológica", "profesional": "andrés"})[0])
+    assert d["horarios_de"] == "Dr. Andrés Ríos" and d["atienden_este_servicio"] == ["Dra. Laura Gómez", "Dr. Andrés Ríos"]
+    cita = json.loads(h.ejecutar("agendar_cita", {"nombre": "Ana Gómez", "servicio": "Valoración odontológica", "fecha": "2026-11-10",
+                                                  "hora": "09:00", "profesional": "Andrés"})[0])
+    assert cita["profesional"] == "Dr. Andrés Ríos"
+    # Esa hora con Andrés ya no está; con Laura sí. Si insisten en Andrés, no se la da a otro
+    d2 = json.loads(Herramientas(db, CLINICA, "2", ahora).ejecutar("consultar_disponibilidad", {"fecha": "2026-11-10", "servicio": "Valoración odontológica", "profesional": "Andrés"})[0])
+    assert "09:00" not in d2["horarios_libres"]
+    _, err = Herramientas(db, CLINICA, "2", ahora).ejecutar("agendar_cita", {"nombre": "Luis Pérez", "servicio": "Valoración odontológica", "fecha": "2026-11-10", "hora": "09:00", "profesional": "Andrés"})
+    assert err
+    sin_preferencia = json.loads(Herramientas(db, CLINICA, "2", ahora).ejecutar("agendar_cita", {"nombre": "Luis Pérez", "servicio": "Valoración odontológica",
+                                                                                              "fecha": "2026-11-10", "hora": "09:00", "profesional": ""})[0])
+    assert sin_preferencia["profesional"] == "Dra. Laura Gómez"
+
+
+def test_profesional_inexistente_o_que_no_hace_ese_servicio(db):
+    h = Herramientas(db, CLINICA, "573001112233", ahora)
+    salida, err = h.ejecutar("consultar_disponibilidad", {"fecha": "2026-11-10", "servicio": "Resina estética", "profesional": "Andrés"})
+    assert err and "Dra. Laura Gómez" in salida                       # el Dr. Andrés no hace resinas: se ofrece a quien sí
+    assert h.ejecutar("consultar_disponibilidad", {"fecha": "2026-11-10", "servicio": "Valoración odontológica", "profesional": "Pedro"})[1]
+    assert h.ejecutar("consultar_disponibilidad", {"fecha": "2026-11-10", "servicio": "Valoración odontológica", "profesional": "Dr"})[1]  # ambiguo
+
+
+def test_clinica_con_un_solo_consultorio_ignora_el_profesional(db):
+    n = _reemplazar(CLINICA, profesionales=[])
+    h = Herramientas(db, n, "573001112233", ahora)
+    d = json.loads(h.ejecutar("consultar_disponibilidad", {"fecha": "2026-11-10", "servicio": "Valoración odontológica", "profesional": "cualquiera"})[0])
+    assert "atienden_este_servicio" not in d and d["horarios_libres"]
+
+
+def test_el_prompt_lista_al_equipo_solo_si_hay_varios():
+    texto = prompt_sistema(CLINICA)
+    assert "Dr. Andrés Ríos: solo Valoración de ortodoncia" in texto and "Dra. Laura Gómez: todos los servicios" in texto and "campo profesional" in texto
+    assert "Deja siempre vacío el campo profesional" in prompt_sistema(_reemplazar(CLINICA, profesionales=[]))

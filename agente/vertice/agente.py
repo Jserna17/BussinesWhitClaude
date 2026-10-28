@@ -48,6 +48,16 @@ def prompt_sistema(n: Negocio) -> str:
     faq = "\n".join(f"- P: {f['pregunta']}\n  R: {f['respuesta']}" for f in n.faq) or "- (sin preguntas frecuentes)"
     politicas = "\n".join(f"- {p}" for p in n.politicas) or "- (sin políticas especiales)"
     humano = "\n".join(f"- {h}" for h in n.pasar_a_humano_si) or "- El cliente lo pide."
+    if len(n.nombres_profesionales()) > 1:
+        def que_atiende(p: dict) -> str:
+            return "todos los servicios" if not p.get("servicios") else "solo " + ", ".join(p["servicios"])
+        equipo = "\n".join(f"- {p['nombre']}: {que_atiende(p)}" for p in n.profesionales)
+        horario += "\n\nProfesionales y lo que atiende cada uno:\n" + equipo
+        profesionales_regla = ("- Esta clínica tiene varios odontólogos. Si el cliente pide uno en particular, pásalo en el campo profesional de consultar_disponibilidad y de agendar_cita "
+                               "(y ofrece solo sus horarios). Si no tiene preferencia, no se lo preguntes: deja profesional vacío, y al confirmar di con quién quedó. "
+                               "Si pide a alguien que no atiende ese servicio, explícalo y ofrece a quien sí lo atiende.")
+    else:
+        profesionales_regla = "- Deja siempre vacío el campo profesional de las herramientas de agenda."
     pre_reserva = (
         "- En este negocio la recepción confirma las citas a mano: al agendar, el resultado dice estado 'por_confirmar'. Dile al paciente que su cita quedó "
         "*solicitada* y el horario *apartado*, que la clínica se la confirmará por este chat en breve (en horario de atención) y NO digas que está confirmada. "
@@ -96,6 +106,7 @@ Políticas:
 - No ofrezcas acciones que no puedes hacer con tus herramientas (por ejemplo, llamar por teléfono); si el cliente pide algo así, ofrece pasar el caso al equipo.
 {recordatorios}
 {pre_reserva}
+{profesionales_regla}
 - No das diagnósticos, consejos médicos ni garantías de resultados; para eso está la valoración con el profesional.
 - Usa pasar_a_humano cuando:
 {humano}

@@ -435,3 +435,8 @@ P0/P1/P2. Checklist de onboarding actualizado; la pregunta "¿dónde llevan la a
 - La búsqueda web **no** encontró Google/Instagram de estas clínicas: esos campos quedan en blanco, no se inventaron. Se quitó de la hoja de Orozco lo no verificable (identidad del Instagram).
 - **Pendiente del fundador:** revisión previa (Google, Instagram, anuncios, web) y cerrar con amabilidad los chats donde ofrecieron cita.
 
+### Varios odontólogos: el paciente puede pedir uno (misma sesión)
+- Hueco hallado: Sofía no podía pedir un odontólogo específico (asignaba al primero libre). Ahora `consultar_disponibilidad` y `agendar_cita` aceptan `profesional` (nombre o parte: "Andrés"); si no atiende ese servicio o es ambiguo, lo explica y ofrece a quien sí; sin preferencia asigna uno libre y dice con quién quedó. El prompt lista al equipo y qué atiende cada uno.
+- Probado: 81 pruebas + conversación real con el modelo (pide al Dr. Andrés → solo sus horarios y agenda con él; pide una resina con él → no la hace, ofrece a la Dra. Laura).
+- Pendiente (P1): agregar o quitar odontólogos desde el panel (hoy se edita el YAML de la clínica); recordar con quién se atiende un paciente habitual.
+

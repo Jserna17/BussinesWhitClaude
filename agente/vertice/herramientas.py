@@ -36,8 +36,9 @@ DEFINICIONES = [
             {
                 "fecha": {"type": "string", "description": "Fecha en formato AAAA-MM-DD."},
                 "servicio": {"type": "string", "description": "Nombre del servicio tal como aparece en la lista."},
+                "profesional": {"type": "string", "description": "Odontólogo que pidió el cliente (nombre o parte del nombre), o cadena vacía si le da igual."},
             },
-            ["fecha", "servicio"],
+            ["fecha", "servicio", "profesional"],
         ),
     },
     {
@@ -53,8 +54,9 @@ DEFINICIONES = [
                 "servicio": {"type": "string"},
                 "fecha": {"type": "string", "description": "AAAA-MM-DD"},
                 "hora": {"type": "string", "description": "HH:MM en formato 24 horas."},
+                "profesional": {"type": "string", "description": "Odontólogo que pidió el cliente, o cadena vacía si le da igual (se asigna uno libre)."},
             },
-            ["nombre", "servicio", "fecha", "hora"],
+            ["nombre", "servicio", "fecha", "hora", "profesional"],
         ),
     },
     {
@@ -181,27 +183,49 @@ class Herramientas:
             )
         return s, dia
 
-    def _consultar_disponibilidad(self, fecha: str, servicio: str) -> dict:
+    def _resolver_profesional(self, texto: str, servicio: str) -> str:
+        """"" = cualquiera. Acepta el nombre completo o una parte ("Laura") si identifica a una sola persona."""
+        texto = texto.strip().lower()
+        nombres = self.negocio.nombres_profesionales(servicio)
+        if not texto or len(self.negocio.nombres_profesionales()) == 1:
+            return ""
+        exactos = [n for n in nombres if n.lower() == texto]
+        parecidos = exactos or [n for n in nombres if texto in n.lower()]
+        if len(parecidos) == 1:
+            return parecidos[0]
+        raise ErrorHerramienta(f"No encuentro a '{texto}' entre quienes atienden este servicio: {', '.join(nombres)}. "
+                               "Pregúntale al cliente con quién prefiere o agenda con cualquiera libre.")
+
+    def _consultar_disponibilidad(self, fecha: str, servicio: str, profesional: str = "") -> dict:
         s, dia = self._validar(servicio, fecha)
-        libres = sorted(self.agenda.libres(dia, s))
+        prof = self._resolver_profesional(profesional, s.nombre)
+        por_hora = self.agenda.libres(dia, s)
+        if prof:
+            por_hora = {h: ps for h, ps in por_hora.items() if prof in ps}
+        libres = sorted(por_hora)
         if not libres:
-            motivo = self.agenda.cerrado(dia) or "No hay horarios libres ese día (agenda llena)."
+            motivo = self.agenda.cerrado(dia) or (f"{prof} no tiene horarios libres ese día." if prof else "No hay horarios libres ese día (agenda llena).")
             return {"fecha": fecha, "dia": DIAS[dia.weekday()], "horarios_libres": [],
                     "nota": f"{motivo} Ofrece otro día."}
+        extra = {}
+        equipo = self.negocio.nombres_profesionales(s.nombre)
+        if len(self.negocio.nombres_profesionales()) > 1:
+            extra = {"atienden_este_servicio": equipo, **({"horarios_de": prof} if prof else {})}
         return {"fecha": fecha, "dia": DIAS[dia.weekday()], "servicio": s.nombre,
-                "duracion_min": s.duracion_min,
+                "duracion_min": s.duracion_min, **extra,
                 "manana": [h for h in libres if h < "12:00"][:MAX_HORARIOS],
                 "tarde": [h for h in libres if h >= "12:00"][:MAX_HORARIOS],
                 "horarios_libres": libres}
 
-    def _agendar_cita(self, nombre: str, servicio: str, fecha: str, hora: str) -> dict:
+    def _agendar_cita(self, nombre: str, servicio: str, fecha: str, hora: str, profesional: str = "") -> dict:
         s, _ = self._validar(servicio, fecha)
+        prof = self._resolver_profesional(profesional, s.nombre)
         palabras = [p for p in nombre.replace(".", " ").split() if len(p) > 1]
         if len(palabras) < 2 or nombre.strip().lower() in NOMBRES_GENERICOS:
             raise ErrorHerramienta("Antes de agendar pide al cliente su nombre y apellido; no inventes ni uses "
                                    "nombres genéricos. Todavía no se agendó nada.")
         try:
-            cita = self.agenda.reservar(self.cliente, nombre, s.nombre, fecha, hora)
+            cita = self.agenda.reservar(self.cliente, nombre, s.nombre, fecha, hora, profesional=prof)
         except Conflicto as e:
             raise ErrorHerramienta(f"{e} Otro paciente acaba de tomarla o no está libre. "
                                    "Consulta la disponibilidad de nuevo y ofrece otras horas.")

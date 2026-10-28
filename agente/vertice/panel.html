@@ -21,7 +21,7 @@
   --display: "Manrope", "Segoe UI", system-ui, sans-serif; --body: "Figtree", "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
 }
-:root[data-theme="dark"] {
+:root[data-vtema="dark"] {
   --bg: #0c1311; --surface: #141d1b; --surface-2: #18221f; --fg: #e4ece9; --muted: #98a8a3; --faint: #6f7f7a;
   --line: #24302d; --line-strong: #31403c; --brand: #3aa58f; --brand-2: #48b9a1; --brand-soft: #16342e; --brand-ink: #04110e;
   --bar: #47b59e; --mine: #1b463b; --theirs: #1c2826; --chat: #0f1816; --ok: #62d18d; --ok-soft: #153325; --warn: #f0b45a;
@@ -1045,13 +1045,13 @@ async function cargarHistorial() {
 
 // --- Tema: siempre claro (blanco) salvo que la persona elija oscuro --------------------
 function aplicarTema(t) {
-  document.documentElement.dataset.theme = t;
+  document.documentElement.dataset.vtema = t;  // atributo propio: el visor de claude.ai usa data-theme y no debe cambiar nuestro tema
   $("temaTxt").textContent = t === "dark" ? "Tema claro" : "Tema oscuro";
   try { localStorage.setItem("vtema", t); } catch (_) {}
 }
 let temaInicial = "light"; try { temaInicial = localStorage.getItem("vtema") === "dark" ? "dark" : "light"; } catch (_) {}
 aplicarTema(temaInicial);
-$("tema").onclick = () => aplicarTema(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+$("tema").onclick = () => aplicarTema(document.documentElement.dataset.vtema === "dark" ? "light" : "dark");
 
 // Sesión guardada en esta pestaña
 try {

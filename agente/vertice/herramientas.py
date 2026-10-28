@@ -147,8 +147,9 @@ class Herramientas:
         s, dia = self._validar(servicio, fecha)
         libres = sorted(self.agenda.libres(dia, s))
         if not libres:
+            motivo = self.agenda.cerrado(dia) or "No hay horarios libres ese día (agenda llena)."
             return {"fecha": fecha, "dia": DIAS[dia.weekday()], "horarios_libres": [],
-                    "nota": "No hay horarios libres ese día (cerrado o lleno). Ofrece otro día."}
+                    "nota": f"{motivo} Ofrece otro día."}
         return {"fecha": fecha, "dia": DIAS[dia.weekday()], "servicio": s.nombre,
                 "duracion_min": s.duracion_min,
                 "manana": [h for h in libres if h < "12:00"][:MAX_HORARIOS],

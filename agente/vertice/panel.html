@@ -135,6 +135,8 @@ nav.menu .count { margin-left: auto; min-width: 20px; padding: 0 6px; border-rad
 .cal-head .dn { font-size: .76rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
 .cal-head .dd { font: 800 1.15rem var(--display); }
 .cal-head.today .dd { color: var(--brand); }
+.cal-head .fest { font-size: .68rem; font-weight: 700; color: var(--warn); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fest-tag { position: absolute; top: 40%; left: 8px; right: 8px; text-align: center; font-size: .78rem; font-weight: 700; color: var(--warn); background: var(--warn-soft); border-radius: 8px; padding: 6px; z-index: 1; }
 .cal-head .lanes { display: flex; gap: 2px; margin-top: 4px; }
 .cal-head .lanes span { flex: 1; font-size: .68rem; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-corner { border-bottom: 1px solid var(--line); background: var(--surface); position: sticky; top: 0; z-index: 2; }
@@ -144,7 +146,7 @@ nav.menu .count { margin-left: auto; min-width: 20px; padding: 0 6px; border-rad
 .col { position: relative; border-left: 1px solid var(--line); }
 .col .hl { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line); }
 .col .hl.half { border-top-style: dashed; opacity: .55; }
-.col .closed { position: absolute; left: 0; right: 0; background: repeating-linear-gradient(135deg, var(--closed), var(--closed) 6px, transparent 6px, transparent 12px); }
+.col .closed { position: absolute; background: repeating-linear-gradient(135deg, var(--closed), var(--closed) 6px, transparent 6px, transparent 12px); }
 .col.today { background: color-mix(in srgb, var(--brand-soft) 35%, transparent); }
 .nowline { position: absolute; left: 0; right: 0; height: 2px; background: var(--now); z-index: 3; }
 .nowline::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--now); }
@@ -158,6 +160,8 @@ nav.menu .count { margin-left: auto; min-width: 20px; padding: 0 6px; border-rad
 .ev.no_asistio { background: var(--warn-soft); border-left-color: var(--warn); } .ev.no_asistio .t { color: var(--warn); }
 .ev.cancelada { background: var(--surface); border: 1px dashed var(--line-strong); border-left: 3px solid var(--line-strong); opacity: .7; }
 .ev.cancelada .n { text-decoration: line-through; } .ev.cancelada .t { color: var(--muted); }
+.ev.conflicto { border-color: var(--bad); border-left-color: var(--bad); background: var(--bad-soft); z-index: 2; }
+.ev.conflicto .t { color: var(--bad); }
 .ev.bloqueo { background: repeating-linear-gradient(135deg, var(--block), var(--block) 5px, var(--surface-2) 5px, var(--surface-2) 10px); border-left-color: var(--faint); cursor: pointer; }
 .ev.bloqueo .t { color: var(--muted); }
 .cal-legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 16px; border-top: 1px solid var(--line); font-size: .78rem; color: var(--muted); }
@@ -175,7 +179,10 @@ dl.kv { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 8px 12p
 dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
 .field { display: grid; gap: 5px; font-size: .82rem; color: var(--muted); font-weight: 600; }
 .field input, .field select { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 9px; padding: 9px 10px; font-size: .92rem; color: var(--fg); font-weight: 500; min-width: 0; }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.check { display: flex; gap: 8px; align-items: center; font-size: .88rem; font-weight: 600; cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--brand); }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.row2 .field input, .row2 .field select { width: 100%; }
 .slots { display: flex; flex-wrap: wrap; gap: 6px; }
 .slots button { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 8px; padding: 6px 10px; font-weight: 600; font-size: .84rem; cursor: pointer; font-variant-numeric: tabular-nums; }
 .slots button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
@@ -316,7 +323,7 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
           <div class="cal-legend">
             <span><span class="pill confirmada">Confirmada</span></span><span><span class="pill asistio">Asistió</span></span>
             <span><span class="pill no_asistio">No asistió</span></span><span><span class="pill cancelada">Cancelada</span></span>
-            <span>Rayado: fuera de horario o bloqueado</span>
+            <span>Rayado: fuera de horario o bloqueado</span><span><span class="pill abierta">Por reprogramar</span> (festivo o bloqueo)</span>
           </div>
         </div>
       </section>
@@ -515,7 +522,13 @@ const nDias = () => S.vista === "semana" ? 7 : 1;
 $("semAnt").onclick = () => { S.desde = addDias(S.desde, -nDias()); cargarAgenda(); };
 $("semSig").onclick = () => { S.desde = addDias(S.desde, nDias()); cargarAgenda(); };
 $("semHoy").onclick = () => { S.desde = S.vista === "semana" ? lunes(S.info.hoy) : S.info.hoy; cargarAgenda(); };
-function franjasDe(f) { return S.info.horario[DIAS[d0(f).getDay()]] || []; }
+const festivoDe = f => (S.info.festivos || {})[f] || "";
+const cerradoPorFestivo = f => !!festivoDe(f) && !S.info.abre_festivos;
+function franjasDe(f, prof) {
+  if (cerradoPorFestivo(f)) return [];
+  const h = prof && S.info.horario_profesionales ? S.info.horario_profesionales[prof] : S.info.horario;
+  return (h || S.info.horario)[DIAS[d0(f).getDay()]] || [];
+}
 async function cargarAgenda() {
   const n = nDias();
   S.agenda = await api(`/agenda?desde=${S.desde}&dias=${n}`);
@@ -523,7 +536,7 @@ async function cargarAgenda() {
   $("rango").textContent = n === 1 ? fechaLarga(S.desde) : `${d0(dias[0]).getDate()} ${MES[d0(dias[0]).getMonth()]} – ${d0(dias[6]).getDate()} ${MES[d0(dias[6]).getMonth()]}`;
   // Rango de horas: de la apertura más temprana al cierre más tarde de los días mostrados (mínimo 8–18).
   let ini = 8 * 60, fin = 18 * 60;
-  dias.forEach(f => franjasDe(f).forEach(([a, b]) => { ini = Math.min(ini, minutos(a)); fin = Math.max(fin, minutos(b)); }));
+  dias.forEach(f => [null, ...S.info.profesionales].forEach(p => franjasDe(f, p).forEach(([a, b]) => { ini = Math.min(ini, minutos(a)); fin = Math.max(fin, minutos(b)); })));
   ini = Math.floor(ini / 60) * 60; fin = Math.ceil(fin / 60) * 60;
   const alto = (fin - ini) * PPM, profs = S.info.profesionales, L = profs.length;
   const cal = $("cal");
@@ -534,6 +547,7 @@ async function cargarAgenda() {
     const dd = d0(f), activas = S.agenda.citas.filter(c => c.inicio.startsWith(f) && c.estado !== "cancelada").length;
     celdas.push(el("div", { class: "cal-head" + (f === S.info.hoy ? " today" : "") },
       el("div", { class: "dn" }, DIA_CORTO[dd.getDay()] + (activas ? ` · ${activas}` : "")), el("div", { class: "dd" }, dd.getDate()),
+      festivoDe(f) ? el("div", { class: "fest", title: festivoDe(f) }, "Festivo · " + festivoDe(f)) : null,
       L > 1 ? el("div", { class: "lanes" }, profs.map(p => el("span", { title: p }, p.replace(/^(Dra?\.)\s+/, "$1 ").split(" ").slice(0, 2).join(" ")))) : null));
   });
   const horas = el("div", { class: "hours", style: `height:${alto}px` });
@@ -542,20 +556,29 @@ async function cargarAgenda() {
   dias.forEach(f => {
     const col = el("div", { class: "col" + (f === S.info.hoy ? " today" : ""), style: `height:${alto}px` });
     for (let m = ini; m < fin; m += 30) col.append(el("div", { class: "hl" + (m % 60 ? " half" : ""), style: `top:${(m - ini) * PPM}px` }));
-    // Fuera de horario (antes de abrir, almuerzo, después de cerrar)
-    let cursor = ini;
-    [...franjasDe(f)].sort().forEach(([a, b]) => { if (minutos(a) > cursor) col.append(el("div", { class: "closed", style: `top:${(cursor - ini) * PPM}px;height:${(minutos(a) - cursor) * PPM}px` })); cursor = Math.max(cursor, minutos(b)); });
-    if (cursor < fin) col.append(el("div", { class: "closed", style: `top:${(cursor - ini) * PPM}px;height:${(fin - cursor) * PPM}px` }));
+    // Fuera de horario (antes de abrir, almuerzo, después de cerrar), por carril si cada profesional tiene su horario
+    (L > 1 ? profs : [null]).forEach((prof, lane) => {
+      const x = L > 1 ? `left:${lane * 100 / L}%;width:${100 / L}%` : "left:0;right:0";
+      const tapa = (a, b) => col.append(el("div", { class: "closed", style: `top:${(a - ini) * PPM}px;height:${(b - a) * PPM}px;${x}` }));
+      let cursor = ini;
+      [...franjasDe(f, prof)].sort().forEach(([a, b]) => { if (minutos(a) > cursor) tapa(cursor, minutos(a)); cursor = Math.max(cursor, minutos(b)); });
+      if (cursor < fin) tapa(cursor, fin);
+    });
+    if (cerradoPorFestivo(f)) col.append(el("div", { class: "fest-tag" }, festivoDe(f)));
     const pos = (desdeIso, hastaIso, prof) => {
-      const a = Math.max(minutos(hora(desdeIso)), ini), b = Math.min(minutos(hora(hastaIso)), fin);
+      // Un bloqueo de varios días (vacaciones) ocupa el día completo en los días intermedios.
+      const a = Math.max(desdeIso.slice(0, 10) < f ? ini : minutos(hora(desdeIso)), ini);
+      const b = Math.min(hastaIso.slice(0, 10) > f ? fin : minutos(hora(hastaIso)), fin);
       const lane = prof ? Math.max(0, profs.indexOf(prof)) : 0, ancho = prof ? 100 / L : 100;
       return `top:${(a - ini) * PPM + 1}px;height:${Math.max(18, (b - a) * PPM - 2)}px;left:calc(${lane * ancho}% + 3px);width:calc(${ancho}% - 6px)`;
     };
     S.agenda.bloqueos.filter(b => b.inicio.slice(0, 10) <= f && b.fin.slice(0, 10) >= f).forEach(b =>
       col.append(el("button", { class: "ev bloqueo", type: "button", style: pos(b.inicio, b.fin, b.profesional || null), onclick: () => verBloqueo(b) },
-        el("div", { class: "t" }, `${hora(b.inicio)}–${hora(b.fin)}`), el("div", { class: "n" }, b.motivo || "Bloqueado"))));
+        el("div", { class: "t" }, b.inicio.slice(0, 10) === b.fin.slice(0, 10) ? `${hora(b.inicio)}–${hora(b.fin)}` : `Hasta ${fechaCorta(b.fin)}`), el("div", { class: "n" }, b.motivo || "Bloqueado"))));
+    const enConflicto = c => c.estado === "confirmada" && (cerradoPorFestivo(f) || S.agenda.bloqueos.some(b =>
+      (!b.profesional || b.profesional === c.profesional) && c.inicio < b.fin && c.fin > b.inicio));
     S.agenda.citas.filter(c => c.inicio.startsWith(f)).sort((a, b) => (a.estado === "cancelada") - (b.estado === "cancelada")).forEach(c =>
-      col.append(el("button", { class: "ev " + c.estado, type: "button", style: pos(c.inicio, c.fin, L > 1 ? c.profesional : null), onclick: () => verCita(c), title: `${hora(c.inicio)} ${c.nombre} · ${c.servicio}` },
+      col.append(el("button", { class: "ev " + c.estado + (enConflicto(c) ? " conflicto" : ""), type: "button", style: pos(c.inicio, c.fin, L > 1 ? c.profesional : null), onclick: () => verCita(c), title: `${hora(c.inicio)} ${c.nombre} · ${c.servicio}` },
         el("div", { class: "t" }, hora(c.inicio) + (c.origen === "asistente" ? " · IA" : "")), el("div", { class: "n" }, c.nombre.replace(/^Paciente ejemplo · /, "")), el("div", { class: "s" }, c.servicio))));
     if (f === S.info.hoy) {
       const ahora = new Date(), m = ahora.getHours() * 60 + ahora.getMinutes();
@@ -583,7 +606,10 @@ function verCita(c) {
        el("button", { class: "btn danger", type: "button", onclick: () => estadoCita(c, "cancelada") }, "Cancelar cita")]
     : [el("button", { class: "btn", type: "button", onclick: () => estadoCita(c, "confirmada") }, "Volver a confirmada")];
   const tieneChat = /^\d{7,}$/.test(c.cliente || "") || S.convs.some(x => x.cliente === c.cliente);
+  const choque = c.estado === "confirmada" && (cerradoPorFestivo(c.inicio.slice(0, 10)) ? `Ese día es festivo (${festivoDe(c.inicio.slice(0, 10))}).`
+    : (S.agenda.bloqueos.find(b => (!b.profesional || b.profesional === c.profesional) && c.inicio < b.fin && c.fin > b.inicio) ? "Quedó dentro de un horario bloqueado." : ""));
   abrirDrawer(c.nombre, [
+    choque ? el("div", { class: "note err" }, choque + " Avísale al paciente y reprográmala.") : null,
     el("div", {}, el("span", { class: "pill " + c.estado }, ESTADO[c.estado]), " ", el("span", { class: "tag" + (c.origen === "asistente" ? " ia" : "") }, c.origen === "asistente" ? "Agendó " + asist() : "Recepción")),
     el("dl", { class: "kv" },
       el("dt", {}, "Fecha"), el("dd", {}, fechaLarga(c.inicio)),
@@ -601,7 +627,7 @@ async function estadoCita(c, estado) {
 }
 function verBloqueo(b) {
   abrirDrawer("Horario bloqueado", [el("dl", { class: "kv" },
-    el("dt", {}, "Fecha"), el("dd", {}, fechaLarga(b.inicio)), el("dt", {}, "Horas"), el("dd", { class: "num" }, `${hora(b.inicio)} – ${hora(b.fin)}`),
+    el("dt", {}, "Desde"), el("dd", {}, `${fechaLarga(b.inicio)} · ${hora(b.inicio)}`), el("dt", {}, "Hasta"), el("dd", {}, `${fechaLarga(b.fin)} · ${hora(b.fin)}`),
     el("dt", {}, "Aplica a"), el("dd", {}, b.profesional || "Toda la clínica"), el("dt", {}, "Motivo"), el("dd", {}, b.motivo || "—")),
     el("p", { class: "muted small" }, `Mientras exista, ${asist()} no ofrece estas horas.`)],
     [el("button", { class: "btn danger", type: "button", onclick: async () => { await api(`/bloqueos/${b.id}`, { method: "DELETE" }); toast("Bloqueo quitado"); cerrarDrawer(); cargarAgenda(); } }, "Quitar bloqueo")]);
@@ -620,7 +646,7 @@ function abrirNuevaCita() {
       const d = await api(`/disponibilidad?fecha=${fFecha.value}&servicio=${encodeURIComponent(fServ.value)}`);
       const lista = Object.entries(d.libres).filter(([, ps]) => !fProf.value || ps.includes(fProf.value)).map(([h]) => h).sort();
       slots.replaceChildren(...(lista.length ? lista.map(h => el("button", { type: "button", "aria-pressed": "false", onclick: e => { sel.hora = h; slots.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b === e.currentTarget)); } }, h))
-        : [el("span", { class: "muted small" }, "No hay horas libres ese día.")]));
+        : [el("span", { class: "muted small" }, cerradoPorFestivo(fFecha.value) ? `Festivo (${festivoDe(fFecha.value)}): la clínica no atiende.` : "No hay horas libres ese día.")]));
     } catch (e) { slots.replaceChildren(el("span", { class: "muted small" }, e.message)); }
   }
   fServ.onchange = fFecha.onchange = fProf.onchange = horas;
@@ -644,19 +670,28 @@ function abrirNuevaCita() {
 }
 function abrirBloqueo() {
   const fFecha = el("input", { id: "bqFecha", type: "date", value: S.vista === "dia" ? S.desde : S.info.hoy, min: S.info.hoy });
+  const fFin = el("input", { id: "bqFin", type: "date", min: S.info.hoy });
+  const fTodo = el("input", { id: "bqTodo", type: "checkbox" });
+  fTodo.onchange = () => { fDesde.disabled = fHasta.disabled = fTodo.checked; if (fTodo.checked) { fDesde.value = "00:00"; fHasta.value = "23:59"; } };
   const fDesde = el("input", { id: "bqDesde", type: "time", value: "12:00" }), fHasta = el("input", { id: "bqHasta", type: "time", value: "14:00" });
   const fProf = el("select", { id: "bqProf" }, el("option", { value: "" }, "Toda la clínica"), S.info.profesionales.map(p => el("option", { value: p }, p)));
   const fMotivo = el("input", { id: "bqMotivo", placeholder: "Ej.: festivo, congreso, reunión" }), nota = el("div", { class: "note err", hidden: true });
   abrirDrawer("Bloquear horario", [
     el("p", { class: "muted small", style: "margin:0" }, `${asist()} no ofrecerá estas horas a los pacientes.`),
-    el("label", { class: "field", for: "bqFecha" }, "Fecha", fFecha),
-    el("div", { class: "row2" }, el("label", { class: "field", for: "bqDesde" }, "Desde", fDesde), el("label", { class: "field", for: "bqHasta" }, "Hasta", fHasta)),
+    el("div", { class: "row2" }, el("label", { class: "field", for: "bqFecha" }, "Desde el día", fFecha), el("label", { class: "field", for: "bqFin" }, "Hasta el día (opcional)", fFin)),
+    el("label", { class: "check", for: "bqTodo" }, fTodo, "Todo el día (vacaciones, incapacidad, congreso)"),
+    el("div", { class: "row2" }, el("label", { class: "field", for: "bqDesde" }, "Desde la hora", fDesde), el("label", { class: "field", for: "bqHasta" }, "Hasta la hora", fHasta)),
     varios() ? el("label", { class: "field", for: "bqProf" }, "Aplica a", fProf) : null,
     el("label", { class: "field", for: "bqMotivo" }, "Motivo", fMotivo), nota,
   ], [el("button", { class: "btn primary", type: "button", onclick: async () => {
     try {
-      await api("/bloqueos", { method: "POST", body: JSON.stringify({ fecha: fFecha.value, desde: fDesde.value, hasta: fHasta.value, profesional: fProf.value, motivo: fMotivo.value }) });
-      toast("Horario bloqueado"); cerrarDrawer(); S.desde = S.vista === "semana" ? lunes(fFecha.value) : fFecha.value; cargarAgenda();
+      const r = await api("/bloqueos", { method: "POST", body: JSON.stringify({ fecha: fFecha.value, fecha_fin: fFin.value, desde: fDesde.value, hasta: fHasta.value, profesional: fProf.value, motivo: fMotivo.value }) });
+      S.desde = S.vista === "semana" ? lunes(fFecha.value) : fFecha.value; cargarAgenda();
+      if (r.citas_afectadas && r.citas_afectadas.length) {
+        abrirDrawer("Horario bloqueado", [el("div", { class: "note err" }, `Hay ${r.citas_afectadas.length} ${r.citas_afectadas.length === 1 ? "cita confirmada" : "citas confirmadas"} en ese horario. El bloqueo no las cancela: avísale al paciente y reprograma.`),
+          el("div", { class: "timeline" }, r.citas_afectadas.map(c => el("div", { class: "tl" }, el("div", {}, el("div", { class: "h" }, hora(c.inicio)), el("div", { class: "muted small" }, fechaCorta(c.inicio))),
+            el("div", {}, el("div", { class: "who" }, c.nombre), el("div", { class: "muted small" }, c.servicio + (varios() ? " · " + c.profesional : "")), /^\d{7,}$/.test(c.cliente || "") ? el("div", { class: "muted small" }, telefono(c.cliente)) : null))))]);
+      } else { toast("Horario bloqueado"); cerrarDrawer(); }
     } catch (e) { nota.hidden = false; nota.textContent = e.message; }
   }, html: ic("lock") + "Bloquear" })]);
 }

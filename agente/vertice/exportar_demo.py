@@ -65,9 +65,11 @@ SIMULADOR = r"""
     let m;
     if (metodo === "POST" && (m = ruta.match(/^\/citas\/(\d+)\/estado$/))) { const c = citas.get(+m[1]); if (c) c.estado = cuerpo.estado; return R({ ok: true }); }
     if (metodo === "POST" && ruta === "/bloqueos") {
-      if (cuerpo.hasta <= cuerpo.desde) return R({ detail: "La hora final debe ser mayor que la inicial." }, 400);
-      const b = { id: sig++, profesional: cuerpo.profesional || "", inicio: `${cuerpo.fecha}T${cuerpo.desde}:00`, fin: `${cuerpo.fecha}T${cuerpo.hasta}:00`, motivo: cuerpo.motivo || "" };
-      bloqueos.set(b.id, b); return R({ bloqueo_id: b.id });
+      if (`${cuerpo.fecha_fin || cuerpo.fecha}T${cuerpo.hasta}` <= `${cuerpo.fecha}T${cuerpo.desde}`) return R({ detail: "El final del bloqueo debe ser posterior al inicio." }, 400);
+      const b = { id: sig++, profesional: cuerpo.profesional || "", inicio: `${cuerpo.fecha}T${cuerpo.desde}:00`, fin: `${cuerpo.fecha_fin || cuerpo.fecha}T${cuerpo.hasta}:00`, motivo: cuerpo.motivo || "" };
+      bloqueos.set(b.id, b);
+      const afectadas = [...citas.values()].filter(c => c.estado === "confirmada" && c.inicio < b.fin && c.fin > b.inicio && (!b.profesional || c.profesional === b.profesional));
+      return R({ bloqueo_id: b.id, citas_afectadas: afectadas });
     }
     if (metodo === "DELETE" && (m = ruta.match(/^\/bloqueos\/(\d+)$/))) { bloqueos.delete(+m[1]); return R({ ok: true }); }
     if (metodo === "POST" && (m = ruta.match(/^\/casos\/(\d+)\/resolver$/))) { const c = casos.casos.find(x => x.id === +m[1]); if (c) c.estado = "resuelta"; return R({ ok: true }); }

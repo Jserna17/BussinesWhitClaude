@@ -17,10 +17,15 @@ horario:                      # franjas; el espacio entre ellas es el almuerzo
   jueves: [["08:00", "12:00"], ["14:00", "18:00"]]
   viernes: [["08:00", "12:00"], ["14:00", "18:00"]]
   sabado: ["08:00", "12:00"]
+abre_festivos: false          # festivos de Colombia (se calculan solos): cerrado
 profesionales:                # sillas que atienden en paralelo; sin "servicios" = atiende todo
-  - nombre: Dra. Laura Gómez
+  - nombre: Dra. Laura Gómez   # sin "horario" = el horario de la clínica
   - nombre: Dr. Andrés Ríos
     servicios: ["Valoración de ortodoncia", "Ortodoncia (control)", "Valoración odontológica", "Limpieza dental (profilaxis)"]
+    horario:                  # ortodoncista: solo martes, jueves y viernes
+      martes: [["08:00", "12:00"], ["14:00", "18:00"]]
+      jueves: [["08:00", "12:00"], ["14:00", "18:00"]]
+      viernes: [["14:00", "18:00"]]
 servicios:
   - nombre: Valoración odontológica
     precio: "$50.000 (se descuenta si haces el tratamiento)"

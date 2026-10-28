@@ -371,3 +371,17 @@ cubiertos (número de WhatsApp y coexistencia, choque bot/recepcionista, notas d
 sillas, recordatorios, reprogramar, roles, atribución para la garantía, respaldos/monitoreo, Ley 1581). Prioridades
 P0/P1/P2. Checklist de onboarding actualizado; la pregunta "¿dónde llevan la agenda?" pasa a la visita.
 **Próximo paso:** aprobación del fundador para construir los P0 en orden.
+
+---
+
+## Sesión #20 — 2026-10-28 — P0-1: festivos y horarios por profesional
+
+**Pedido:** construir lo imprescindible de `docs/14` en orden.
+**Hecho (P0-1):**
+- `vertice/festivos.py`: festivos de Colombia calculados para cualquier año (Ley Emiliani + Semana Santa); verificado contra el calendario 2026 (18 festivos).
+- Horario propio por profesional (`horario` dentro de `profesionales`) y `abre_festivos` por clínica; el motor de agenda ofrece solo horas en que cada odontólogo atiende. Demo: el Dr. Andrés solo martes, jueves y viernes tarde.
+- El prompt de Sofía ahora muestra bien el horario partido (antes mostraba solo la primera franja) y los días de cada profesional; avisa si el día es festivo.
+- Panel: festivos marcados, carriles con el horario de cada odontólogo, bloqueos de varios días (vacaciones, incapacidad), y las citas que quedan dentro de un festivo o bloqueo se marcan "por reprogramar" (el bloqueo no las cancela, avisa cuáles son).
+- Corregido de paso: la base devolvía la hora real del servidor en las pruebas; ahora las pruebas usan reloj fijo. 28 pruebas OK.
+- Demo publicada de nuevo (misma URL, versión 3).
+**Siguiente:** P0-2 pausa automática y tomar control del chat.

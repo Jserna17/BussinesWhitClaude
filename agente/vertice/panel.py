@@ -21,6 +21,7 @@ from pydantic import BaseModel
 from . import transcripcion
 from .agenda import Agenda, Conflicto, ErrorAgenda
 from .db import ESTADOS_CITA, BaseDatos
+from .festivos import festivos
 from .negocio import DIAS, Negocio
 
 PAGINA = Path(__file__).with_name("panel.html")
@@ -41,6 +42,7 @@ class NuevoEstado(BaseModel):
 
 class NuevoBloqueo(BaseModel):
     fecha: str
+    fecha_fin: str = ""  # para vacaciones o congresos de varios días (incluido)
     desde: str
     hasta: str
     profesional: str = ""
@@ -90,7 +92,11 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
     def sesion(n: Negocio = Depends(negocio_autorizado)):
         return {"negocio": n.id, "nombre": n.nombre, "asistente": n.nombre_asistente,
                 "servicios": [s.nombre for s in n.servicios], "profesionales": n.nombres_profesionales(),
-                "horario": {d: n.franjas(d) for d in DIAS}, "hoy": ahora().date().isoformat()}
+                "horario": {d: n.franjas(d) for d in DIAS}, "hoy": ahora().date().isoformat(),
+                "horario_profesionales": {p: {d: n.franjas_de(p, d) for d in DIAS} for p in n.nombres_profesionales()},
+                "abre_festivos": n.abre_festivos,
+                "festivos": {d.isoformat(): nombre for a in (ahora().year, ahora().year + 1)
+                             for d, nombre in festivos(a).items()}}
 
     @api.get("/resumen")
     def resumen(dias: int = 7, n: Negocio = Depends(negocio_autorizado)):
@@ -167,16 +173,23 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
     def crear_bloqueo(datos: NuevoBloqueo, n: Negocio = Depends(negocio_autorizado)):
         try:
             dia = date.fromisoformat(datos.fecha)
+            ultimo = date.fromisoformat(datos.fecha_fin) if datos.fecha_fin else dia
             inicio = datetime.combine(dia, datetime.strptime(datos.desde, "%H:%M").time())
-            fin = datetime.combine(dia, datetime.strptime(datos.hasta, "%H:%M").time())
+            fin = datetime.combine(ultimo, datetime.strptime(datos.hasta, "%H:%M").time())
         except ValueError:
             raise HTTPException(status_code=400, detail="Fecha u horas inválidas.")
         if fin <= inicio:
-            raise HTTPException(status_code=400, detail="La hora final debe ser mayor que la inicial.")
+            raise HTTPException(status_code=400, detail="El final del bloqueo debe ser posterior al inicio.")
+        if (ultimo - dia).days > 60:
+            raise HTTPException(status_code=400, detail="Un bloqueo puede durar máximo 60 días.")
         if datos.profesional and datos.profesional not in n.nombres_profesionales():
             raise HTTPException(status_code=400, detail="Profesional desconocido.")
         bid = db.crear_bloqueo(n.id, datos.profesional, inicio.isoformat(), fin.isoformat(), datos.motivo)
-        return {"bloqueo_id": bid}
+        # Citas ya confirmadas dentro del bloqueo: hay que reprogramarlas (el bloqueo no las borra).
+        afectadas = [dict(c) for c in db.citas_entre(n.id, inicio.isoformat(), fin.isoformat())
+                     if c["estado"] == "confirmada" and c["fin"] > inicio.isoformat()
+                     and (not datos.profesional or c["profesional"] == datos.profesional)]
+        return {"bloqueo_id": bid, "citas_afectadas": afectadas}
 
     @api.delete("/bloqueos/{bloqueo_id}")
     def borrar_bloqueo(bloqueo_id: int, n: Negocio = Depends(negocio_autorizado)):

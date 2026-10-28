@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-28 · Sesión #19 (integración de agenda y riesgos de operación)
+> Última actualización: 2026-10-28 · Sesión #20 (P0-1: festivos y horarios por profesional)
 
 ---
 
@@ -131,7 +131,8 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [x] Agenda sin cruces (multi-profesional, almuerzo, bloqueos, reservas atómicas) y panel del médico — 22 pruebas OK
 - [ ] Publicar el servidor (webhook + panel) en un VPS con HTTPS
 - [x] Análisis de integración de agenda y riesgos de operación (`docs/14-integracion-agenda-y-operacion.md`)
-- [ ] Pendientes P0 antes del primer cliente: festivos y horario por profesional; pausa/tomar control del chat (coexistencia);
+- [x] P0-1 hecho (2026-10-28): festivos de Colombia calculados, horario y vacaciones por profesional, bloqueos de varios días, aviso de citas por reprogramar
+- [ ] Pendientes P0 antes del primer cliente: pausa/tomar control del chat (coexistencia);
   notas de voz; reprogramar; recordatorios con plantillas; usuarios con rol + bitácora; modo pre-reserva; VPS + respaldos + monitoreo; aviso de privacidad
 - [ ] Ampliar base a 150 negocios (restaurantes, salones, hoteles/fincas, Santa Rosa, La Virginia)
 - [ ] Primeros 3 clientes piloto
@@ -175,6 +176,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-28 | Toda consulta a SQLite pasa por un candado (lecturas incluidas) | El panel pide datos en paralelo y la conexión compartida fallaba (error 500) |
 | 2026-10-28 | Regla: una sola agenda oficial por clínica. Tres modos: A) Vértice es la agenda, B) sincronizada (Google Calendar / software con API), C) pre-reserva con confirmación humana; siempre semana de sombra antes de encender | Evitar dobles reservas con cuadernos o software existentes |
 | 2026-10-28 | No manejar historia clínica; solo agenda y conversación | Carga legal (Ley 2015/2020, Res. 866/2021) fuera de nuestro alcance |
+| 2026-10-28 | Las clínicas cierran en festivos colombianos por defecto (`abre_festivos: false`, configurable); cada profesional puede tener horario propio | Evitar agendar festivos y horarios que el odontólogo no atiende |
 
 ## 8. Preguntas abiertas para el fundador
 

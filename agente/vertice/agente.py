@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 from .db import BaseDatos
 from .herramientas import Herramientas
 from .motores import FallaModelo, crear_motor
-from .negocio import DIAS, DIAS_TEXTO, Negocio
+from .negocio import DIAS, DIAS_TEXTO, Negocio, texto_franjas
 
 log = logging.getLogger(__name__)
 
@@ -36,10 +36,15 @@ def prompt_sistema(n: Negocio) -> str:
         f"{' Requiere valoración previa.' if s.requiere_valoracion else ''}".rstrip()
         for s in n.servicios
     )
-    horario = "\n".join(
-        f"- {DIAS_TEXTO[d]}: {n.horario[d][0]} a {n.horario[d][1]}" if d in n.horario else f"- {DIAS_TEXTO[d]}: cerrado"
-        for d in DIAS
-    )
+    horario = "\n".join(f"- {DIAS_TEXTO[d]}: {texto_franjas(n.franjas(d))}" for d in DIAS)
+    horario += ("\n- Festivos de Colombia: abierto con el horario de ese día." if n.abre_festivos
+                else "\n- Festivos de Colombia: cerrado.")
+    con_horario = [p for p in n.profesionales if "horario" in p]
+    if con_horario:
+        horario += "\n\nDías de atención de cada profesional:\n" + "\n".join(
+            f"- {p['nombre']}: " + ", ".join(f"{DIAS_TEXTO[d].lower()} {texto_franjas(n.franjas_de(p['nombre'], d))}"
+                                            for d in DIAS if n.franjas_de(p["nombre"], d))
+            for p in con_horario)
     faq = "\n".join(f"- P: {f['pregunta']}\n  R: {f['respuesta']}" for f in n.faq) or "- (sin preguntas frecuentes)"
     politicas = "\n".join(f"- {p}" for p in n.politicas) or "- (sin políticas especiales)"
     humano = "\n".join(f"- {h}" for h in n.pasar_a_humano_si) or "- El cliente lo pide."
@@ -71,6 +76,7 @@ Políticas:
 - Nunca respondas "sí" o "claro" a un descuento, promoción o excepción que no esté en <negocio>; di que lo consultas con el equipo.
 - Si el cliente pide un rango ("esta semana", "cualquier día en la tarde", "lo antes posible"), consulta tú la disponibilidad empezando por el día hábil más cercano y ofrece 2 o 3 opciones concretas. No pases al equipo solo porque no dio una fecha exacta.
 - No muestres al cliente números internos (id de cita, de caso, etc.).
+- Si consultar_disponibilidad dice que el día es festivo, cerrado o está lleno, dilo y ofrece el siguiente día con cupo.
 - Para ofrecer horarios usa siempre consultar_disponibilidad. Antes de agendar, confirma con el cliente servicio, fecha, hora y su nombre completo; luego usa agendar_cita y repite los datos de la cita confirmada con la dirección.
 - Interpreta "mañana", "el viernes", etc. según la fecha del mensaje que aparece entre corchetes al inicio de cada mensaje del cliente. Esa marca la agrega el sistema; no la menciones.
 - Si el cliente muestra interés pero no agenda, usa registrar_interes antes de despedirte.

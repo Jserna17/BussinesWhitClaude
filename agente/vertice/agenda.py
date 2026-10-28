@@ -9,6 +9,7 @@ from datetime import date, datetime, timedelta
 from typing import Callable
 
 from .db import BaseDatos, Conflicto
+from .festivos import festivo
 from .negocio import DIAS, Negocio, Servicio
 
 __all__ = ["Agenda", "Conflicto", "ErrorAgenda"]
@@ -44,13 +45,21 @@ class Agenda:
             raise ErrorAgenda("Esa fecha ya pasó.")
         return dia
 
+    def cerrado(self, dia: date) -> str | None:
+        """Motivo por el que la clínica no atiende ese día (festivo o día sin horario), o None."""
+        nombre = festivo(dia)
+        if nombre and not self.negocio.abre_festivos:
+            return f"Es festivo ({nombre}); la clínica no atiende."
+        if not any(self.negocio.franjas_de(p, DIAS[dia.weekday()]) for p in self.negocio.nombres_profesionales()):
+            return "La clínica no atiende ese día de la semana."
+        return None
+
     def libres(self, dia: date, servicio: Servicio, anticipacion_min: int | None = None) -> dict[str, list[str]]:
         """{hora: [profesionales libres]} para cada turno en el que cabe el servicio completo."""
+        if self.cerrado(dia):
+            return {}
         anticipacion = self.negocio.anticipacion_min if anticipacion_min is None else anticipacion_min
         profesionales = self.negocio.nombres_profesionales(servicio.nombre)
-        franjas = self.negocio.franjas(DIAS[dia.weekday()])
-        if not franjas or not profesionales:
-            return {}
         inicio_dia, fin_dia = _hora(dia, "00:00"), _hora(dia, "00:00") + timedelta(days=1)
         ocupado = self.db.ocupaciones(self.negocio.id, inicio_dia.isoformat(), fin_dia.isoformat())
         ocupado = [(o["profesional"], datetime.fromisoformat(o["inicio"]), datetime.fromisoformat(o["fin"]))
@@ -58,18 +67,15 @@ class Agenda:
         minimo = self.ahora() + timedelta(minutes=anticipacion)
         paso, dur = timedelta(minutes=self.negocio.intervalo_min), timedelta(minutes=servicio.duracion_min)
         resultado: dict[str, list[str]] = {}
-        for desde, hasta in franjas:
-            t, cierre = _hora(dia, desde), _hora(dia, hasta)
-            while t + dur <= cierre:
-                if t >= minimo:
+        for prof in profesionales:  # cada profesional con su propio horario
+            for desde, hasta in self.negocio.franjas_de(prof, DIAS[dia.weekday()]):
+                t, cierre = _hora(dia, desde), _hora(dia, hasta)
+                while t + dur <= cierre:
                     fin = t + dur
-                    choques = [p for p, a, b in ocupado if t < b and fin > a]
-                    if "" not in choques:  # bloqueo general
-                        disponibles = [p for p in profesionales if p not in choques]
-                        if disponibles:
-                            resultado[t.strftime("%H:%M")] = disponibles
-                t += paso
-        return resultado
+                    if t >= minimo and not any(p in ("", prof) and t < b and fin > a for p, a, b in ocupado):
+                        resultado.setdefault(t.strftime("%H:%M"), []).append(prof)
+                    t += paso
+        return dict(sorted(resultado.items()))
 
     def reservar(self, cliente: str, nombre: str, servicio_nombre: str, fecha: str, hora: str,
                  profesional: str = "", origen: str = "asistente", anticipacion_min: int | None = None) -> dict:

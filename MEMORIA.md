@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-28 · Sesión #17 (panel demo publicado para verlo sin servidor)
+> Última actualización: 2026-10-28 · Sesión #18 (rediseño del panel del médico)
 
 ---
 
@@ -48,6 +48,8 @@
   atómicas (probado con 20 pacientes simultáneos); panel web `/panel` con indicadores, agenda semanal (asistió/no
   asistió/cancelar, nueva cita, bloqueos), conversaciones completas y casos/interesados. Capturas en `demo/capturas/`.
   Probado en vivo con OpenAI: 20/20. Falta: publicarlo en un servidor (VPS) para que el médico lo abra desde su celular.
+- **Panel rediseñado (v0.3):** navegación lateral, resumen Hoy/Periodo, agenda tipo calendario por odontólogo,
+  panel lateral para citas y bloqueos, conversaciones con buscador y ficha del paciente.
 - **Panel demo sin servidor:** https://claude.ai/artifact/WaS72eAXnZiXdQcAqS82sR (`demo/panel-demo.html`, generado con
   `python -m vertice.exportar_demo`): foto de los datos + simulador; se puede agendar/bloquear/marcar, los cambios no se guardan. Privado.
 - **Página demo para visitas:** https://claude.ai/artifact/QNoA7pa8cbFn5WqLEwce34 (`demo/sofia.html`): chat tipo
@@ -167,6 +169,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-28 | Agenda: reglas en `vertice/agenda.py` (una sola fuente para asistente y panel); reserva re-validada en transacción exclusiva; nombre y apellido obligatorios para agendar | Evitar cruces y citas con datos basura; lo pidió el fundador |
 | 2026-10-28 | Panel del médico servido por la misma app (`/panel`), con clave por clínica | Sin costo extra; el médico ve agenda, conversaciones e indicadores |
 | 2026-10-28 | Dato de venta principal: "respondieron unas 11 horas después" (mediana real del mystery shopping) | Las clínicas sí quieren pacientes (responden, ofrecen citas) pero tarde y a mano |
+| 2026-10-28 | Toda consulta a SQLite pasa por un candado (lecturas incluidas) | El panel pide datos en paralelo y la conexión compartida fallaba (error 500) |
 
 ## 8. Preguntas abiertas para el fundador
 

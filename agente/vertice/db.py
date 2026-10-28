@@ -77,12 +77,45 @@ class Conflicto(Exception):
     """El horario ya no está libre (otro paciente lo tomó o hay un bloqueo)."""
 
 
+class _Resultado:
+    """Filas ya leídas de un cursor (se leen dentro del candado para no cruzar hilos)."""
+
+    def __init__(self, cur: sqlite3.Cursor):
+        self.filas = cur.fetchall()
+        self.lastrowid, self.rowcount = cur.lastrowid, cur.rowcount
+
+    def fetchall(self) -> list[sqlite3.Row]:
+        return self.filas
+
+    def fetchone(self) -> sqlite3.Row | None:
+        return self.filas[0] if self.filas else None
+
+    def __iter__(self):
+        return iter(self.filas)
+
+
+class _Conexion:
+    """Conexión compartida entre hilos (FastAPI atiende el panel en paralelo): cada consulta toma el candado."""
+
+    def __init__(self, con: sqlite3.Connection, lock: threading.RLock):
+        self._con, self._lock = con, lock
+
+    def execute(self, sql: str, params: tuple = ()) -> _Resultado:
+        with self._lock:
+            return _Resultado(self._con.execute(sql, params))
+
+    def executescript(self, sql: str) -> None:
+        with self._lock:
+            self._con.executescript(sql)
+
+
 class BaseDatos:
     def __init__(self, ruta: Path | str):
         self._lock = threading.RLock()
         # isolation_level=None: las transacciones se abren a mano con BEGIN IMMEDIATE.
-        self.con = sqlite3.connect(str(ruta), check_same_thread=False, isolation_level=None, timeout=15)
-        self.con.row_factory = sqlite3.Row
+        con = sqlite3.connect(str(ruta), check_same_thread=False, isolation_level=None, timeout=15)
+        con.row_factory = sqlite3.Row
+        self.con = _Conexion(con, self._lock)
         if str(ruta) != ":memory:":
             self.con.execute("PRAGMA journal_mode=WAL")
         self.con.executescript(ESQUEMA)
@@ -112,7 +145,7 @@ class BaseDatos:
             else:
                 self.con.execute("COMMIT")
 
-    def _escribir(self, sql: str, params: tuple) -> sqlite3.Cursor:
+    def _escribir(self, sql: str, params: tuple) -> _Resultado:
         with self.transaccion() as con:
             return con.execute(sql, params)
 

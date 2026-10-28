@@ -43,9 +43,9 @@ SIMULADOR = r"""
       if (ruta === "/sesion") return R(F["/sesion"]);
       if (ruta === "/resumen") return R(F["/resumen?dias=" + q.get("dias")] || F["/resumen?dias=7"]);
       if (ruta === "/agenda") {
-        const desde = q.get("desde"), hasta = new Date(desde + "T00:00:00Z"); hasta.setUTCDate(hasta.getUTCDate() + 7);
+        const desde = q.get("desde"), dias = +(q.get("dias") || 7), hasta = new Date(desde + "T00:00:00Z"); hasta.setUTCDate(hasta.getUTCDate() + dias);
         const h = hasta.toISOString().slice(0, 10);
-        return R({ desde, dias: 7, citas: [...citas.values()].filter(c => c.inicio >= desde && c.inicio < h).sort((a, b) => a.inicio.localeCompare(b.inicio)),
+        return R({ desde, dias, citas: [...citas.values()].filter(c => c.inicio >= desde && c.inicio < h).sort((a, b) => a.inicio.localeCompare(b.inicio)),
                    bloqueos: [...bloqueos.values()].filter(b => b.inicio < h && b.fin > desde) });
       }
       if (ruta === "/disponibilidad") return R({ fecha: q.get("fecha"), libres: libres(q.get("fecha"), q.get("servicio")) });
@@ -91,7 +91,7 @@ def exportar(foto: str, salida: str) -> None:
     cabeza = cabeza.replace("<title>Panel de la clínica · Vértice</title>",
                             '<title>Panel Vértice · Demo</title>\n<meta name="claude:viewport-fit-sides" content="cover">')
     simulador = SIMULADOR.replace("__FOTO__", Path(foto).read_text(encoding="utf-8"))
-    cuerpo = cuerpo.replace('<section id="login"', AVISO + '\n<section id="login"', 1)
+    cuerpo = cuerpo.replace('<div id="login"', AVISO + '\n<div id="login"', 1)
     cuerpo = cuerpo.replace("<script>", simulador + "\n<script>", 1)
     Path(salida).write_text(cabeza + cuerpo, encoding="utf-8")
     print("Generado", salida)

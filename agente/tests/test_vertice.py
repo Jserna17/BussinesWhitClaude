@@ -397,3 +397,25 @@ def test_transcripcion_marca_intentos_rechazados():
     ]
     ev = transcripcion.leer(msgs)["mensajes"][-1]
     assert ev["rol"] == "evento" and ev["texto"].startswith("Intentó agendar y el sistema no lo permitió") and "Agendó" not in ev["texto"]
+
+
+def test_lecturas_y_escrituras_en_paralelo_no_fallan(tmp_path):
+    # El panel pide resumen, agenda y casos a la vez; FastAPI los atiende en hilos distintos con la misma conexión.
+    import threading
+    base = BaseDatos(tmp_path / "p.db")
+    errores = []
+
+    def trabajo(i):
+        try:
+            for j in range(40):
+                base.registrar_escalacion("n", f"c{i}", f"motivo {j}")
+                base.filas("escalaciones", "n")
+                base.citas_entre("n", "0000", "9999")
+        except Exception as e:  # noqa: BLE001
+            errores.append(repr(e))
+
+    hilos = [threading.Thread(target=trabajo, args=(i,)) for i in range(8)]
+    [h.start() for h in hilos]
+    [h.join() for h in hilos]
+    assert errores == []
+    assert len(base.filas("escalaciones", "n")) == 8 * 40

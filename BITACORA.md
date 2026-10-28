@@ -337,3 +337,24 @@ los datos del servidor + simulador de la API: agenda sin cruces, bloqueos, estad
 https://claude.ai/artifact/WaS72eAXnZiXdQcAqS82sR. Probada con navegador automático: agendar quita la hora de las
 libres, sin errores. Panel con modo claro/oscuro según elección del usuario.
 **Próximo paso:** si quiere correr el sistema completo en su PC, guía según su sistema operativo; luego VPS + Meta.
+
+---
+
+## Sesión #18 — 2026-10-28 — Rediseño del panel del médico
+
+**Pedido:** interfaz limpia, profesional y moderna, reorganizada visualmente.
+**Qué se hizo (`agente/vertice/panel.html`):**
+- Navegación lateral con íconos y ficha de la clínica (en celular pasa a barra superior compacta).
+- Resumen en dos bloques: **Hoy** (citas de hoy, próximas, casos abiertos, interesados) y **Lo que hizo el
+  asistente** (mensajes, % fuera de horario, citas agendadas por Sofía, inasistencia) con selector 7/30 días;
+  gráfica, tarjeta "Requiere atención" y próximas citas en línea de tiempo.
+- Agenda tipo calendario: horas en el eje vertical, un carril por odontólogo, almuerzo y horas cerradas rayadas,
+  línea de "ahora", vista Semana/Día (Día por defecto en celular). Detalle de cita, nueva cita (botones de horas
+  libres) y bloqueos en un panel lateral.
+- Conversaciones en tres columnas: lista con buscador, chat y ficha del paciente con las acciones de Sofía.
+- **Error real encontrado:** el panel nuevo pide varios datos a la vez y la base fallaba con lecturas en paralelo
+  (error 500). Arreglado: toda consulta toma el candado (`db.py`). Prueba nueva con 8 hilos (falla sin el arreglo).
+- Datos de ejemplo con nombres en vez de "#1"; demo regenerada y re-publicada (mismo enlace). 23 pruebas OK.
+- Capturas nuevas en `demo/capturas/` (incluye detalle de cita, nueva cita, modo oscuro y celular).
+
+**Próximos pasos:** hojas de auditoría para las 5 clínicas prioritarias y visitas; luego VPS + Meta.

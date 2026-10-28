@@ -270,3 +270,16 @@ muchas no hacen anuncios ni tienen buena presencia en redes.
 **Qué se hizo:** se le entregaron las 13 clínicas dentales con WhatsApp de `prospectos/clinicas-dentales.csv` y el
 mensaje de paciente para la auditoría. **Próximo paso:** el fundador anota hora de envío y de respuesta de cada una;
 Claude arma las hojas de auditoría.
+
+---
+
+## Sesión #13 — 2026-10-27 (noche) — Resultados del mystery shopping #1
+
+**Qué pasó:** el fundador escribió como paciente a ~20 clínicas entre 9:37 y 10:19 p. m. y compartió capturas.
+**Resultados:** solo 3 respondieron algo útil esa noche; ninguna agendó. Ortocentro tiene un asistente IA ("Ana",
+sobre Meta) que responde al instante pero no ve la agenda, pide cédula y repite "una asesora te contactará". La
+auxiliar de la Dra. Calderón responde con plantillas y deja todo para "mañana". Varias no entregan o tienen ausencia.
+**Qué se hizo:** `prospectos/mystery-shopping-2026-10-27.md` (tabla, aprendizajes y ángulo de venta); CSV de
+prospectos actualizados (6 números nuevos, etapa "Mystery shop", columna respuesta_whatsapp); MEMORIA actualizada.
+**Próximos pasos:** mañana a mediodía el fundador revisa quién respondió y a qué hora; Claude arma las hojas de
+auditoría y la ruta de visitas (prioridad: Megacentro Pinares — PB Odontología, Dr. Orozco — y Ortocentro).

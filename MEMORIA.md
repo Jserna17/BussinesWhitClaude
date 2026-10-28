@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-27 · Sesión #11 (página demo de Sofía para visitas)
+> Última actualización: 2026-10-27 · Sesión #13 (mystery shopping #1: ~20 clínicas)
 
 ---
 
@@ -110,7 +110,9 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [ ] Elegir modelo de producción comparando calidad/costo (OpenAI vs Claude Haiku/Opus) con conversaciones reales
 - [ ] Registrar `verticeautomatizacion.com` — **después de la primera venta**
 - [x] Foco definido: clínicas dentales · oferta "Sistema de Pacientes Nuevos" · auditoría gratis · plantillas de anuncios
-- [ ] Auditar las primeras 10 clínicas (mystery shopping + Google + Instagram + Biblioteca de anuncios)
+- [x] Mystery shopping #1 (27-oct, 9:37–10:19 p. m.): ~20 clínicas; solo 3 respondieron algo útil de noche y **ninguna agendó**;
+  la única con IA (Ortocentro, "Ana") no ve la agenda. Detalle: `prospectos/mystery-shopping-2026-10-27.md`
+- [ ] Revisar respuestas del día siguiente y completar Google/Instagram/anuncios de cada clínica (auditoría completa)
 - [ ] Primeras 5 visitas con la auditoría impresa (ruta Megacentro Pinares)
 - [ ] Ampliar lista dental a 60+ clínicas (cuando haya acceso a Google Maps o con ayuda del fundador)
 - [ ] Fundador crea cuenta en Meta for Developers (número de prueba de WhatsApp)
@@ -151,6 +153,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-27 | Modelo por defecto para pruebas/demos: OpenAI `gpt-5.4-mini` | 20/20 en la batería, respuestas en 1–3 s, económico; decisión final de producción tras comparar costos reales |
 | 2026-10-27 | Reglas de negocio críticas se validan en las herramientas, no solo en el prompt (p. ej. `requiere_valoracion`) | El modelo a veces ignora instrucciones; el código no |
 | 2026-10-27 | Demo para visitas = página web en claude.ai (artifact) que el fundador abre en su celular | No requiere servidor ni WhatsApp conectado; muestra chat + agenda en vivo |
+| 2026-10-27 | Mensaje central de venta: "de 20 clínicas, ninguna me dejó una cita agendada de noche" (dato propio del mystery shopping) | Evidencia real y local; más fuerte que cifras de internet |
 
 ## 8. Preguntas abiertas para el fundador
 

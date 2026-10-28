@@ -158,7 +158,7 @@ sesiones · reactivación de pacientes antiguos.
 | 2. Pausa automática y tomar control del chat | ✅ 2026-10-28 | Ver detalle abajo |
 | 3. Notas de voz | ✅ 2026-10-28 | Descarga de WhatsApp + transcripción (OpenAI `gpt-4o-mini-transcribe`, cambiable). Probado en vivo con audio sintético: 1–3 s, texto casi idéntico. **Falta probar con audios reales** (ruido, acentos, jerga) |
 | 4. Reprogramar citas | ✅ 2026-10-28 | Atómico (la cita no se duplica ni choca consigo misma); herramienta de Sofía + botón en el panel + mensaje listo para avisar al paciente |
-| 5. Recordatorios con confirmación | ⏳ | |
+| 5. Recordatorios con confirmación | ✅ 2026-10-28 (código) | Falta: **aprobar la plantilla en Meta** (`plantillas/plantillas-whatsapp-meta.md`) y probar con un número real |
 | 6. Usuarios con rol + bitácora | ⏳ | |
 | 7. Modo pre-reserva | ⏳ | |
 | 8. VPS, respaldos, monitoreo, aviso de privacidad | ⏳ | |
@@ -190,4 +190,14 @@ sesiones · reactivación de pacientes antiguos.
 - Conserva al mismo odontólogo si puede; Sofía solo puede mover citas del propio paciente.
 - Desde el panel, al mover una cita aparece un mensaje listo para avisar al paciente (enviar por WhatsApp si está dentro de las
   24 h, o copiar). **No se envía solo.**
+
+### P0-5 · recordatorios con confirmación
+- Ciclo en segundo plano cada 5 min (`VERTICE_RECORDATORIOS_SEGUNDOS`; apagable con `VERTICE_RECORDATORIOS=0`).
+- Dos avisos por cita (día anterior y 2 h antes) con botones **Sí, confirmo / Necesito cambiarla**; solo de día (8 a. m.–8 p. m.),
+  nunca repetidos, omite citas sin número de WhatsApp y las agendadas hace pocas horas.
+- "Confirmo" → queda marcado en el panel (✓ en el calendario, conteo en el resumen) y se responde un agradecimiento fijo.
+  "Necesito cambiarla" → Sofía ayuda a reprogramar con sus herramientas. Reprogramar reinicia la confirmación y los avisos.
+- Si el paciente confirma con texto libre, Sofía usa la herramienta `confirmar_asistencia`.
+- Los botones llegan del webhook como mensajes de tipo `button` con el `payload` que enviamos (`confirmar:<id>` / `cambiar:<id>`):
+  **por confirmar con una plantilla real**, igual que el formato exacto de los envíos de plantilla.
 

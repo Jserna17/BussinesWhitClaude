@@ -481,7 +481,7 @@ async function cargarResumen() {
   const pct = r.mensajes_pacientes ? Math.round(100 * r.fuera_de_horario / r.mensajes_pacientes) : 0;
   const marcadas = r.inasistencia.asistio + r.inasistencia.no_asistio;
   $("kpisHoy").replaceChildren(
-    kpi("cal", "Citas de hoy", deHoy.length, pendientes ? `${pendientes} por atender` : "Sin pendientes"),
+    kpi("cal", "Citas de hoy", deHoy.length, deHoy.length ? `${deHoy.filter(c => c.confirmacion === "confirmo").length} confirmaron · ${pendientes} por atender` : "Sin pendientes"),
     kpi("clock", "Próximas citas", r.proximas.length, "Confirmadas desde ahora"),
     kpi("alert", "Casos abiertos", r.casos_abiertos, r.casos_abiertos ? "Esperan respuesta del equipo" : "Todo al día", r.casos_abiertos > 0),
     kpi("user", "Interesados", r.interesados, "Preguntaron y no agendaron"));
@@ -591,7 +591,7 @@ async function cargarAgenda() {
       (!b.profesional || b.profesional === c.profesional) && c.inicio < b.fin && c.fin > b.inicio));
     S.agenda.citas.filter(c => c.inicio.startsWith(f)).sort((a, b) => (a.estado === "cancelada") - (b.estado === "cancelada")).forEach(c =>
       col.append(el("button", { class: "ev " + c.estado + (enConflicto(c) ? " conflicto" : ""), type: "button", style: pos(c.inicio, c.fin, L > 1 ? c.profesional : null), onclick: () => verCita(c), title: `${hora(c.inicio)} ${c.nombre} · ${c.servicio}` },
-        el("div", { class: "t" }, hora(c.inicio) + (c.origen === "asistente" ? " · IA" : "")), el("div", { class: "n" }, c.nombre.replace(/^Paciente ejemplo · /, "")), el("div", { class: "s" }, c.servicio))));
+        el("div", { class: "t" }, hora(c.inicio) + (c.origen === "asistente" ? " · IA" : "") + (c.confirmacion === "confirmo" ? " ✓" : c.confirmacion === "cambiar" ? " ↺" : "")), el("div", { class: "n" }, c.nombre.replace(/^Paciente ejemplo · /, "")), el("div", { class: "s" }, c.servicio))));
     if (f === S.info.hoy) {
       const ahora = new Date(), m = ahora.getHours() * 60 + ahora.getMinutes();
       if (m >= ini && m <= fin) col.append(el("div", { class: "nowline", style: `top:${(m - ini) * PPM}px` }));
@@ -603,7 +603,9 @@ async function cargarAgenda() {
 
 // --- Panel lateral ------------------------------------------------------------
 function abrirDrawer(titulo, cuerpo, pie = []) {
-  $("drTitulo").textContent = titulo; $("drBody").replaceChildren(...[cuerpo].flat()); $("drFoot").replaceChildren(...pie);
+  const util = x => [x].flat().filter(e => e != null && e !== false);  // los elementos opcionales llegan como null
+  pie = util(pie);
+  $("drTitulo").textContent = titulo; $("drBody").replaceChildren(...util(cuerpo)); $("drFoot").replaceChildren(...pie);
   $("drFoot").hidden = !pie.length; $("drawer").hidden = false; $("scrim").hidden = false;
   setTimeout(() => ($("drawer").querySelector("input,select,button.primary") || $("drCerrar")).focus(), 30);
 }
@@ -623,13 +625,16 @@ function verCita(c) {
     : (S.agenda.bloqueos.find(b => (!b.profesional || b.profesional === c.profesional) && c.inicio < b.fin && c.fin > b.inicio) ? "Quedó dentro de un horario bloqueado." : ""));
   abrirDrawer(c.nombre, [
     choque ? el("div", { class: "note err" }, choque + " Avísale al paciente y reprográmala.") : null,
+    c.estado === "confirmada" && c.confirmacion ? el("div", { class: "note " + (c.confirmacion === "confirmo" ? "ok" : "err") }, c.confirmacion === "confirmo" ? "El paciente confirmó que asistirá." : "El paciente pidió cambiar la cita: contáctalo o reprográmala.") : null,
     el("div", {}, el("span", { class: "pill " + c.estado }, ESTADO[c.estado]), " ", el("span", { class: "tag" + (c.origen === "asistente" ? " ia" : "") }, c.origen === "asistente" ? "Agendó " + asist() : "Recepción")),
     el("dl", { class: "kv" },
       el("dt", {}, "Fecha"), el("dd", {}, fechaLarga(c.inicio)),
       el("dt", {}, "Hora"), el("dd", { class: "num" }, `${hora(c.inicio)} – ${hora(c.fin)}`),
       el("dt", {}, "Servicio"), el("dd", {}, c.servicio),
       varios() ? el("dt", {}, "Profesional") : null, varios() ? el("dd", {}, c.profesional) : null,
-      el("dt", {}, "Teléfono"), el("dd", {}, /^\d{7,}$/.test(c.cliente || "") ? telefono(c.cliente) : "—")),
+      el("dt", {}, "Teléfono"), el("dd", {}, /^\d{7,}$/.test(c.cliente || "") ? telefono(c.cliente) : "—"),
+      c.recordatorio_1 || c.recordatorio_2 ? el("dt", {}, "Recordatorios") : null,
+      c.recordatorio_1 || c.recordatorio_2 ? el("dd", {}, [c.recordatorio_1 ? "Día antes: " + c.recordatorio_1.slice(5, 16).replace("T", " ") : "", c.recordatorio_2 ? "2 h antes: " + c.recordatorio_2.slice(11, 16) : ""].filter(Boolean).join(" · ")) : null),
     tieneChat ? el("button", { class: "btn", type: "button", onclick: () => { cerrarDrawer(); irAChat(c.cliente); }, html: ic("msg") + "Ver conversación" }) : null,
   ], acciones);
 }

@@ -16,6 +16,8 @@ def _evento(nombre: str, entrada: dict) -> str | None:
     """Texto corto para el médico cuando el asistente usó una herramienta."""
     if nombre == "agendar_cita":
         return f"Agendó {entrada.get('servicio', '')} · {entrada.get('fecha', '')} {entrada.get('hora', '')} · {entrada.get('nombre', '')}"
+    if nombre == "confirmar_asistencia":
+        return f"Registró que el paciente confirmó la cita #{entrada.get('cita_id')}"
     if nombre == "reprogramar_cita":
         return f"Reprogramó la cita #{entrada.get('cita_id')} · {entrada.get('fecha', '')} {entrada.get('hora', '')}"
     if nombre == "cancelar_cita":

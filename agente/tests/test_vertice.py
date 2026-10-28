@@ -656,3 +656,136 @@ def test_herramienta_reprogramar_y_panel(db):
     libres = c.get("/panel/api/disponibilidad", headers=H, params={"fecha": "2026-11-11", "servicio": "limpieza", "excluir": cita["cita_id"]}).json()["libres"]
     assert "08:00" in libres
     assert c.post("/panel/api/citas/9999/reprogramar", headers=H, json={"fecha": "2026-11-11", "hora": "08:00"}).status_code == 404
+
+
+# --- Recordatorios --------------------------------------------------------
+from vertice import recordatorios  # noqa: E402
+
+
+def test_cuando_en_espanol():
+    base = datetime(2026, 11, 9, 9, 0)
+    assert recordatorios.cuando(datetime(2026, 11, 9, 14, 0), base) == "hoy a las 2:00 p. m."
+    assert recordatorios.cuando(datetime(2026, 11, 10, 8, 30), base) == "mañana a las 8:30 a. m."
+    assert recordatorios.cuando(datetime(2026, 11, 12, 12, 0), base) == "el jueves 12 de noviembre a las 12:00 p. m."
+
+
+def _clinica_con_whatsapp():
+    from dataclasses import replace
+    return replace(CLINICA, whatsapp_phone_number_id="123")
+
+
+def test_recordatorio_se_envia_una_vez_con_botones(db):
+    n = _clinica_con_whatsapp()
+    cita = Agenda(db, n, ahora).reservar("573001112233", "Ana Gómez", "Valoración odontológica", "2026-11-10", "15:00")
+    enviados = []
+
+    def plantilla(pid, para, nombre, parametros, botones):
+        enviados.append((pid, para, nombre, parametros, botones))
+        return f"wamid.r{len(enviados)}"
+
+    manana_temprano = datetime(2026, 11, 9, 7, 30)   # de madrugada: no se molesta
+    assert recordatorios.ciclo(db, {n.id: n}, plantilla, manana_temprano) == {"enviados": 0, "fallidos": 0}
+    dia = datetime(2026, 11, 9, 15, 30)               # ya falta menos de 24 h: toca el aviso del día anterior
+    assert recordatorios.ciclo(db, {n.id: n}, plantilla, dia)["enviados"] == 1
+    assert recordatorios.ciclo(db, {n.id: n}, plantilla, dia)["enviados"] == 0  # no se repite
+    pid, para, nombre, parametros, botones = enviados[0]
+    assert (pid, para, nombre) == ("123", "573001112233", "recordatorio_cita")
+    assert parametros == ["Ana", n.nombre, "Valoración odontológica", "mañana a las 3:00 p. m."]
+    assert botones == [f"confirmar:{cita['cita_id']}", f"cambiar:{cita['cita_id']}"]
+    # El aviso corto de 2 h antes también sale, una sola vez
+    corto = datetime(2026, 11, 10, 13, 30)
+    assert recordatorios.ciclo(db, {n.id: n}, plantilla, corto)["enviados"] == 1
+    assert recordatorios.ciclo(db, {n.id: n}, plantilla, corto)["enviados"] == 0
+    assert enviados[1][3][3] == "hoy a las 3:00 p. m."
+
+
+def test_recordatorio_que_falla_se_reintenta_y_casos_que_se_omiten(db):
+    n = _clinica_con_whatsapp()
+    ag = Agenda(db, n, ahora)
+    ag.reservar("573001112233", "Ana Gómez", "Valoración odontológica", "2026-11-10", "15:00")
+    ag.reservar("panel-20261109", "Sin Teléfono", "Valoración odontológica", "2026-11-10", "16:00")  # recepción sin número
+    llamadas = []
+
+    def meta_caida(*a):
+        llamadas.append(a)
+        raise RuntimeError("131047 plantilla no aprobada")
+
+    dia = datetime(2026, 11, 9, 15, 30)
+    assert recordatorios.ciclo(db, {n.id: n}, meta_caida, dia) == {"enviados": 0, "fallidos": 1}
+    assert len(llamadas) == 1                                   # la de sin teléfono ni se intentó
+    assert recordatorios.ciclo(db, {n.id: n}, lambda *a: "ok", dia)["enviados"] == 1  # reintento exitoso
+    # Clínica sin número de WhatsApp conectado o con recordatorios apagados: nada se envía
+    assert recordatorios.ciclo(db, {CLINICA.id: CLINICA}, lambda *a: "x", dia)["enviados"] == 0
+
+
+def test_cita_recien_agendada_no_recibe_aviso_pegado(db):
+    n = _clinica_con_whatsapp()
+    Agenda(db, n, ahora).reservar("573001112233", "Ana Gómez", "Valoración odontológica", "2026-11-09", "14:00")  # hoy mismo
+    enviados = []
+    r = recordatorios.ciclo(db, {n.id: n}, lambda *a: enviados.append(a) or "w", datetime(2026, 11, 9, 12, 5))
+    assert r["enviados"] == 0 and enviados == []   # se agendó 5 h antes: ya está fresca
+
+
+def payload_boton(boton_payload, texto_="Sí, confirmo", msg_id="wamid.b1"):
+    return {"entry": [{"changes": [{"value": {
+        "metadata": {"phone_number_id": "123"},
+        "contacts": [{"wa_id": "573001112233", "profile": {"name": "Ana"}}],
+        "messages": [{"id": msg_id, "from": "573001112233", "type": "button",
+                      "button": {"payload": boton_payload, "text": texto_}}],
+    }}]}]}
+
+
+def test_boton_confirmo_y_boton_cambiar(db):
+    n = _clinica_con_whatsapp()
+    cita = Agenda(db, n, ahora).reservar("573001112233", "Ana Gómez", "Valoración odontológica", "2026-11-10", "15:00")
+    api = APIFalsa([respuesta(texto("Claro, ¿qué día te queda mejor?"))])
+    enviados = []
+    c = TestClient(crear_app(Asistente(db, api, ahora), {n.id: n}, enviar=lambda pid, para, t: enviados.append(t) or "w",
+                             recordatorios_activos=False))
+    c.post("/webhook", json=payload_boton(f"confirmar:{cita['cita_id']}"))
+    assert db.cita(n.id, cita["cita_id"])["confirmacion"] == "confirmo"
+    assert len(enviados) == 1 and "confirmada tu asistencia" in enviados[0] and api.peticiones == []
+    # "Necesito cambiarla": lo atiende Sofía con las herramientas, sin gastar una respuesta fija
+    c.post("/webhook", json=payload_boton(f"cambiar:{cita['cita_id']}", "Necesito cambiarla", "wamid.b2"))
+    assert db.cita(n.id, cita["cita_id"])["confirmacion"] == "cambiar"
+    assert "Necesito cambiar mi cita de Valoración odontológica (mañana a las 3:00 p. m.)" in json.dumps(api.peticiones[0]["messages"], ensure_ascii=False)
+    assert enviados[-1] == "Claro, ¿qué día te queda mejor?"
+    # Un botón de una cita ajena o cancelada no marca nada
+    assert db.marcar_confirmacion(n.id, cita["cita_id"], "otro", "confirmo") is False
+
+
+def test_reprogramar_reinicia_confirmacion_y_recordatorios(db):
+    n = _clinica_con_whatsapp()
+    ag = Agenda(db, n, ahora)
+    cita = ag.reservar("573001112233", "Ana Gómez", "Valoración odontológica", "2026-11-10", "15:00")
+    assert recordatorios.ciclo(db, {n.id: n}, lambda *a: "w", datetime(2026, 11, 9, 15, 30))["enviados"] == 1
+    db.marcar_confirmacion(n.id, cita["cita_id"], "573001112233", "confirmo")
+    ag.reprogramar(cita["cita_id"], "2026-11-12", "10:00")
+    fila = db.cita(n.id, cita["cita_id"])
+    assert (fila["recordatorio_1"], fila["confirmacion"]) == ("", "")
+
+
+def test_herramienta_confirmar_asistencia(db):
+    h = Herramientas(db, CLINICA, "573001112233", ahora)
+    cita = json.loads(h.ejecutar("agendar_cita", {"nombre": "Ana Gómez", "servicio": "limpieza", "fecha": "2026-11-10", "hora": "10:00"})[0])
+    assert not h.ejecutar("confirmar_asistencia", {"cita_id": cita["cita_id"]})[1]
+    assert db.cita(CLINICA.id, cita["cita_id"])["confirmacion"] == "confirmo"
+    assert Herramientas(db, CLINICA, "otro", ahora).ejecutar("confirmar_asistencia", {"cita_id": cita["cita_id"]})[1]
+
+
+def test_el_ciclo_de_recordatorios_arranca_con_el_servidor(db, monkeypatch):
+    import time
+    from vertice import app as modulo_app
+    monkeypatch.setattr(modulo_app, "INTERVALO_RECORDATORIOS", 0.05)
+    n = _clinica_con_whatsapp()
+    Agenda(db, n, ahora).reservar("573001112233", "Ana Gómez", "Valoración odontológica", "2026-11-10", "15:00")
+    enviados = []
+    reloj = lambda: datetime(2026, 11, 9, 15, 30)  # noqa: E731
+    app = crear_app(Asistente(db, APIFalsa([]), reloj), {n.id: n}, enviar=lambda *a: None,
+                    enviar_plantilla=lambda *a: enviados.append(a) or "wamid.loop", recordatorios_activos=True)
+    with TestClient(app):          # al entrar arranca el ciclo; al salir se detiene
+        for _ in range(40):
+            if enviados:
+                break
+            time.sleep(0.05)
+    assert len(enviados) == 1

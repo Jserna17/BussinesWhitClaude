@@ -5,15 +5,18 @@ Ejecutar:  uvicorn vertice.app:app --host 0.0.0.0 --port 8000
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
+from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 
-from . import voz, whatsapp
+from . import recordatorios, voz, whatsapp
 from .agente import Asistente
 from .db import BaseDatos
 from .negocio import Negocio, cargar_negocios
@@ -29,6 +32,7 @@ VERIFY_TOKEN = os.environ.get("WHATSAPP_VERIFY_TOKEN", "")
 APP_SECRET = os.environ.get("WHATSAPP_APP_SECRET", "")
 
 NO_TEXTO = "Por ahora solo puedo leer mensajes de texto y notas de voz ✍️ ¿Me escribes tu consulta?"
+INTERVALO_RECORDATORIOS = int(os.environ.get("VERTICE_RECORDATORIOS_SEGUNDOS", "300"))
 NO_ENTENDI_VOZ = "No logré escuchar bien tu nota de voz 🎧 ¿Me la puedes escribir, por favor?"
 
 
@@ -40,13 +44,37 @@ def notificar_dueno(negocio: Negocio, texto: str) -> None:
 
 
 def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] | None = None,
-              enviar=whatsapp.enviar_texto, descargar=whatsapp.descargar_media, transcribir=voz.transcribir) -> FastAPI:
+              enviar=whatsapp.enviar_texto, descargar=whatsapp.descargar_media, transcribir=voz.transcribir,
+              enviar_plantilla=whatsapp.enviar_plantilla, recordatorios_activos: bool | None = None) -> FastAPI:
     db = BaseDatos(RUTA_DB) if asistente is None else asistente.db
     asistente = asistente or Asistente(db, notificar_dueno=notificar_dueno)
     negocios = negocios if negocios is not None else cargar_negocios(CARPETA_NEGOCIOS)
     por_numero = {n.whatsapp_phone_number_id: n for n in negocios.values() if n.whatsapp_phone_number_id}
 
-    app = FastAPI(title="Vértice · Asistente de WhatsApp")
+    if recordatorios_activos is None:
+        recordatorios_activos = os.environ.get("VERTICE_RECORDATORIOS", "1") != "0"
+
+    def enviar_recordatorios() -> dict:
+        return recordatorios.ciclo(db, negocios, enviar_plantilla, asistente.ahora())
+
+    @asynccontextmanager
+    async def vida(_app: FastAPI):
+        async def bucle():
+            while True:
+                try:
+                    r = await asyncio.to_thread(enviar_recordatorios)
+                    if r["enviados"] or r["fallidos"]:
+                        log.info("Recordatorios: %s", r)
+                except Exception:  # noqa: BLE001 - el ciclo nunca debe morir
+                    log.exception("Falló el ciclo de recordatorios")
+                await asyncio.sleep(INTERVALO_RECORDATORIOS)
+        tarea = asyncio.create_task(bucle()) if recordatorios_activos else None
+        yield
+        if tarea:
+            tarea.cancel()
+
+    app = FastAPI(title="Vértice · Asistente de WhatsApp", lifespan=vida)
+    app.state.enviar_recordatorios = enviar_recordatorios
     montar_panel(app, db, negocios, asistente.ahora, enviar)
 
     @app.get("/salud")
@@ -76,7 +104,32 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
                 return None
         return m.texto
 
+    def respuesta_a_boton(m: whatsapp.MensajeEntrante, negocio: Negocio) -> str | None:
+        """Botones del recordatorio. Devuelve el texto para el asistente, "" si ya se resolvió sola, None si no aplica."""
+        accion, _, cid = m.payload.partition(":")
+        if accion not in ("confirmar", "cambiar") or not cid.isdigit():
+            return None
+        cita = db.cita(negocio.id, int(cid))
+        if cita is None or cita["estado"] != "confirmada" or cita["cliente"] != m.de:
+            return None  # la cita ya no existe o se canceló: que lo atienda el asistente como texto normal
+        db.marcar_confirmacion(negocio.id, int(cid), m.de, "confirmo" if accion == "confirmar" else "cambiar")
+        cuando = recordatorios.cuando(datetime.fromisoformat(cita["inicio"]), asistente.ahora())
+        if accion == "cambiar":
+            return f"Necesito cambiar mi cita de {cita['servicio']} ({cuando})."
+        db.guardar_mensaje_chat(negocio.id, m.de, "paciente", "✅ Confirmó su asistencia", "whatsapp")
+        if not db.pausa_vigente(negocio.id, m.de):
+            gracias = f"¡Gracias, {cita['nombre'].split()[0]}! Quedó confirmada tu asistencia {cuando} ✅ Si algo cambia, escríbenos por aquí."
+            db.guardar_mensaje_chat(negocio.id, m.de, "asistente", gracias, "recordatorio")
+            enviar_y_registrar(negocio, m.de, gracias)
+        return ""
+
     def atender(m: whatsapp.MensajeEntrante, negocio: Negocio) -> None:
+        if m.payload:
+            traducido = respuesta_a_boton(m, negocio)
+            if traducido == "":
+                return
+            if traducido:
+                m = whatsapp.MensajeEntrante(**{**m.__dict__, "texto": traducido, "tipo": "text", "payload": ""})
         texto_entrante = texto_de(m, negocio)
         if db.pausa_vigente(negocio.id, m.de):
             # Una persona atiende este chat: guardamos el mensaje para que el equipo lo vea y no respondemos.

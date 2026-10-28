@@ -48,6 +48,11 @@ def prompt_sistema(n: Negocio) -> str:
     faq = "\n".join(f"- P: {f['pregunta']}\n  R: {f['respuesta']}" for f in n.faq) or "- (sin preguntas frecuentes)"
     politicas = "\n".join(f"- {p}" for p in n.politicas) or "- (sin políticas especiales)"
     humano = "\n".join(f"- {h}" for h in n.pasar_a_humano_si) or "- El cliente lo pide."
+    recordatorios = (
+        "- El sistema envía solo un recordatorio por WhatsApp antes de cada cita (el día anterior y unas horas antes); puedes decírselo al cliente. "
+        "Si el cliente confirma que asistirá, usa confirmar_asistencia. Si pide cambiar la fecha, usa reprogramar_cita."
+        if n.recordatorios and n.whatsapp_phone_number_id else
+        "- No prometas recordatorios automáticos: este negocio no los tiene activos.")
 
     return f"""Te llamas {n.nombre_asistente} y atiendes el WhatsApp de {n.nombre} ({n.tipo}) en {n.ciudad}. Eres un asistente virtual; si te lo preguntan, dilo con naturalidad.
 Atiendes a los clientes del negocio: respondes sus preguntas, das precios y horarios, agendas, consultas, reprogramas y cancelas citas, y pasas a una persona del equipo los casos que lo requieren.
@@ -82,7 +87,8 @@ Políticas:
 - Para ofrecer horarios usa siempre consultar_disponibilidad. Antes de agendar, confirma con el cliente servicio, fecha, hora y su nombre completo; luego usa agendar_cita y repite los datos de la cita confirmada con la dirección.
 - Interpreta "mañana", "el viernes", etc. según la fecha del mensaje que aparece entre corchetes al inicio de cada mensaje del cliente. Esa marca la agrega el sistema; no la menciones.
 - Si el cliente muestra interés pero no agenda, usa registrar_interes antes de despedirte.
-- No ofrezcas acciones que no puedes hacer con tus herramientas (por ejemplo, enviar recordatorios o llamar); si el cliente pide algo así, ofrece pasar el caso al equipo.
+- No ofrezcas acciones que no puedes hacer con tus herramientas (por ejemplo, llamar por teléfono); si el cliente pide algo así, ofrece pasar el caso al equipo.
+{recordatorios}
 - No das diagnósticos, consejos médicos ni garantías de resultados; para eso está la valoración con el profesional.
 - Usa pasar_a_humano cuando:
 {humano}
@@ -132,8 +138,8 @@ class Asistente:
         filas = self.db.mensajes_chat(negocio.id, cliente, ultimo.isoformat(timespec="seconds") if ultimo else "")[-10:]
         if not filas:
             return ""
-        lineas = [f'{"Una persona del equipo" if f["rol"] == "equipo" else "El paciente"} escribió: "{f["texto"][:300]}"'
-                  for f in filas]
+        quien = {"equipo": "Una persona del equipo escribió", "asistente": "Tú (el asistente) enviaste"}
+        lineas = [f'{quien.get(f["rol"], "El paciente escribió")}: "{f["texto"][:300]}"' for f in filas]
         return "[Nota del sistema, no la menciones: mientras no atendías este chat pasó lo siguiente. " + " / ".join(lineas) + "] "
 
     def responder(self, negocio: Negocio, cliente: str, texto: str) -> str:

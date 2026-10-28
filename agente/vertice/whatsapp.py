@@ -26,6 +26,7 @@ class MensajeEntrante:
     tipo: str
     media_id: str = ""  # nota de voz: id para descargarla
     mime: str = ""
+    payload: str = ""  # botón de una plantilla (p. ej. "confirmar:12")
 
 
 @dataclass(frozen=True)
@@ -73,13 +74,15 @@ def extraer_mensajes(payload: dict) -> list[MensajeEntrante]:
             for m in valor.get("messages", []):
                 tipo = m.get("type", "")
                 texto = m.get("text", {}).get("body") if tipo == "text" else None
+                boton = m.get("button", {}) if tipo == "button" else {}
                 if tipo == "button":
-                    texto = m.get("button", {}).get("text")
+                    texto = boton.get("text")
                 audio = m.get("audio", {}) if tipo == "audio" else {}
                 mensajes.append(MensajeEntrante(
                     id=m.get("id", ""), phone_number_id=phone_number_id, de=m.get("from", ""),
                     nombre_perfil=nombres.get(m.get("from"), ""), texto=texto, tipo=tipo,
                     media_id=str(audio.get("id", "")), mime=audio.get("mime_type", ""),
+                    payload=str(boton.get("payload", "")),
                 ))
     return mensajes
 
@@ -92,6 +95,35 @@ def descargar_media(media_id: str, token: str | None = None) -> tuple[bytes, str
         info = json.load(r)
     with urllib.request.urlopen(urllib.request.Request(info["url"], headers=cab), timeout=30) as r:
         return r.read(), info.get("mime_type", "audio/ogg")
+
+
+def _post(phone_number_id: str, cuerpo: dict, token: str | None) -> str | None:
+    token = token or os.environ["WHATSAPP_TOKEN"]
+    peticion = urllib.request.Request(
+        f"https://graph.facebook.com/{GRAPH_VERSION}/{phone_number_id}/messages", data=json.dumps(cuerpo).encode(),
+        method="POST", headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(peticion, timeout=15) as r:
+            log.info("WhatsApp enviado a %s (%s)", cuerpo.get("to"), r.status)
+            try:
+                return json.load(r)["messages"][0]["id"]
+            except (KeyError, IndexError, ValueError):
+                return None
+    except urllib.error.HTTPError as e:
+        log.error("WhatsApp rechazó el envío a %s: %s %s", cuerpo.get("to"), e.code, e.read()[:300])
+        raise
+
+
+def enviar_plantilla(phone_number_id: str, para: str, plantilla: str, parametros: list[str],
+                     botones: list[str] | None = None, idioma: str = "es", token: str | None = None) -> str | None:
+    """Envía una plantilla aprobada por Meta (la única forma de escribir primero o pasadas 24 h).
+    `parametros`: textos para {{1}}, {{2}}…; `botones`: payload de cada botón de respuesta rápida, en orden."""
+    componentes = [{"type": "body", "parameters": [{"type": "text", "text": p.replace("\n", " ")[:200]} for p in parametros]}]
+    for i, payload in enumerate(botones or []):
+        componentes.append({"type": "button", "sub_type": "quick_reply", "index": str(i),
+                            "parameters": [{"type": "payload", "payload": payload}]})
+    return _post(phone_number_id, {"messaging_product": "whatsapp", "to": para, "type": "template",
+                                   "template": {"name": plantilla, "language": {"code": idioma}, "components": componentes}}, token)
 
 
 def enviar_texto(phone_number_id: str, para: str, texto: str, token: str | None = None) -> str | None:

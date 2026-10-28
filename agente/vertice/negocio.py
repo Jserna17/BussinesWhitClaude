@@ -45,6 +45,8 @@ class Negocio:
     intervalo_min: int = 30      # cada cuánto empieza un turno
     panel_clave: str = ""        # clave del panel del médico (o variable VERTICE_PANEL_CLAVE_<ID>)
     abre_festivos: bool = False  # festivos de Colombia: cerrado salvo que la clínica diga lo contrario
+    recordatorios: bool = True   # recordatorio con botones por WhatsApp (plantilla aprobada por Meta)
+    plantilla_recordatorio: str = "recordatorio_cita"
     pausa_horas: float = 12      # si una persona del equipo escribe en un chat, el asistente se calla este tiempo
 
     def franjas(self, dia: str) -> list[tuple[str, str]]:

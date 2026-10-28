@@ -57,6 +57,12 @@ def sembrar(ruta: str, negocio_id: str = "clinica-demo") -> None:
         cid, _ = db.reservar(n.id, ["Dra. Laura Gómez"], f"pasado{i}", f"Paciente ejemplo · {quien}",
                              "Valoración odontológica", inicio.isoformat(), (inicio + timedelta(minutes=30)).isoformat(), "panel")
         db.cambiar_estado_cita(n.id, cid, estado)
+    # Respuestas de ejemplo a los recordatorios: una confirma y otra pide cambiar
+    for fila in db.con.execute("SELECT id, cliente, nombre FROM citas WHERE negocio_id=? AND cliente LIKE 'ejemplo%' ORDER BY inicio", (n.id,)):
+        if "Marta" in fila["nombre"]:
+            db.marcar_confirmacion(n.id, fila["id"], fila["cliente"], "confirmo")
+        if "Jorge" in fila["nombre"]:
+            db.marcar_confirmacion(n.id, fila["id"], fila["cliente"], "cambiar")
     print("Datos de ejemplo agregados a", ruta)
 
 

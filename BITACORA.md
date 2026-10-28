@@ -399,3 +399,12 @@ P0/P1/P2. Checklist de onboarding actualizado; la pregunta "¿dónde llevan la a
 - 40 pruebas OK. Demo republicada.
 **Siguiente:** P0-5 recordatorios con confirmación (plantillas de Meta).
 
+### P0-5 (misma sesión)
+- `vertice/recordatorios.py`: ciclo de recordatorios con plantilla de Meta y botones; reglas de horario, sin duplicados, reintento si falla; arranca con el servidor.
+- Botones del paciente: "Confirmo" queda en el panel; "Necesito cambiarla" lo atiende Sofía. Herramienta `confirmar_asistencia` para respuestas en texto.
+- Panel: ✓ / ↺ en el calendario, estado y recordatorios enviados en el detalle de la cita, conteo en el resumen.
+- Guía `plantillas/plantillas-whatsapp-meta.md` con la plantilla exacta que hay que aprobar (acción del fundador).
+- Error propio corregido: el panel mostraba "null" en el detalle de las citas (elementos opcionales del panel lateral) desde P0-1.
+- 48 pruebas OK; demo republicada.
+**Siguiente:** P0-6 usuarios con rol y bitácora de cambios.
+

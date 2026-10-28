@@ -80,6 +80,15 @@ DEFINICIONES = [
         ),
     },
     {
+        "name": "confirmar_asistencia",
+        "description": (
+            "Registra que el cliente confirmó que asistirá a una cita (por ejemplo, responde \"sí, voy\" a un "
+            "recordatorio). Usa ver_mis_citas para obtener el id; si tiene varias citas, confirma cuál."
+        ),
+        "strict": True,
+        "input_schema": _esquema({"cita_id": {"type": "integer"}}, ["cita_id"]),
+    },
+    {
         "name": "cancelar_cita",
         "description": "Cancela una cita del cliente. Primero usa ver_mis_citas para obtener el id y confirma con el cliente.",
         "strict": True,
@@ -209,6 +218,11 @@ class Herramientas:
         if len(self.negocio.nombres_profesionales()) == 1:
             cita.pop("profesional")
         return cita
+
+    def _confirmar_asistencia(self, cita_id: int) -> dict:
+        if not self.db.marcar_confirmacion(self.negocio.id, cita_id, self.cliente, "confirmo"):
+            raise ErrorHerramienta("No encontré una cita confirmada con ese id para este cliente.")
+        return {"cita_id": cita_id, "asistencia_confirmada": True}
 
     def _cancelar_cita(self, cita_id: int) -> dict:
         if not self.db.cancelar_cita(self.negocio.id, self.cliente, cita_id):

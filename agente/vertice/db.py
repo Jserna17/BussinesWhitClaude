@@ -82,7 +82,9 @@ ZONA = ZoneInfo("America/Bogota")
 
 # Columnas agregadas después de la v0.1 (las bases existentes se actualizan solas).
 MIGRACIONES = {
-    "citas": {"profesional": "TEXT NOT NULL DEFAULT 'Consultorio'", "origen": "TEXT NOT NULL DEFAULT 'asistente'"},
+    "citas": {"profesional": "TEXT NOT NULL DEFAULT 'Consultorio'", "origen": "TEXT NOT NULL DEFAULT 'asistente'",
+              "recordatorio_1": "TEXT NOT NULL DEFAULT ''", "recordatorio_2": "TEXT NOT NULL DEFAULT ''",
+              "confirmacion": "TEXT NOT NULL DEFAULT ''"},
     "escalaciones": {"estado": "TEXT NOT NULL DEFAULT 'abierta'"},
 }
 
@@ -254,9 +256,28 @@ class BaseDatos:
                 for prof in candidatos:
                     if any(o["profesional"] == prof for o in ocupados):
                         continue
-                    con.execute("UPDATE citas SET inicio=?, fin=?, profesional=? WHERE id=?", (inicio, fin, prof, cita_id))
+                    con.execute("UPDATE citas SET inicio=?, fin=?, profesional=?, recordatorio_1='', recordatorio_2='', confirmacion='' "
+                                "WHERE id=?", (inicio, fin, prof, cita_id))
                     return prof
         raise Conflicto("Ese horario ya no está disponible.")
+
+    # --- Recordatorios y confirmación del paciente ---------------------
+    COLUMNAS_RECORDATORIO = {1: "recordatorio_1", 2: "recordatorio_2"}
+
+    def reclamar_recordatorio(self, cita_id: int, numero: int) -> bool:
+        """Reserva el envío de un recordatorio (atómico: aunque haya dos procesos, solo uno lo envía)."""
+        col = self.COLUMNAS_RECORDATORIO[numero]
+        return self._escribir(f"UPDATE citas SET {col}=? WHERE id=? AND {col}='' AND estado='confirmada'",
+                              (self._ahora(), cita_id)).rowcount == 1
+
+    def liberar_recordatorio(self, cita_id: int, numero: int) -> None:
+        """El envío falló: se podrá reintentar en el siguiente ciclo."""
+        self._escribir(f"UPDATE citas SET {self.COLUMNAS_RECORDATORIO[numero]}='' WHERE id=?", (cita_id,))
+
+    def marcar_confirmacion(self, negocio_id: str, cita_id: int, cliente: str, valor: str) -> bool:
+        """valor: 'confirmo' o 'cambiar' (lo que respondió el paciente). Solo para citas confirmadas del propio paciente."""
+        return self._escribir("UPDATE citas SET confirmacion=? WHERE id=? AND negocio_id=? AND cliente=? AND estado='confirmada'",
+                              (valor, cita_id, negocio_id, cliente)).rowcount == 1
 
     def citas_entre(self, negocio_id: str, desde: str, hasta: str) -> list[sqlite3.Row]:
         return self.con.execute(

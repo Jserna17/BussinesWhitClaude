@@ -103,6 +103,16 @@ CREATE TABLE IF NOT EXISTS bitacora (
     creado TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_bitacora ON bitacora (negocio_id, creado);
+CREATE TABLE IF NOT EXISTS profesionales (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    negocio_id TEXT NOT NULL,
+    nombre TEXT NOT NULL,
+    servicios TEXT NOT NULL DEFAULT '[]',
+    horario TEXT NOT NULL DEFAULT '',
+    activo INTEGER NOT NULL DEFAULT 1,
+    creado TEXT NOT NULL,
+    UNIQUE (negocio_id, nombre)
+);
 CREATE TABLE IF NOT EXISTS estado (
     clave TEXT PRIMARY KEY,
     valor TEXT NOT NULL,
@@ -495,6 +505,36 @@ class BaseDatos:
     def bitacora(self, negocio_id: str, desde: str, limite: int = 300) -> list[sqlite3.Row]:
         return self.con.execute("SELECT * FROM bitacora WHERE negocio_id=? AND creado >= ? ORDER BY id DESC LIMIT ?",
                                 (negocio_id, desde, limite)).fetchall()
+
+    # --- Odontólogos de cada clínica (se administran desde el panel) ----------
+    def profesionales_de(self, negocio_id: str) -> list[sqlite3.Row]:
+        return self.con.execute("SELECT * FROM profesionales WHERE negocio_id=? ORDER BY activo DESC, id", (negocio_id,)).fetchall()
+
+    def profesional(self, negocio_id: str, profesional_id: int) -> sqlite3.Row | None:
+        return self.con.execute("SELECT * FROM profesionales WHERE negocio_id=? AND id=?", (negocio_id, profesional_id)).fetchone()
+
+    def crear_profesional(self, negocio_id: str, nombre: str, servicios_json: str, horario_json: str) -> int:
+        try:
+            return self._escribir("INSERT INTO profesionales (negocio_id, nombre, servicios, horario, creado) VALUES (?,?,?,?,?)",
+                                  (negocio_id, nombre, servicios_json, horario_json, self._ahora())).lastrowid
+        except sqlite3.IntegrityError:
+            raise ValueError(f"Ya existe un odontólogo llamado '{nombre}'.")
+
+    def actualizar_profesional(self, negocio_id: str, profesional_id: int, servicios_json: str, horario_json: str) -> bool:
+        return self._escribir("UPDATE profesionales SET servicios=?, horario=? WHERE id=? AND negocio_id=?",
+                              (servicios_json, horario_json, profesional_id, negocio_id)).rowcount == 1
+
+    def activar_profesional(self, negocio_id: str, profesional_id: int, activo: bool) -> bool:
+        return self._escribir("UPDATE profesionales SET activo=? WHERE id=? AND negocio_id=?",
+                              (1 if activo else 0, profesional_id, negocio_id)).rowcount == 1
+
+    def citas_futuras_de(self, negocio_id: str, profesional: str) -> int:
+        return self.con.execute(f"SELECT COUNT(*) AS n FROM citas WHERE negocio_id=? AND profesional=? AND {_ACTIVOS_SQL} AND inicio >= ?",
+                                (negocio_id, profesional, self._ahora())).fetchone()["n"]
+
+    def pasar_citas_de_consultorio(self, negocio_id: str, nuevo: str) -> int:
+        """Al agregar el primer odontólogo a una clínica de un solo consultorio, sus citas pasan a él (si no, no bloquearían su horario)."""
+        return self._escribir("UPDATE citas SET profesional=? WHERE negocio_id=? AND profesional='Consultorio'", (nuevo, negocio_id)).rowcount
 
     # --- Salud del sistema (lo lee el monitoreo) -------------------------
     def poner_estado(self, clave: str, valor: str) -> None:

@@ -16,7 +16,7 @@ from pathlib import Path
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 
-from . import recordatorios, salud, voz, whatsapp
+from . import profesionales, recordatorios, salud, voz, whatsapp
 from .agente import RESPUESTA_FALLA, Asistente
 from .db import BaseDatos
 from .negocio import Negocio, aviso_privacidad_texto, cargar_negocios
@@ -51,7 +51,9 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
     db = BaseDatos(RUTA_DB) if asistente is None else asistente.db
     asistente = asistente or Asistente(db, notificar_dueno=notificar_dueno)
     negocios = negocios if negocios is not None else cargar_negocios(CARPETA_NEGOCIOS)
-    por_numero = {n.whatsapp_phone_number_id: n for n in negocios.values() if n.whatsapp_phone_number_id}
+    profesionales.sincronizar(db, negocios)  # los odontólogos viven en la base: se siembran del YAML solo la primera vez
+    # Se guarda el id (no el objeto): al cambiar los odontólogos desde el panel, el asistente usa siempre la clínica vigente.
+    por_numero = {n.whatsapp_phone_number_id: n.id for n in negocios.values() if n.whatsapp_phone_number_id}
     produccion = os.environ.get("VERTICE_ENTORNO") == "produccion"
     if produccion:  # en producción, sin secretos no se arranca: mejor caído y avisado que abierto a mensajes falsos
         faltan = [v for v, ok in (("WHATSAPP_APP_SECRET", APP_SECRET), ("WHATSAPP_VERIFY_TOKEN", VERIFY_TOKEN),
@@ -206,13 +208,13 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
             raise HTTPException(status_code=401)
         payload = json.loads(cuerpo or b"{}")
         for e in whatsapp.extraer_ecos(payload):
-            negocio = por_numero.get(e.phone_number_id)
+            negocio = negocios.get(por_numero.get(e.phone_number_id, ""))
             if negocio is None or not e.para or (e.id and not db.marcar_procesado(e.id)):
                 continue
             db.guardar_mensaje_chat(negocio.id, e.para, "equipo", e.texto, "app")
             db.pausar(negocio.id, e.para, negocio.pausa_horas, "El equipo escribió desde la app de WhatsApp")
         for m in whatsapp.extraer_mensajes(payload):
-            negocio = por_numero.get(m.phone_number_id)
+            negocio = negocios.get(por_numero.get(m.phone_number_id, ""))
             if negocio is None:
                 log.warning("Mensaje para un número no configurado: %s", m.phone_number_id)
                 continue

@@ -231,6 +231,14 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
 
 .who { display: flex; align-items: center; gap: 10px; padding: 8px 6px; }
 .who .n { font-weight: 700; font-size: .88rem; line-height: 1.2; }
+.dias-grid { display: grid; gap: 6px; }
+.dia-fila { display: grid; grid-template-columns: 92px repeat(4, minmax(0, 1fr)); gap: 6px; align-items: center; }
+.dia-fila input[type=time] { width: 100%; border: 1px solid var(--line-strong); border-radius: 8px; padding: 6px 6px; background: var(--surface); color: var(--fg); font-size: .85rem; min-width: 0; }
+.dia-fila input[type=time]:disabled { opacity: .45; }
+.drawer.ancho { width: min(600px, 100%); }
+.dia-fila.cab span { grid-column: span 2; }
+.dia-fila.cab { font-size: .72rem; color: var(--faint); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.servs { display: grid; gap: 4px; max-height: 180px; overflow: auto; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; }
 .person { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
 .person:first-child { border-top: 0; padding-top: 0; }
 .person .acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
@@ -374,6 +382,9 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
 
       <!-- EQUIPO -->
       <section data-view="equipo" hidden>
+        <div class="card" style="margin-bottom:14px"><div class="card-h"><h2>Odontólogos y consultorios</h2><span class="muted small">Quién atiende, qué servicios y en qué horario</span>
+          <button class="btn sm primary more" id="addProf" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Agregar odontólogo</button></div>
+          <div class="card-b" id="profLista"></div></div>
         <div class="card"><div class="card-h"><h2>Personas con acceso al panel</h2><span class="muted small more">Cada persona entra con su usuario y clave</span></div>
           <div class="card-b" id="equipoLista"></div></div>
         <p class="muted small">Dueño: ve y administra todo. Recepción: agenda, conversaciones y casos. Odontólogo: solo su propia agenda.</p>
@@ -473,6 +484,11 @@ $("loginForm").onsubmit = async e => {
     try { sessionStorage.setItem("vp", JSON.stringify(S.token ? { n: S.negocio, t: S.token } : { n: S.negocio, c: S.clave })); } catch (_) {}
   } catch (err) { S.token = ""; $("lgMsg").hidden = false; $("lgMsg").textContent = usuario ? err.message : "Código o clave incorrectos."; }
 };
+function pintarClinica() {
+  $("clinica").textContent = S.info.nombre;
+  $("clinicaSub").textContent = `Asistente: ${asist()} · ${S.info.profesionales.length} ${S.info.profesionales.length === 1 ? "consultorio" : "profesionales"}`;
+}
+async function refrescarSesion() { S.info = await api("/sesion"); pintarClinica(); }
 async function entrar() {
   S.info = await api("/sesion");
   const permisos = new Set(S.info.permisos); S.can = p => permisos.has(p);
@@ -482,8 +498,7 @@ async function entrar() {
   $("quienAv").textContent = iniciales(u.nombre); $("quienNombre").textContent = u.nombre;
   $("quienRol").textContent = u.rol_texto + (u.rol === "odontologo" ? " · " + u.profesional : "");
   $("miClave").hidden = u.soporte;
-  $("clinica").textContent = S.info.nombre;
-  $("clinicaSub").textContent = `Asistente: ${asist()} · ${S.info.profesionales.length} ${S.info.profesionales.length === 1 ? "consultorio" : "profesionales"}`;
+  pintarClinica();
   S.desde = lunes(S.info.hoy);
   if (matchMedia("(max-width: 900px)").matches) { S.vista = "dia"; S.desde = S.info.hoy; marcarVista(); }
   const primera = [...document.querySelectorAll("nav.menu [data-perm]")].find(b => !b.hidden).dataset.tab;
@@ -512,7 +527,7 @@ function ir(tab) {
     el("button", { class: "btn primary", type: "button", onclick: () => abrirNuevaCita(), html: ic("plus") + "Nueva cita" }));
   else if (tab === "equipo") acts.append(el("button", { class: "btn primary", type: "button", onclick: () => abrirNuevoUsuario(), html: ic("plus") + "Agregar persona" }));
   else acts.append(el("button", { class: "btn", type: "button", onclick: () => ir(tab), html: ic("refresh") + "Actualizar" }));
-  ({ resumen: cargarResumen, agenda: cargarAgenda, chats: cargarConvs, casos: () => cargarCasos(), equipo: cargarEquipo, historial: cargarHistorial })[tab]();
+  ({ resumen: cargarResumen, agenda: cargarAgenda, chats: cargarConvs, casos: () => cargarCasos(), equipo: () => { cargarProfesionales(); cargarEquipo(); }, historial: cargarHistorial })[tab]();
 }
 document.querySelectorAll("nav.menu [data-tab]").forEach(b => b.onclick = () => ir(b.dataset.tab));
 document.querySelectorAll("[data-ir]").forEach(b => b.onclick = () => ir(b.dataset.ir));
@@ -607,7 +622,9 @@ async function cargarAgenda() {
   let ini = 8 * 60, fin = 18 * 60;
   dias.forEach(f => [null, ...S.info.profesionales].forEach(p => franjasDe(f, p).forEach(([a, b]) => { ini = Math.min(ini, minutos(a)); fin = Math.max(fin, minutos(b)); })));
   ini = Math.floor(ini / 60) * 60; fin = Math.ceil(fin / 60) * 60;
-  const alto = (fin - ini) * PPM, profs = S.info.usuario.rol === "odontologo" ? [S.info.usuario.profesional] : S.info.profesionales, L = profs.length;
+  const alto = (fin - ini) * PPM, base = S.info.usuario.rol === "odontologo" ? [S.info.usuario.profesional] : S.info.profesionales,
+    inactivos = [...new Set(S.agenda.citas.map(c => c.profesional))].filter(x => x && !base.includes(x)),   // ya no atienden, pero tienen citas
+    profs = [...base, ...inactivos], L = profs.length;
   const cal = $("cal");
   cal.style.setProperty("--dias", n);
   cal.style.setProperty("--colmin", n === 1 ? "0px" : (L > 1 ? "150px" : "120px"));
@@ -617,7 +634,7 @@ async function cargarAgenda() {
     celdas.push(el("div", { class: "cal-head" + (f === S.info.hoy ? " today" : "") },
       el("div", { class: "dn" }, DIA_CORTO[dd.getDay()] + (activas ? ` · ${activas}` : "")), el("div", { class: "dd" }, dd.getDate()),
       festivoDe(f) ? el("div", { class: "fest", title: festivoDe(f) }, "Festivo · " + festivoDe(f)) : null,
-      L > 1 ? el("div", { class: "lanes" }, profs.map(p => el("span", { title: p }, p.replace(/^(Dra?\.)\s+/, "$1 ").split(" ").slice(0, 2).join(" ")))) : null));
+      L > 1 ? el("div", { class: "lanes" }, profs.map(p => el("span", { title: p + (inactivos.includes(p) ? " (ya no atiende)" : "") }, (inactivos.includes(p) ? "✕ " : "") + p.replace(/^(Dra?\.)\s+/, "$1 ").split(" ").slice(0, 2).join(" ")))) : null));
   });
   const horas = el("div", { class: "hours", style: `height:${alto}px` });
   for (let m = ini; m <= fin; m += 60) horas.append(el("span", { style: `top:${(m - ini) * PPM}px` }, `${String(m / 60).padStart(2, "0")}:00`));
@@ -667,7 +684,7 @@ function abrirDrawer(titulo, cuerpo, pie = []) {
   $("drFoot").hidden = !pie.length; $("drawer").hidden = false; $("scrim").hidden = false;
   setTimeout(() => ($("drawer").querySelector("input,select,button.primary") || $("drCerrar")).focus(), 30);
 }
-function cerrarDrawer() { $("drawer").hidden = true; $("scrim").hidden = true; }
+function cerrarDrawer() { $("drawer").hidden = true; $("scrim").hidden = true; $("drawer").classList.remove("ancho"); }
 $("drCerrar").onclick = cerrarDrawer; $("scrim").onclick = cerrarDrawer;
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("drawer").hidden) cerrarDrawer(); });
 
@@ -988,6 +1005,72 @@ async function cargarEquipo() {
         catch (e) { toast(e.message); } } }, u.activo ? "Desactivar" : "Activar"))))
     : [el("p", { class: "empty" }, "Todavía no hay personas. Agrega a tu equipo con el botón de arriba.")]));
 }
+// --- Odontólogos y consultorios ---------------------------------------------------
+const DIAS_LISTA = [["lunes", "Lunes"], ["martes", "Martes"], ["miercoles", "Miércoles"], ["jueves", "Jueves"], ["viernes", "Viernes"], ["sabado", "Sábado"], ["domingo", "Domingo"]];
+const resumenHorario = h => !h ? "Horario de la clínica" : DIAS_LISTA.filter(([k]) => h[k]).map(([k, t]) => `${t.slice(0, 3)} ${h[k].map(f => f.join("–")).join(" y ")}`).join(" · ");
+async function cargarProfesionales() {
+  const d = await api("/profesionales"); S.profs = d;
+  $("profLista").replaceChildren(...d.profesionales.map(p => el("div", { class: "person", style: p.activo ? "" : "opacity:.6" },
+    el("div", { class: "avatar" }, iniciales(p.nombre.replace(/^(Dra?\.)\s+/, ""))),
+    el("div", { style: "min-width:0" }, el("div", { style: "font-weight:700" }, p.nombre),
+      el("div", { class: "muted small" }, p.todos_los_servicios ? "Atiende todos los servicios" : `Atiende: ${p.servicios.join(", ")}`),
+      el("div", { class: "muted small" }, resumenHorario(p.horario)),
+      el("div", { style: "margin-top:4px;display:flex;gap:6px;flex-wrap:wrap" }, el("span", { class: "pill " + (p.activo ? "asistio" : "cancelada") }, p.activo ? "Activo" : "Desactivado"),
+        p.citas_futuras ? el("span", { class: "pill " + (p.activo ? "confirmada" : "no_asistio") }, `${p.citas_futuras} ${p.citas_futuras === 1 ? "cita futura" : "citas futuras"}`) : null)),
+    el("div", { class: "acts" },
+      el("button", { class: "btn sm", type: "button", onclick: () => abrirProfesional(p) }, "Editar"),
+      el("button", { class: "btn sm " + (p.activo ? "danger" : ""), type: "button", onclick: () => cambiarEstadoProfesional(p) }, p.activo ? "Desactivar" : "Activar")))));
+}
+async function cambiarEstadoProfesional(p) {
+  if (p.activo && !confirm(`${p.nombre} dejará de recibir citas nuevas.${p.citas_futuras ? ` Tiene ${p.citas_futuras} citas futuras: no se cancelan, pero tendrás que reprogramarlas o avisar a los pacientes.` : ""} ¿Continuar?`)) return;
+  try {
+    const r = await api(`/profesionales/${p.id}/estado`, { method: "POST", body: JSON.stringify({ activo: !p.activo }) });
+    toast(p.activo ? (r.citas_futuras ? `Desactivado. Quedan ${r.citas_futuras} citas por reprogramar` : "Odontólogo desactivado") : "Odontólogo reactivado");
+    await refrescarSesion(); cargarProfesionales();
+  } catch (e) { toast(e.message); }
+}
+function abrirProfesional(p) {
+  const nuevo = !p, servicios = S.profs.servicios, nota = el("div", { class: "note err", hidden: true });
+  const nombre = el("input", { id: "pfNombre", placeholder: "Ej.: Dra. Laura Gómez", value: p ? p.nombre : "", disabled: !nuevo });
+  const todos = el("input", { id: "pfTodos", type: "checkbox", checked: nuevo || p.todos_los_servicios });
+  const cajas = servicios.map(sv => el("input", { type: "checkbox", value: sv, checked: !nuevo && !p.todos_los_servicios && p.servicios.includes(sv) }));
+  const sincServ = () => cajas.forEach(c => c.disabled = todos.checked); todos.onchange = sincServ; sincServ();
+  const propio = el("input", { id: "pfPropio", type: "checkbox", checked: !nuevo && !!p.horario });
+  const filas = DIAS_LISTA.map(([k, t]) => {
+    const h = !nuevo && p.horario && p.horario[k] || null, clinica = S.info.horario[k] || [];
+    const f = h || clinica.map(x => x.slice(0, 2)), t1 = f[0] || ["", ""], t2 = f[1] || ["", ""];
+    const marca = el("input", { type: "checkbox", checked: !!h || (nuevo || !p.horario) && clinica.length > 0 });
+    const ins = [el("input", { type: "time", value: t1[0] }), el("input", { type: "time", value: t1[1] }), el("input", { type: "time", value: t2[0] }), el("input", { type: "time", value: t2[1] })];
+    const sync = () => { ins.forEach(i => i.disabled = !propio.checked || !marca.checked); }; marca.onchange = sync; marca._sync = sync; sync();
+    return { k, marca, ins, nodo: el("div", { class: "dia-fila" }, el("label", { class: "check", style: "gap:6px" }, marca, t), ...ins) };
+  });
+  const grid = el("div", { class: "dias-grid", id: "pfGrid" }, el("div", { class: "dia-fila cab" }, el("b", { style: "grid-column:auto" }), el("span", {}, "Turno 1 · desde – hasta"), el("span", {}, "Turno 2 (opcional) · desde – hasta")), ...filas.map(x => x.nodo));
+  const sincHor = () => { grid.style.display = propio.checked ? "" : "none"; filas.forEach(x => { x.marca.disabled = !propio.checked; x.marca._sync(); }); };
+  propio.onchange = sincHor; sincHor();
+  abrirDrawer(nuevo ? "Agregar odontólogo" : "Editar a " + p.nombre, [
+    el("label", { class: "field", for: "pfNombre" }, "Nombre", nombre, nuevo ? el("span", { class: "muted small", style: "font-weight:400" }, "Después no se puede cambiar: las citas quedan ligadas a este nombre.") : null),
+    el("div", { class: "field" }, "Servicios que atiende",
+      el("label", { class: "check", for: "pfTodos" }, todos, "Atiende todos los servicios"),
+      el("div", { class: "servs" }, servicios.map((sv, i) => el("label", { class: "check", style: "font-weight:500" }, cajas[i], sv)))),
+    el("div", { class: "field" }, "Horario",
+      el("label", { class: "check", for: "pfPropio" }, propio, "Tiene un horario propio (distinto al de la clínica)"),
+      el("span", { class: "muted small", style: "font-weight:400" }, "Si no, atiende en el horario de la clínica. Marca los días en que atiende; el segundo turno es opcional (por ejemplo, después del almuerzo)."), grid),
+    nota,
+  ], [el("button", { class: "btn primary", type: "button", onclick: async () => {
+    nota.hidden = true;
+    const horario = propio.checked ? Object.fromEntries(filas.filter(x => x.marca.checked).map(x => {
+      const v = x.ins.map(i => i.value), turnos = [[v[0], v[1]]]; if (v[2] || v[3]) turnos.push([v[2], v[3]]); return [x.k, turnos]; })) : null;
+    try {
+      const cuerpo = JSON.stringify({ nombre: nombre.value, servicios: todos.checked ? [] : cajas.filter(c => c.checked).map(c => c.value), horario });
+      if (!todos.checked && !cajas.some(c => c.checked)) throw new Error("Marca al menos un servicio, o elige \"Atiende todos los servicios\".");
+      const r = nuevo ? await api("/profesionales", { method: "POST", body: cuerpo }) : await api(`/profesionales/${p.id}`, { method: "PUT", body: cuerpo });
+      toast(nuevo ? (r.citas_movidas ? `Odontólogo agregado. ${r.citas_movidas} citas del consultorio pasaron a él` : "Odontólogo agregado") : "Cambios guardados");
+      cerrarDrawer(); await refrescarSesion(); cargarProfesionales();
+    } catch (e) { nota.hidden = false; nota.textContent = e.message; } } }, nuevo ? "Agregar" : "Guardar cambios")]);
+  $("drawer").classList.add("ancho");  // el formulario de horarios necesita más espacio
+}
+$("addProf").onclick = () => abrirProfesional(null);
+
 const ROLES_TXT = { dueno: "Dueño", recepcion: "Recepción", odontologo: "Odontólogo" };
 function campoClave(id, etiqueta) {
   return el("label", { class: "field", for: id }, etiqueta, el("input", { id, type: "password", autocomplete: "new-password" }),
@@ -1025,7 +1108,7 @@ $("miClave").onclick = () => {
 };
 
 // --- Historial ------------------------------------------------------------------
-const ACCIONES = { datos_exportados: "Descargó los datos de un paciente", datos_eliminados: "Eliminó los datos de un paciente", solicitud_creada: "Recibió una solicitud de cita", solicitud_confirmada: "Confirmó una solicitud de cita", solicitud_rechazada: "Rechazó una solicitud de cita", cita_creada: "Creó una cita", cita_reprogramada: "Reprogramó una cita", cita_estado: "Cambió el estado de una cita", cita_cancelada: "Canceló una cita",
+const ACCIONES = { profesional_creado: "Agregó un odontólogo", profesional_editado: "Cambió los servicios u horario de un odontólogo", profesional_activado: "Reactivó a un odontólogo", profesional_desactivado: "Desactivó a un odontólogo", datos_exportados: "Descargó los datos de un paciente", datos_eliminados: "Eliminó los datos de un paciente", solicitud_creada: "Recibió una solicitud de cita", solicitud_confirmada: "Confirmó una solicitud de cita", solicitud_rechazada: "Rechazó una solicitud de cita", cita_creada: "Creó una cita", cita_reprogramada: "Reprogramó una cita", cita_estado: "Cambió el estado de una cita", cita_cancelada: "Canceló una cita",
   cita_confirmada: "Confirmó asistencia", bloqueo_creado: "Bloqueó un horario", bloqueo_quitado: "Quitó un bloqueo", chat_tomado: "Tomó un chat", chat_devuelto: "Devolvió un chat",
   mensaje_enviado: "Escribió a un paciente", caso_resuelto: "Resolvió un caso", caso_abierto: "Pasó un caso al equipo", usuario_creado: "Agregó a una persona",
   usuario_activado: "Activó a una persona", usuario_desactivado: "Desactivó a una persona", clave_cambiada: "Cambió su clave", clave_restablecida: "Restableció una clave",

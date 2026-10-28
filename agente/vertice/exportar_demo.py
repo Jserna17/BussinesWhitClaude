@@ -34,17 +34,31 @@ SIMULADOR = r"""
   const R = (cuerpo, status = 200) => Promise.resolve(new Response(JSON.stringify(cuerpo), { status, headers: { "Content-Type": "application/json" } }));
   const mas = (iso, min) => { const d = new Date(iso + "Z"); d.setUTCMinutes(d.getUTCMinutes() + min); return d.toISOString().slice(0, 19); };
   const cruza = (a1, b1, a2, b2) => a1 < b2 && b1 > a2;
+  const PROFS = F["/profesionales"], sesion = F["/sesion"], editados = new Set();   // editados o nuevos: sus horas se calculan en vivo
+  const NOMBRE_DIA = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+  const aMin = hhmm => +hhmm.slice(0, 2) * 60 + +hhmm.slice(3, 5), deMin = m => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+  function generar(fecha, servicio, nombre, dur) {   // horas libres de un odontólogo según su horario, sus servicios, festivos y lo ya ocupado
+    const p = PROFS.profesionales.find(x => x.nombre === nombre);
+    if (!p || !p.activo || (!p.todos_los_servicios && !p.servicios.includes(servicio))) return [];
+    if (sesion.festivos[fecha] && !sesion.abre_festivos) return [];
+    const franjas = (sesion.horario_profesionales[nombre] || sesion.horario)[NOMBRE_DIA[new Date(fecha + "T12:00:00").getDay()]] || [];
+    const horas = [];
+    for (const [a, b] of (franjas.length && typeof franjas[0] === "string" ? [franjas] : franjas)) for (let m = aMin(a); m + dur <= aMin(b); m += 30) horas.push(deMin(m));
+    return horas;
+  }
   function libres(fecha, servicio, excluir = 0) {
-    const base = F.dispo[fecha + "|" + servicio] || {};
-    const dur = F.duraciones[servicio] || 30, out = {};
+    const base = {}, dur = F.duraciones[servicio] || 30, out = {};
+    const nombres = new Set(PROFS.profesionales.filter(x => x.activo).map(x => x.nombre));
+    for (const [hora, profs] of Object.entries(F.dispo[fecha + "|" + servicio] || {})) { const ok = profs.filter(p => nombres.has(p) && !editados.has(p)); if (ok.length) base[hora] = ok; }
+    for (const nombre of editados) for (const hora of generar(fecha, servicio, nombre, dur)) (base[hora] = base[hora] || []).push(nombre);
     for (const [hora, profs] of Object.entries(base)) {
       const ini = `${fecha}T${hora}:00`, fin = mas(ini, dur);
       const libresAqui = profs.filter(p =>
-        ![...citas.values()].some(c => (c.id >= 100000 || c.movida) && c.id !== excluir && c.estado !== "cancelada" && c.profesional === p && cruza(ini, fin, c.inicio, c.fin)) &&
-        ![...bloqueos.values()].some(b => b.id >= 100000 && (b.profesional === "" || b.profesional === p) && cruza(ini, fin, b.inicio, b.fin)));
+        ![...citas.values()].some(c => (c.id >= 100000 || c.movida || editados.has(p)) && c.id !== excluir && c.estado !== "cancelada" && c.profesional === p && cruza(ini, fin, c.inicio, c.fin)) &&
+        ![...bloqueos.values()].some(b => (b.id >= 100000 || editados.has(p)) && (b.profesional === "" || b.profesional === p) && cruza(ini, fin, b.inicio, b.fin)));
       if (libresAqui.length) out[hora] = libresAqui;
     }
-    return out;
+    return Object.fromEntries(Object.entries(out).sort());
   }
   window.fetch = async (url, opts = {}) => {
     const u = new URL(url, "https://demo.local"), ruta = u.pathname.replace("/panel/api", ""), q = u.searchParams;
@@ -52,6 +66,7 @@ SIMULADOR = r"""
     if (metodo === "GET") {
       if (ruta === "/sesion") return R({ ...F["/sesion"], usuario: { nombre: ROL.nombre, rol: ROL.rol, rol_texto: ROL.rol_texto, profesional: ROL.profesional, soporte: false }, permisos: ROL.p });
       if (ruta === "/usuarios") return R(usuarios);
+      if (ruta === "/profesionales") return R({ ...PROFS, profesionales: PROFS.profesionales.map(p => ({ ...p, citas_futuras: [...citas.values()].filter(c => c.profesional === p.nombre && ["confirmada", "por_confirmar"].includes(c.estado)).length })) });
       if (ruta === "/solicitudes") {  // la espera se toma de la foto (la demo no tiene reloj propio)
         const esperas = Object.fromEntries((F["/solicitudes"] || []).map(c => [c.id, c.espera_min]));
         const lista = [...citas.values()].filter(c => c.estado === "por_confirmar" && (ROL.rol !== "odontologo" || c.profesional === ROL.profesional))
@@ -113,6 +128,41 @@ SIMULADOR = r"""
         delete F.hilos[cli]; const i = F["/conversaciones"].findIndex(x => x.cliente === cli); if (i >= 0) F["/conversaciones"].splice(i, 1);
         [...citas.values()].filter(c => c.cliente === cli).forEach(c => { c.nombre = "Paciente eliminado"; c.cliente = "eliminado"; if (c.estado === "confirmada") c.estado = "cancelada"; });
         anotar("datos_eliminados", `Eliminó los datos de un paciente (…${cli.slice(-4)})`); return R({ conversaciones: 1 });
+      }
+    }
+    const sincProfs = () => {   // deja la sesión (carriles del calendario, horarios) al día con la lista
+      sesion.profesionales = PROFS.profesionales.filter(p => p.activo).map(p => p.nombre);
+      sesion.horario_profesionales = Object.fromEntries(PROFS.profesionales.filter(p => p.activo).map(p => [p.nombre, p.horario || Object.fromEntries(Object.entries(sesion.horario))]));
+    };
+    const revisarProf = c => {
+      if (!/^.{3,60}$/.test((c.nombre || "").trim())) return "El nombre debe tener entre 3 y 60 letras (ej.: Dra. Laura Gómez).";
+      for (const [dia, turnos] of Object.entries(c.horario || {})) {
+        const t = [...turnos].sort();
+        for (const [a, b] of t) { if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(a) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(b)) return `Hora inválida en ${dia}: use el formato HH:MM.`; if (b <= a) return `En ${dia}, la hora final debe ser posterior a la inicial.`; }
+        for (let i = 1; i < t.length; i++) if (t[i][0] < t[i - 1][1]) return `En ${dia}, los turnos se cruzan.`;
+      }
+      if (c.horario && !Object.keys(c.horario).length) return "Marca al menos un día en el que atiende, o elige el horario de la clínica.";
+      return "";
+    };
+    if (metodo === "POST" && ruta === "/profesionales") {
+      const err = revisarProf(cuerpo); if (err) return R({ detail: err }, 400);
+      const nombre = cuerpo.nombre.trim().replace(/\s+/g, " ");
+      if (PROFS.profesionales.some(p => p.nombre.toLowerCase() === nombre.toLowerCase())) return R({ detail: `Ya existe un odontólogo llamado '${nombre}'.` }, 409);
+      const p = { id: sig++, nombre, activo: true, servicios: cuerpo.servicios || [], todos_los_servicios: !(cuerpo.servicios || []).length, horario: cuerpo.horario || null, citas_futuras: 0 };
+      PROFS.profesionales.push(p); editados.add(nombre); sincProfs(); anotar("profesional_creado", `${nombre} (${p.todos_los_servicios ? "todos los servicios" : p.servicios.join(", ")})`);
+      return R({ id: p.id, citas_movidas: 0 });
+    }
+    if ((m = ruta.match(/^\/profesionales\/(\d+)(?:\/(estado))?$/))) {
+      const p = PROFS.profesionales.find(x => x.id === +m[1]); if (!p) return R({ detail: "Odontólogo no encontrado." }, 404);
+      if (metodo === "PUT") {
+        const err = revisarProf({ ...cuerpo, nombre: p.nombre }); if (err) return R({ detail: err }, 400);
+        Object.assign(p, { servicios: cuerpo.servicios || [], todos_los_servicios: !(cuerpo.servicios || []).length, horario: cuerpo.horario || null });
+        editados.add(p.nombre); sincProfs(); anotar("profesional_editado", p.nombre); return R({ ok: true, citas_futuras: 0 });
+      }
+      if (metodo === "POST" && m[2] === "estado") {
+        if (!cuerpo.activo && p.activo && PROFS.profesionales.filter(x => x.activo).length <= 1) return R({ detail: "Debe quedar al menos un odontólogo activo." }, 400);
+        p.activo = !!cuerpo.activo; sincProfs(); anotar(p.activo ? "profesional_activado" : "profesional_desactivado", p.nombre);
+        return R({ ok: true, citas_futuras: [...citas.values()].filter(c => c.profesional === p.nombre && ["confirmada", "por_confirmar"].includes(c.estado)).length });
       }
     }
     if (metodo === "POST" && ruta === "/usuarios") {

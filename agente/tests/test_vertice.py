@@ -1267,3 +1267,128 @@ def test_el_prompt_lista_al_equipo_solo_si_hay_varios():
     texto = prompt_sistema(CLINICA)
     assert "Dr. Andrés Ríos: solo Valoración de ortodoncia" in texto and "Dra. Laura Gómez: todos los servicios" in texto and "campo profesional" in texto
     assert "Deja siempre vacío el campo profesional" in prompt_sistema(_reemplazar(CLINICA, profesionales=[]))
+
+
+# --- Odontólogos administrados desde el panel ---------------------------------
+from vertice import profesionales as modulo_prof  # noqa: E402
+
+
+def _panel_con_negocios(db, monkeypatch, negocio=None, enviados=None):
+    monkeypatch.setattr(modulo_usuarios, "ITERACIONES", 1000)
+    negocio = negocio or _reemplazar(CLINICA, whatsapp_phone_number_id="123")
+    negocios = {negocio.id: negocio}
+    api = APIFalsa([respuesta(texto("Hola")), respuesta(texto("Hola otra vez"))])
+    c = TestClient(crear_app(Asistente(db, api, ahora), negocios, enviar=lambda pid, para, t: (enviados.append(t) if enviados is not None else None) or "w",
+                             recordatorios_activos=False))
+    db.crear_usuario(negocio.id, "dueno1", "Dueño", "dueno", "", modulo_usuarios.hashear("Clave1234"))
+    db.crear_usuario(negocio.id, "marta", "Marta", "recepcion", "", modulo_usuarios.hashear("Clave1234"))
+    return c, negocios, api
+
+
+def test_los_odontologos_del_yaml_se_siembran_una_vez_y_luego_manda_la_base(db):
+    negocios = {CLINICA.id: CLINICA}
+    modulo_prof.sincronizar(db, negocios)
+    assert [f["nombre"] for f in db.profesionales_de(CLINICA.id)] == ["Dra. Laura Gómez", "Dr. Andrés Ríos"]
+    assert negocios[CLINICA.id].franjas_de("Dr. Andrés Ríos", "martes") and not negocios[CLINICA.id].franjas_de("Dr. Andrés Ríos", "lunes")
+    # El YAML cambia (otro odontólogo), pero ya hay datos en la base: se ignora
+    otro = {CLINICA.id: _reemplazar(CLINICA, profesionales=[{"nombre": "Dr. Nuevo"}])}
+    modulo_prof.sincronizar(db, otro)
+    assert otro[CLINICA.id].nombres_profesionales() == ["Dra. Laura Gómez", "Dr. Andrés Ríos"]
+
+
+def test_agregar_un_odontologo_desde_el_panel_lo_ve_todo_al_instante(db, monkeypatch):
+    enviados = []
+    c, negocios, api = _panel_con_negocios(db, monkeypatch, enviados=enviados)
+    dueno = entrar(c, "dueno1")
+    nuevo = {"nombre": "Dr. Camilo Peña", "servicios": ["Valoración odontológica", "Limpieza dental (profilaxis)"],
+             "horario": {"martes": [["08:00", "12:00"]], "jueves": [["14:00", "18:00"]]}}
+    r = c.post("/panel/api/profesionales", headers=dueno, json=nuevo)
+    assert r.status_code == 200, r.text
+    s = c.get("/panel/api/sesion", headers=dueno).json()
+    assert "Dr. Camilo Peña" in s["profesionales"] and s["horario_profesionales"]["Dr. Camilo Peña"]["martes"] == [["08:00", "12:00"]]
+    # Agenda: solo ofrece sus horarios propios y solo para los servicios que atiende
+    n = negocios[CLINICA.id]
+    ag = Agenda(db, n, ahora)
+    val = ag.servicio("Valoración odontológica")
+    con_camilo = {h for h, ps in ag.libres(date(2026, 11, 10), val).items() if "Dr. Camilo Peña" in ps}
+    assert "08:00" in con_camilo and "14:00" not in con_camilo                         # martes solo en la mañana
+    assert not any("Dr. Camilo Peña" in ps for ps in ag.libres(date(2026, 11, 10), ag.servicio("Resina estética")).values())
+    # Sofía puede agendar con él sin reiniciar nada, y lo conoce por el prompt
+    h = Herramientas(db, n, "573001112233", ahora)
+    cita = json.loads(h.ejecutar("agendar_cita", {"nombre": "Ana Gómez", "servicio": "Valoración odontológica", "fecha": "2026-11-10", "hora": "09:00", "profesional": "Camilo"})[0])
+    assert cita["profesional"] == "Dr. Camilo Peña"
+    c.post("/webhook", json=payload())
+    assert "Dr. Camilo Peña: solo Valoración odontológica, Limpieza dental (profilaxis)" in json.dumps(api.peticiones[0], ensure_ascii=False)
+    # Queda en el historial
+    assert "profesional_creado" in [f["accion"] for f in c.get("/panel/api/bitacora", headers=dueno).json()]
+
+
+def test_validaciones_al_crear_o_editar_un_odontologo(db, monkeypatch):
+    c, negocios, _ = _panel_con_negocios(db, monkeypatch)
+    dueno = entrar(c, "dueno1")
+    def crear(**cambios):
+        base = {"nombre": "Dra. Sara Londoño", "servicios": [], "horario": None}
+        return c.post("/panel/api/profesionales", headers=dueno, json={**base, **cambios})
+    assert crear(nombre="Al").status_code == 400
+    assert crear(servicios=["Cirugía de rodilla"]).status_code == 400
+    assert crear(horario={"lunes": [["12:00", "08:00"]]}).status_code == 400            # fin antes del inicio
+    assert crear(horario={"lunes": [["08:00", "12:00"], ["11:00", "14:00"]]}).status_code == 400   # turnos cruzados
+    assert crear(horario={"lunes": [["8:00", "12:00"]]}).status_code == 400            # hora mal escrita
+    assert crear(horario={"festivo": [["08:00", "12:00"]]}).status_code == 400          # día inexistente
+    assert crear(nombre="dra. laura gómez").status_code == 409 or crear(nombre="Dra. Laura Gómez").status_code == 409   # repetido
+    assert crear().status_code == 200
+    assert c.post("/panel/api/profesionales", headers=entrar(c, "marta"), json={"nombre": "Dr. Intruso Pérez"}).status_code == 403    # solo el dueño
+    assert c.get("/panel/api/profesionales", headers=entrar(c, "marta")).status_code == 403
+
+
+def test_editar_servicios_y_horario_cambia_la_disponibilidad_ya(db, monkeypatch):
+    c, negocios, _ = _panel_con_negocios(db, monkeypatch)
+    dueno = entrar(c, "dueno1")
+    andres = next(p for p in c.get("/panel/api/profesionales", headers=dueno).json()["profesionales"] if p["nombre"] == "Dr. Andrés Ríos")
+    assert andres["horario"]["martes"] and "Limpieza dental (profilaxis)" in andres["servicios"]
+    r = c.put(f"/panel/api/profesionales/{andres['id']}", headers=dueno,
+              json={"servicios": ["Valoración odontológica"], "horario": {"lunes": [["14:00", "18:00"]]}})
+    assert r.status_code == 200
+    ag = Agenda(db, negocios[CLINICA.id], ahora)
+    lunes = ag.libres(date(2026, 11, 9), ag.servicio("Valoración odontológica"))
+    assert any("Dr. Andrés Ríos" in ps for h, ps in lunes.items() if h >= "14:00")           # ahora atiende los lunes en la tarde
+    assert not any("Dr. Andrés Ríos" in ps for ps in ag.libres(date(2026, 11, 10), ag.servicio("Valoración odontológica")).values())  # ya no los martes
+    assert not any("Dr. Andrés Ríos" in ps for ps in ag.libres(date(2026, 11, 9), ag.servicio("Limpieza dental (profilaxis)")).values())
+    # Volver al horario de la clínica
+    c.put(f"/panel/api/profesionales/{andres['id']}", headers=dueno, json={"servicios": [], "horario": None})
+    assert negocios[CLINICA.id].franjas_de("Dr. Andrés Ríos", "lunes") == negocios[CLINICA.id].franjas("lunes")
+
+
+def test_desactivar_un_odontologo_conserva_su_historial_y_avisa_de_sus_citas(db, monkeypatch):
+    c, negocios, _ = _panel_con_negocios(db, monkeypatch)
+    dueno = entrar(c, "dueno1")
+    ag = Agenda(db, negocios[CLINICA.id], ahora)
+    cita = ag.reservar("573001112233", "Ana Gómez", "Valoración odontológica", "2026-11-10", "09:00", profesional="Dr. Andrés Ríos")
+    andres = next(p for p in c.get("/panel/api/profesionales", headers=dueno).json()["profesionales"] if p["nombre"] == "Dr. Andrés Ríos")
+    assert andres["citas_futuras"] == 1
+    r = c.post(f"/panel/api/profesionales/{andres['id']}/estado", headers=dueno, json={"activo": False}).json()
+    assert r["citas_futuras"] == 1
+    assert "Dr. Andrés Ríos" not in c.get("/panel/api/sesion", headers=dueno).json()["profesionales"]
+    ag = Agenda(db, negocios[CLINICA.id], ahora)      # la clínica vigente, como la toma cada petición real
+    assert not any("Dr. Andrés Ríos" in ps for ps in ag.libres(date(2026, 11, 10), ag.servicio("Valoración odontológica")).values())
+    assert db.cita(CLINICA.id, cita["cita_id"])["profesional"] == "Dr. Andrés Ríos"           # su cita sigue ahí, por reprogramar
+    # No se puede dejar la clínica sin odontólogos activos
+    laura = next(p for p in c.get("/panel/api/profesionales", headers=dueno).json()["profesionales"] if p["nombre"] == "Dra. Laura Gómez")
+    assert c.post(f"/panel/api/profesionales/{laura['id']}/estado", headers=dueno, json={"activo": False}).status_code == 400
+    # Y se puede reactivar
+    c.post(f"/panel/api/profesionales/{andres['id']}/estado", headers=dueno, json={"activo": True})
+    assert "Dr. Andrés Ríos" in c.get("/panel/api/sesion", headers=dueno).json()["profesionales"]
+
+
+def test_el_primer_odontologo_de_una_clinica_de_un_solo_consultorio_hereda_sus_citas(db, monkeypatch):
+    solo = _reemplazar(CLINICA, profesionales=[], whatsapp_phone_number_id="123")
+    c, negocios, _ = _panel_con_negocios(db, monkeypatch, negocio=solo)
+    cita = Agenda(db, negocios[solo.id], ahora).reservar("573001112233", "Ana Gómez", "Valoración odontológica", "2026-11-10", "09:00")
+    assert cita["profesional"] == "Consultorio"
+    dueno = entrar(c, "dueno1")
+    r = c.post("/panel/api/profesionales", headers=dueno, json={"nombre": "Dra. Laura Gómez"}).json()
+    assert r["citas_movidas"] == 1
+    assert db.cita(solo.id, cita["cita_id"])["profesional"] == "Dra. Laura Gómez"
+    # Su cita bloquea su horario: no se le puede dar la misma hora
+    ag = Agenda(db, negocios[solo.id], ahora)
+    assert "09:00" not in ag.libres(date(2026, 11, 10), ag.servicio("Valoración odontológica"))

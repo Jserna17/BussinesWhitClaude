@@ -440,3 +440,9 @@ P0/P1/P2. Checklist de onboarding actualizado; la pregunta "¿dónde llevan la a
 - Probado: 81 pruebas + conversación real con el modelo (pide al Dr. Andrés → solo sus horarios y agenda con él; pide una resina con él → no la hace, ofrece a la Dra. Laura).
 - Pendiente (P1): agregar o quitar odontólogos desde el panel (hoy se edita el YAML de la clínica); recordar con quién se atiende un paciente habitual.
 
+### Odontólogos administrables desde el panel (misma sesión)
+- Los odontólogos pasan de vivir en el YAML a la **base de datos** (`profesionales`): el YAML solo los siembra la primera vez; después manda la base. Los cambios se aplican **al instante** (Sofía, panel y recordatorios ven la clínica vigente sin reiniciar; el webhook busca la clínica por id).
+- Panel → Equipo → "Odontólogos y consultorios": agregar, editar (servicios que atiende y horario por día con dos turnos) y desactivar/reactivar. El nombre no se cambia (las citas y los usuarios están ligados a él). Desactivar no borra el historial; avisa de las citas futuras por reprogramar y el calendario sigue mostrando su carril mientras las tenga. No se puede dejar la clínica sin odontólogos activos. Todo queda en el historial. Solo el dueño.
+- Al agregar el primer odontólogo a una clínica de un solo consultorio, sus citas "Consultorio" pasan a él (si no, no bloquearían su horario).
+- Demo: se puede agregar/editar/desactivar y le calcula horarios al nuevo. 87 pruebas OK + prueba en navegador de punta a punta.
+

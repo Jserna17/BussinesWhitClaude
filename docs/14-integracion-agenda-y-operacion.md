@@ -261,3 +261,9 @@ sesiones · reactivación de pacientes antiguos.
 4. Revisión del **abogado** (aviso de datos, contrato de encargado, política de la clínica).
 5. Pendientes menores conocidos: aviso al dueño por plantilla (hoy solo llega si el dueño escribió en las últimas 24 h), purga automática por antigüedad, y probar con **audios y conversaciones reales** antes de dar por buena la calidad.
 
+### Varios odontólogos
+- Cada clínica puede tener los que necesite: cada uno con **sus servicios** y **su horario por día** (dos turnos), sin cruces de agenda. El paciente puede pedir uno por nombre; si no pide, Sofía asigna a uno libre y dice con quién quedó.
+- El dueño los administra en el panel (Equipo → Odontólogos y consultorios). El archivo YAML de la clínica solo sirve para sembrarlos la primera vez.
+- Para que un odontólogo vea solo su agenda, crearle además un usuario con el rol "Odontólogo" asociado a su nombre.
+- Pendiente (P1): que Sofía recuerde con quién se atiende un paciente habitual.
+

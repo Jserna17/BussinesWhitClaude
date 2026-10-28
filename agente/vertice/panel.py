@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from . import transcripcion
+from . import profesionales as prof_mod, transcripcion
 from .agenda import Agenda, CitaNoEncontrada, Conflicto, ErrorAgenda
 from .db import ESTADOS_CITA, BaseDatos
 from .festivos import festivos
@@ -63,6 +63,12 @@ class CambioClave(BaseModel):
 
 class EstadoUsuario(BaseModel):
     activo: bool
+
+
+class DatosProfesional(BaseModel):
+    nombre: str = ""
+    servicios: list[str] = []          # vacío = atiende todos los servicios
+    horario: dict[str, list[list[str]]] | None = None   # None = el horario de la clínica
 
 
 class MensajeEquipo(BaseModel):
@@ -562,6 +568,76 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
         anotar(s, "datos_eliminados", f"Eliminó los datos de un paciente (…{cliente[-4:]}): {resultado['conversaciones']} conversaciones, "
                f"{resultado['citas_anonimizadas']} citas anonimizadas, {resultado['citas_futuras_canceladas']} citas futuras canceladas")
         return resultado
+
+    # --- Odontólogos de la clínica --------------------------------------
+    def listar_profesionales(n: Negocio) -> list[dict]:
+        out = []
+        for f in db.profesionales_de(n.id):
+            d = prof_mod.a_dict(f)
+            out.append({"id": f["id"], "nombre": f["nombre"], "activo": bool(f["activo"]), "servicios": d.get("servicios", []),
+                        "todos_los_servicios": "servicios" not in d, "horario": d.get("horario"),
+                        "citas_futuras": db.citas_futuras_de(n.id, f["nombre"])})
+        return out
+
+    @api.get("/profesionales")
+    def profesionales_de_la_clinica(s: Sesion = Depends(permiso("equipo"))):
+        return {"profesionales": listar_profesionales(s.negocio), "servicios": [x.nombre for x in s.negocio.servicios]}
+
+    def datos_validos(datos: DatosProfesional, n: Negocio) -> tuple[list[str], dict | None]:
+        try:
+            return prof_mod.validar_servicios(datos.servicios, n), prof_mod.validar_horario(datos.horario)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    @api.post("/profesionales")
+    def crear_profesional(datos: DatosProfesional, s: Sesion = Depends(permiso("equipo"))):
+        n = s.negocio
+        try:
+            nombre = prof_mod.validar_nombre(datos.nombre)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        servicios, horario = datos_validos(datos, n)
+        sj, hj = prof_mod.como_json(servicios, horario)
+        try:
+            pid = db.crear_profesional(n.id, nombre, sj, hj)
+        except ValueError as e:
+            raise HTTPException(status_code=409, detail=str(e))
+        movidas = 0
+        if not any(f["activo"] for f in db.profesionales_de(n.id) if f["id"] != pid):  # el primero de una clínica de un solo consultorio
+            movidas = db.pasar_citas_de_consultorio(n.id, nombre)
+        prof_mod.aplicar(db, negocios, n.id)
+        anotar(s, "profesional_creado", f"{nombre} ({'todos los servicios' if not servicios else ', '.join(servicios)})"
+               f"{f'; {movidas} citas del consultorio pasaron a él' if movidas else ''}")
+        return {"id": pid, "citas_movidas": movidas}
+
+    @api.put("/profesionales/{profesional_id}")
+    def editar_profesional(profesional_id: int, datos: DatosProfesional, s: Sesion = Depends(permiso("equipo"))):
+        n = s.negocio
+        f = db.profesional(n.id, profesional_id)
+        if f is None:
+            raise HTTPException(status_code=404, detail="Odontólogo no encontrado.")
+        servicios, horario = datos_validos(datos, n)   # el nombre no se cambia: las citas y los usuarios están ligados a él
+        sj, hj = prof_mod.como_json(servicios, horario)
+        db.actualizar_profesional(n.id, profesional_id, sj, hj)
+        prof_mod.aplicar(db, negocios, n.id)
+        anotar(s, "profesional_editado", f"{f['nombre']}: {'todos los servicios' if not servicios else ', '.join(servicios)}"
+               f"{' · horario propio' if horario else ' · horario de la clínica'}")
+        return {"ok": True, "citas_futuras": db.citas_futuras_de(n.id, f["nombre"])}
+
+    @api.post("/profesionales/{profesional_id}/estado")
+    def estado_profesional(profesional_id: int, datos: EstadoUsuario, s: Sesion = Depends(permiso("equipo"))):
+        n = s.negocio
+        f = db.profesional(n.id, profesional_id)
+        if f is None:
+            raise HTTPException(status_code=404, detail="Odontólogo no encontrado.")
+        if not datos.activo and f["activo"] and sum(1 for x in db.profesionales_de(n.id) if x["activo"]) <= 1:
+            raise HTTPException(status_code=400, detail="Debe quedar al menos un odontólogo activo.")
+        db.activar_profesional(n.id, profesional_id, datos.activo)
+        prof_mod.aplicar(db, negocios, n.id)
+        futuras = db.citas_futuras_de(n.id, f["nombre"])
+        anotar(s, "profesional_activado" if datos.activo else "profesional_desactivado",
+               f"{f['nombre']}{f'; tiene {futuras} citas futuras por reprogramar' if futuras and not datos.activo else ''}")
+        return {"ok": True, "citas_futuras": futuras}
 
     @api.get("/bitacora")
     def historial(dias: int = 7, limite: int = 300, s: Sesion = Depends(permiso("historial"))):

@@ -156,8 +156,8 @@ sesiones · reactivación de pacientes antiguos.
 |---|---|---|
 | 1. Festivos y horario/vacaciones por profesional | ✅ 2026-10-28 | `vertice/festivos.py`; horario propio por profesional; bloqueos de varios días; citas "por reprogramar" |
 | 2. Pausa automática y tomar control del chat | ✅ 2026-10-28 | Ver detalle abajo |
-| 3. Notas de voz | ⏳ | |
-| 4. Reprogramar citas | ⏳ | |
+| 3. Notas de voz | ✅ 2026-10-28 | Descarga de WhatsApp + transcripción (OpenAI `gpt-4o-mini-transcribe`, cambiable). Probado en vivo con audio sintético: 1–3 s, texto casi idéntico. **Falta probar con audios reales** (ruido, acentos, jerga) |
+| 4. Reprogramar citas | ✅ 2026-10-28 | Atómico (la cita no se duplica ni choca consigo misma); herramienta de Sofía + botón en el panel + mensaje listo para avisar al paciente |
 | 5. Recordatorios con confirmación | ⏳ | |
 | 6. Usuarios con rol + bitácora | ⏳ | |
 | 7. Modo pre-reserva | ⏳ | |
@@ -176,4 +176,18 @@ sesiones · reactivación de pacientes antiguos.
 - ⚠️ **Por confirmar con el primer número real:** el formato exacto del aviso `smb_message_echoes` (no pude consultar la
   documentación oficial desde este entorno). El lector es tolerante (acepta el destinatario en `to` o `recipient_id`), pero hay que
   probarlo con un mensaje real escrito desde el celular antes de dar por cerrado este punto.
+
+### P0-3 · notas de voz
+- Las notas de voz se descargan con el token de WhatsApp y se transcriben; Sofía recibe el texto marcado con 🎤 y está
+  instruida para **confirmar nombre, fecha y hora** antes de agendar (la transcripción puede equivocarse).
+- Si no se puede transcribir (audio muy largo —más de 5 MB—, falla de red o del proveedor) Sofía le pide al paciente que escriba.
+- En un chat pausado (atiende el equipo) la nota de voz también se transcribe y se guarda para que el equipo la lea en el panel.
+- La API de Claude no recibe audio: la transcripción siempre usa OpenAI (la misma `OPENAI_API_KEY`), aunque el motor de
+  conversación sea Claude. Costo estimado: centavos de dólar por nota.
+
+### P0-4 · reprogramar
+- El horario viejo se libera y el nuevo se ocupa en una sola transacción; si el nuevo se ocupó, la cita queda donde estaba.
+- Conserva al mismo odontólogo si puede; Sofía solo puede mover citas del propio paciente.
+- Desde el panel, al mover una cita aparece un mensaje listo para avisar al paciente (enviar por WhatsApp si está dentro de las
+  24 h, o copiar). **No se envía solo.**
 

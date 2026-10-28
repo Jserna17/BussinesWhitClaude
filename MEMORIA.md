@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-28 · Sesión #20 (P0-1 y P0-2: festivos/horarios y pausa del asistente)
+> Última actualización: 2026-10-28 · Sesión #20 (P0-1 a P0-4: festivos, pausa del chat, notas de voz, reprogramar)
 
 ---
 
@@ -133,8 +133,9 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [x] Análisis de integración de agenda y riesgos de operación (`docs/14-integracion-agenda-y-operacion.md`)
 - [x] P0-1 hecho (2026-10-28): festivos de Colombia calculados, horario y vacaciones por profesional, bloqueos de varios días, aviso de citas por reprogramar
 - [x] P0-2 hecho (2026-10-28): Sofía se pausa si el equipo escribe (aviso de Meta o desde el panel), tomar control/devolver, responder desde el panel; falta confirmar el formato real del aviso con un número conectado
+- [x] P0-3 notas de voz y P0-4 reprogramar citas hechos (2026-10-28); notas de voz probadas con audio sintético, falta con audios reales
 - [ ] Pendientes P0 antes del primer cliente:
-  notas de voz; reprogramar; recordatorios con plantillas; usuarios con rol + bitácora; modo pre-reserva; VPS + respaldos + monitoreo; aviso de privacidad
+  recordatorios con plantillas; usuarios con rol + bitácora; modo pre-reserva; VPS + respaldos + monitoreo; aviso de privacidad
 - [ ] Ampliar base a 150 negocios (restaurantes, salones, hoteles/fincas, Santa Rosa, La Virginia)
 - [ ] Primeros 3 clientes piloto
 
@@ -179,6 +180,8 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-28 | No manejar historia clínica; solo agenda y conversación | Carga legal (Ley 2015/2020, Res. 866/2021) fuera de nuestro alcance |
 | 2026-10-28 | Las clínicas cierran en festivos colombianos por defecto (`abre_festivos: false`, configurable); cada profesional puede tener horario propio | Evitar agendar festivos y horarios que el odontólogo no atiende |
 | 2026-10-28 | Si una persona del equipo escribe en un chat, Sofía se pausa 12 h (configurable) y el paciente que escribe en pausa queda "esperando al equipo" | Evitar que bot y recepcionista respondan al mismo paciente sin dejar a nadie sin respuesta |
+| 2026-10-28 | Notas de voz: se transcriben con OpenAI aunque el motor de chat sea Claude, y Sofía confirma nombre/fecha/hora antes de agendar | Claude API no recibe audio; la transcripción puede equivocarse |
+| 2026-10-28 | Reprogramar es una sola operación atómica y el panel no avisa solo al paciente: ofrece un mensaje para que el equipo lo envíe | Evitar huecos y no contactar pacientes sin que una persona lo decida |
 
 ## 8. Preguntas abiertas para el fundador
 

@@ -50,7 +50,7 @@ def prompt_sistema(n: Negocio) -> str:
     humano = "\n".join(f"- {h}" for h in n.pasar_a_humano_si) or "- El cliente lo pide."
 
     return f"""Te llamas {n.nombre_asistente} y atiendes el WhatsApp de {n.nombre} ({n.tipo}) en {n.ciudad}. Eres un asistente virtual; si te lo preguntan, dilo con naturalidad.
-Atiendes a los clientes del negocio: respondes sus preguntas, das precios y horarios, agendas, consultas y cancelas citas, y pasas a una persona del equipo los casos que lo requieren.
+Atiendes a los clientes del negocio: respondes sus preguntas, das precios y horarios, agendas, consultas, reprogramas y cancelas citas, y pasas a una persona del equipo los casos que lo requieren.
 
 <negocio>
 Nombre: {n.nombre}

@@ -8,11 +8,11 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from typing import Callable
 
-from .db import BaseDatos, Conflicto
+from .db import BaseDatos, CitaNoEncontrada, Conflicto
 from .festivos import festivo
 from .negocio import DIAS, Negocio, Servicio
 
-__all__ = ["Agenda", "Conflicto", "ErrorAgenda"]
+__all__ = ["Agenda", "CitaNoEncontrada", "Conflicto", "ErrorAgenda"]
 
 
 class ErrorAgenda(Exception):
@@ -54,14 +54,15 @@ class Agenda:
             return "La clínica no atiende ese día de la semana."
         return None
 
-    def libres(self, dia: date, servicio: Servicio, anticipacion_min: int | None = None) -> dict[str, list[str]]:
+    def libres(self, dia: date, servicio: Servicio, anticipacion_min: int | None = None,
+               excluir_cita: int = 0) -> dict[str, list[str]]:
         """{hora: [profesionales libres]} para cada turno en el que cabe el servicio completo."""
         if self.cerrado(dia):
             return {}
         anticipacion = self.negocio.anticipacion_min if anticipacion_min is None else anticipacion_min
         profesionales = self.negocio.nombres_profesionales(servicio.nombre)
         inicio_dia, fin_dia = _hora(dia, "00:00"), _hora(dia, "00:00") + timedelta(days=1)
-        ocupado = self.db.ocupaciones(self.negocio.id, inicio_dia.isoformat(), fin_dia.isoformat())
+        ocupado = self.db.ocupaciones(self.negocio.id, inicio_dia.isoformat(), fin_dia.isoformat(), excluir_cita=excluir_cita)
         ocupado = [(o["profesional"], datetime.fromisoformat(o["inicio"]), datetime.fromisoformat(o["fin"]))
                    for o in ocupado]
         minimo = self.ahora() + timedelta(minutes=anticipacion)
@@ -100,3 +101,29 @@ class Agenda:
                                          inicio.isoformat(), fin.isoformat(), origen)
         return {"cita_id": cita_id, "estado": "confirmada", "servicio": s.nombre, "fecha": fecha,
                 "dia": DIAS[dia.weekday()], "hora": hora, "profesional": prof, "direccion": self.negocio.direccion}
+
+    def reprogramar(self, cita_id: int, fecha: str, hora: str, cliente: str | None = None, profesional: str = "",
+                    anticipacion_min: int | None = None) -> dict:
+        """Mueve una cita confirmada. Con `cliente`, solo si es de ese paciente. Conserva el profesional si puede."""
+        cita = self.db.cita(self.negocio.id, cita_id)
+        if cita is None or cita["estado"] != "confirmada" or (cliente is not None and cita["cliente"] != cliente):
+            raise CitaNoEncontrada("No encontré una cita confirmada con ese id.")
+        s = self.servicio(cita["servicio"])
+        dia = self.fecha(fecha)
+        hora = hora.strip().zfill(5)
+        libres = self.libres(dia, s, anticipacion_min, excluir_cita=cita_id)
+        if hora not in libres:
+            raise Conflicto(f"La hora {hora} no está disponible el {fecha}.")
+        candidatos = libres[hora]
+        if profesional:
+            if profesional not in candidatos:
+                raise Conflicto(f"{profesional} no está libre a las {hora} el {fecha}.")
+            candidatos = [profesional]
+        elif cita["profesional"] in candidatos:  # misma persona que lo atendía, si puede
+            candidatos = [cita["profesional"]] + [c for c in candidatos if c != cita["profesional"]]
+        inicio = _hora(dia, hora)
+        fin = inicio + timedelta(minutes=s.duracion_min)
+        prof = self.db.reprogramar(self.negocio.id, cita_id, candidatos, inicio.isoformat(), fin.isoformat(), cliente)
+        return {"cita_id": cita_id, "estado": "confirmada", "servicio": s.nombre, "fecha": fecha,
+                "dia": DIAS[dia.weekday()], "hora": hora, "profesional": prof, "direccion": self.negocio.direccion,
+                "antes": cita["inicio"]}

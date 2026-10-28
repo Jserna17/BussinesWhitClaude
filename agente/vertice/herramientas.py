@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 from typing import Callable
 
-from .agenda import Agenda, Conflicto, ErrorAgenda
+from .agenda import Agenda, CitaNoEncontrada, Conflicto, ErrorAgenda
 from .db import BaseDatos
 from .negocio import DIAS, Negocio
 
@@ -62,6 +62,22 @@ DEFINICIONES = [
         "description": "Muestra las próximas citas confirmadas de este cliente (identificado por su número).",
         "strict": True,
         "input_schema": _esquema({}, []),
+    },
+    {
+        "name": "reprogramar_cita",
+        "description": (
+            "Cambia una cita confirmada del cliente a otra fecha u hora. Primero usa ver_mis_citas para obtener el id y "
+            "consultar_disponibilidad para ofrecer horarios; confirma con el cliente el nuevo horario antes de usarla."
+        ),
+        "strict": True,
+        "input_schema": _esquema(
+            {
+                "cita_id": {"type": "integer"},
+                "fecha": {"type": "string", "description": "Nueva fecha AAAA-MM-DD."},
+                "hora": {"type": "string", "description": "Nueva hora HH:MM en formato 24 horas."},
+            },
+            ["cita_id", "fecha", "hora"],
+        ),
     },
     {
         "name": "cancelar_cita",
@@ -179,6 +195,20 @@ class Herramientas:
             {"cita_id": c["id"], "servicio": c["servicio"], "inicio": c["inicio"], "nombre": c["nombre"]}
             for c in citas
         ]}
+
+    def _reprogramar_cita(self, cita_id: int, fecha: str, hora: str) -> dict:
+        try:
+            cita = self.agenda.reprogramar(cita_id, fecha, hora, cliente=self.cliente)
+        except CitaNoEncontrada as e:
+            raise ErrorHerramienta(str(e))
+        except Conflicto as e:
+            raise ErrorHerramienta(f"{e} No se movió nada: la cita sigue en su horario original. "
+                                   "Consulta la disponibilidad de nuevo y ofrece otras horas.")
+        except ErrorAgenda as e:
+            raise ErrorHerramienta(str(e))
+        if len(self.negocio.nombres_profesionales()) == 1:
+            cita.pop("profesional")
+        return cita
 
     def _cancelar_cita(self, cita_id: int) -> dict:
         if not self.db.cancelar_cita(self.negocio.id, self.cliente, cita_id):

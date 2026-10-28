@@ -24,13 +24,13 @@ SIMULADOR = r"""
   const R = (cuerpo, status = 200) => Promise.resolve(new Response(JSON.stringify(cuerpo), { status, headers: { "Content-Type": "application/json" } }));
   const mas = (iso, min) => { const d = new Date(iso + "Z"); d.setUTCMinutes(d.getUTCMinutes() + min); return d.toISOString().slice(0, 19); };
   const cruza = (a1, b1, a2, b2) => a1 < b2 && b1 > a2;
-  function libres(fecha, servicio) {
+  function libres(fecha, servicio, excluir = 0) {
     const base = F.dispo[fecha + "|" + servicio] || {};
     const dur = F.duraciones[servicio] || 30, out = {};
     for (const [hora, profs] of Object.entries(base)) {
       const ini = `${fecha}T${hora}:00`, fin = mas(ini, dur);
       const libresAqui = profs.filter(p =>
-        ![...citas.values()].some(c => c.id >= 100000 && c.estado !== "cancelada" && c.profesional === p && cruza(ini, fin, c.inicio, c.fin)) &&
+        ![...citas.values()].some(c => (c.id >= 100000 || c.movida) && c.id !== excluir && c.estado !== "cancelada" && c.profesional === p && cruza(ini, fin, c.inicio, c.fin)) &&
         ![...bloqueos.values()].some(b => b.id >= 100000 && (b.profesional === "" || b.profesional === p) && cruza(ini, fin, b.inicio, b.fin)));
       if (libresAqui.length) out[hora] = libresAqui;
     }
@@ -48,7 +48,7 @@ SIMULADOR = r"""
         return R({ desde, dias, citas: [...citas.values()].filter(c => c.inicio >= desde && c.inicio < h).sort((a, b) => a.inicio.localeCompare(b.inicio)),
                    bloqueos: [...bloqueos.values()].filter(b => b.inicio < h && b.fin > desde) });
       }
-      if (ruta === "/disponibilidad") return R({ fecha: q.get("fecha"), libres: libres(q.get("fecha"), q.get("servicio")) });
+      if (ruta === "/disponibilidad") return R({ fecha: q.get("fecha"), libres: libres(q.get("fecha"), q.get("servicio"), +(q.get("excluir") || 0)) });
       if (ruta === "/conversaciones") return R(F["/conversaciones"]);
       if (ruta.startsWith("/conversaciones/")) return R(F.hilos[decodeURIComponent(ruta.split("/")[2])] || {}, F.hilos[decodeURIComponent(ruta.split("/")[2])] ? 200 : 404);
       if (ruta === "/casos") return R(casos);
@@ -75,6 +75,15 @@ SIMULADOR = r"""
       const msg = { rol: "equipo", texto: cuerpo.texto.trim(), fecha: F["/sesion"].hoy, hora: hh, origen: "panel" };
       hilo.mensajes.push(msg); item.ultimo = msg; marcar(true);
       return R({ ok: true, enviado: false, pausada_hasta: hasta });
+    }
+    if (metodo === "POST" && (m = ruta.match(/^\/citas\/(\d+)\/reprogramar$/))) {
+      const c = citas.get(+m[1]); if (!c || c.estado !== "confirmada") return R({ detail: "No encontré una cita confirmada con ese id." }, 404);
+      const disp = libres(cuerpo.fecha, c.servicio, c.id)[cuerpo.hora] || [];
+      const prof = cuerpo.profesional ? (disp.includes(cuerpo.profesional) ? cuerpo.profesional : null) : (disp.includes(c.profesional) ? c.profesional : disp[0]);
+      if (!prof) return R({ detail: `La hora ${cuerpo.hora} no está disponible el ${cuerpo.fecha}.` }, 409);
+      const ini = `${cuerpo.fecha}T${cuerpo.hora}:00`, antes = c.inicio;
+      Object.assign(c, { inicio: ini, fin: mas(ini, F.duraciones[c.servicio] || 30), profesional: prof, movida: true });
+      return R({ cita_id: c.id, estado: "confirmada", servicio: c.servicio, fecha: cuerpo.fecha, hora: cuerpo.hora, profesional: prof, antes });
     }
     if (metodo === "POST" && (m = ruta.match(/^\/citas\/(\d+)\/estado$/))) { const c = citas.get(+m[1]); if (c) c.estado = cuerpo.estado; return R({ ok: true }); }
     if (metodo === "POST" && ruta === "/bloqueos") {

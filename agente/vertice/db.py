@@ -91,6 +91,10 @@ ESTADOS_OCUPAN = ("confirmada", "asistio", "no_asistio")
 ESTADOS_CITA = ESTADOS_OCUPAN + ("cancelada",)
 
 
+class CitaNoEncontrada(Exception):
+    """La cita no existe, no es de este paciente o ya no está confirmada."""
+
+
 class Conflicto(Exception):
     """El horario ya no está libre (otro paciente lo tomó o hay un bloqueo)."""
 
@@ -200,14 +204,14 @@ class BaseDatos:
         ).fetchall()
 
     # --- Citas y bloqueos ----------------------------------------------
-    def ocupaciones(self, negocio_id: str, desde: str, hasta: str, con=None) -> list[dict]:
-        """Citas que ocupan silla y bloqueos que se cruzan con [desde, hasta)."""
+    def ocupaciones(self, negocio_id: str, desde: str, hasta: str, con=None, excluir_cita: int = 0) -> list[dict]:
+        """Citas que ocupan silla y bloqueos que se cruzan con [desde, hasta). `excluir_cita`: una cita que se está moviendo."""
         con = con or self.con
         estados = ",".join("?" * len(ESTADOS_OCUPAN))
         citas = con.execute(
             f"SELECT profesional, inicio, fin FROM citas WHERE negocio_id=? AND estado IN ({estados}) "
-            "AND inicio < ? AND fin > ?",
-            (negocio_id, *ESTADOS_OCUPAN, hasta, desde),
+            "AND inicio < ? AND fin > ? AND id != ?",
+            (negocio_id, *ESTADOS_OCUPAN, hasta, desde, excluir_cita),
         ).fetchall()
         bloqueos = con.execute(
             "SELECT profesional, inicio, fin FROM bloqueos WHERE negocio_id=? AND inicio < ? AND fin > ?",
@@ -231,6 +235,27 @@ class BaseDatos:
                     (negocio_id, cliente, nombre, servicio, inicio, fin, self._ahora(), prof, origen),
                 )
                 return cur.lastrowid, prof
+        raise Conflicto("Ese horario ya no está disponible.")
+
+    def cita(self, negocio_id: str, cita_id: int) -> sqlite3.Row | None:
+        return self.con.execute("SELECT * FROM citas WHERE id=? AND negocio_id=?", (cita_id, negocio_id)).fetchone()
+
+    def reprogramar(self, negocio_id: str, cita_id: int, candidatos: list[str], inicio: str, fin: str,
+                    cliente: str | None = None) -> str:
+        """Mueve una cita confirmada a otro horario en una sola transacción: el horario viejo se libera y el nuevo se
+        ocupa sin que otro paciente pueda colarse entre medio. Devuelve el profesional."""
+        with self.transaccion() as con:
+            cita = con.execute("SELECT * FROM citas WHERE id=? AND negocio_id=? AND estado='confirmada'",
+                               (cita_id, negocio_id)).fetchone()
+            if cita is None or (cliente is not None and cita["cliente"] != cliente):
+                raise CitaNoEncontrada("No encontré una cita confirmada con ese id.")
+            ocupados = self.ocupaciones(negocio_id, inicio, fin, con, excluir_cita=cita_id)
+            if not any(o["profesional"] == "" for o in ocupados):
+                for prof in candidatos:
+                    if any(o["profesional"] == prof for o in ocupados):
+                        continue
+                    con.execute("UPDATE citas SET inicio=?, fin=?, profesional=? WHERE id=?", (inicio, fin, prof, cita_id))
+                    return prof
         raise Conflicto("Ese horario ya no está disponible.")
 
     def citas_entre(self, negocio_id: str, desde: str, hasta: str) -> list[sqlite3.Row]:

@@ -16,6 +16,8 @@ def _evento(nombre: str, entrada: dict) -> str | None:
     """Texto corto para el médico cuando el asistente usó una herramienta."""
     if nombre == "agendar_cita":
         return f"Agendó {entrada.get('servicio', '')} · {entrada.get('fecha', '')} {entrada.get('hora', '')} · {entrada.get('nombre', '')}"
+    if nombre == "reprogramar_cita":
+        return f"Reprogramó la cita #{entrada.get('cita_id')} · {entrada.get('fecha', '')} {entrada.get('hora', '')}"
     if nombre == "cancelar_cita":
         return f"Canceló la cita #{entrada.get('cita_id')}"
     if nombre == "pasar_a_humano":
@@ -48,7 +50,7 @@ def leer(mensajes: list[dict]) -> dict:
         if id_ in errores and texto:
             if nombre == "consultar_disponibilidad":
                 return ""
-            accion = {"agendar_cita": "agendar", "cancelar_cita": "cancelar"}.get(nombre, "hacer una acción")
+            accion = {"agendar_cita": "agendar", "cancelar_cita": "cancelar", "reprogramar_cita": "reprogramar"}.get(nombre, "hacer una acción")
             return f"Intentó {accion} y el sistema no lo permitió: {errores[id_].split('.')[0].split(';')[0]}."
         return texto
 

@@ -386,13 +386,13 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
   const R = (cuerpo, status = 200) => Promise.resolve(new Response(JSON.stringify(cuerpo), { status, headers: { "Content-Type": "application/json" } }));
   const mas = (iso, min) => { const d = new Date(iso + "Z"); d.setUTCMinutes(d.getUTCMinutes() + min); return d.toISOString().slice(0, 19); };
   const cruza = (a1, b1, a2, b2) => a1 < b2 && b1 > a2;
-  function libres(fecha, servicio) {
+  function libres(fecha, servicio, excluir = 0) {
     const base = F.dispo[fecha + "|" + servicio] || {};
     const dur = F.duraciones[servicio] || 30, out = {};
     for (const [hora, profs] of Object.entries(base)) {
       const ini = `${fecha}T${hora}:00`, fin = mas(ini, dur);
       const libresAqui = profs.filter(p =>
-        ![...citas.values()].some(c => c.id >= 100000 && c.estado !== "cancelada" && c.profesional === p && cruza(ini, fin, c.inicio, c.fin)) &&
+        ![...citas.values()].some(c => (c.id >= 100000 || c.movida) && c.id !== excluir && c.estado !== "cancelada" && c.profesional === p && cruza(ini, fin, c.inicio, c.fin)) &&
         ![...bloqueos.values()].some(b => b.id >= 100000 && (b.profesional === "" || b.profesional === p) && cruza(ini, fin, b.inicio, b.fin)));
       if (libresAqui.length) out[hora] = libresAqui;
     }
@@ -410,7 +410,7 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
         return R({ desde, dias, citas: [...citas.values()].filter(c => c.inicio >= desde && c.inicio < h).sort((a, b) => a.inicio.localeCompare(b.inicio)),
                    bloqueos: [...bloqueos.values()].filter(b => b.inicio < h && b.fin > desde) });
       }
-      if (ruta === "/disponibilidad") return R({ fecha: q.get("fecha"), libres: libres(q.get("fecha"), q.get("servicio")) });
+      if (ruta === "/disponibilidad") return R({ fecha: q.get("fecha"), libres: libres(q.get("fecha"), q.get("servicio"), +(q.get("excluir") || 0)) });
       if (ruta === "/conversaciones") return R(F["/conversaciones"]);
       if (ruta.startsWith("/conversaciones/")) return R(F.hilos[decodeURIComponent(ruta.split("/")[2])] || {}, F.hilos[decodeURIComponent(ruta.split("/")[2])] ? 200 : 404);
       if (ruta === "/casos") return R(casos);
@@ -437,6 +437,15 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
       const msg = { rol: "equipo", texto: cuerpo.texto.trim(), fecha: F["/sesion"].hoy, hora: hh, origen: "panel" };
       hilo.mensajes.push(msg); item.ultimo = msg; marcar(true);
       return R({ ok: true, enviado: false, pausada_hasta: hasta });
+    }
+    if (metodo === "POST" && (m = ruta.match(/^\/citas\/(\d+)\/reprogramar$/))) {
+      const c = citas.get(+m[1]); if (!c || c.estado !== "confirmada") return R({ detail: "No encontré una cita confirmada con ese id." }, 404);
+      const disp = libres(cuerpo.fecha, c.servicio, c.id)[cuerpo.hora] || [];
+      const prof = cuerpo.profesional ? (disp.includes(cuerpo.profesional) ? cuerpo.profesional : null) : (disp.includes(c.profesional) ? c.profesional : disp[0]);
+      if (!prof) return R({ detail: `La hora ${cuerpo.hora} no está disponible el ${cuerpo.fecha}.` }, 409);
+      const ini = `${cuerpo.fecha}T${cuerpo.hora}:00`, antes = c.inicio;
+      Object.assign(c, { inicio: ini, fin: mas(ini, F.duraciones[c.servicio] || 30), profesional: prof, movida: true });
+      return R({ cita_id: c.id, estado: "confirmada", servicio: c.servicio, fecha: cuerpo.fecha, hora: cuerpo.hora, profesional: prof, antes });
     }
     if (metodo === "POST" && (m = ruta.match(/^\/citas\/(\d+)\/estado$/))) { const c = citas.get(+m[1]); if (c) c.estado = cuerpo.estado; return R({ ok: true }); }
     if (metodo === "POST" && ruta === "/bloqueos") {
@@ -690,6 +699,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("drawer
 function verCita(c) {
   const acciones = c.estado === "confirmada"
     ? [el("button", { class: "btn primary", type: "button", onclick: () => estadoCita(c, "asistio"), html: ic("check") + "Asistió" }),
+       el("button", { class: "btn", type: "button", onclick: () => abrirReprogramar(c) }, "Reprogramar"),
        el("button", { class: "btn", type: "button", onclick: () => estadoCita(c, "no_asistio") }, "No asistió"),
        el("button", { class: "btn danger", type: "button", onclick: () => estadoCita(c, "cancelada") }, "Cancelar cita")]
     : [el("button", { class: "btn", type: "button", onclick: () => estadoCita(c, "confirmada") }, "Volver a confirmada")];
@@ -755,6 +765,50 @@ function abrirNuevaCita() {
     } catch (e) { nota.className = "note err"; nota.hidden = false; nota.textContent = e.message; horas(); }
   }, html: ic("check") + "Agendar cita" })]);
   horas();
+}
+function abrirReprogramar(c) {
+  const sel = { hora: "" }, nota = el("div", { class: "note err", hidden: true });
+  const fFecha = el("input", { id: "rpFecha", type: "date", value: c.inicio.slice(0, 10) < S.info.hoy ? S.info.hoy : c.inicio.slice(0, 10), min: S.info.hoy });
+  const fProf = el("select", { id: "rpProf" }, el("option", { value: "" }, "Cualquiera libre"), S.info.profesionales.map(p => el("option", { value: p, selected: p === c.profesional }, p)));
+  const slots = el("div", { class: "slots" });
+  async function horas() {
+    slots.replaceChildren(el("span", { class: "muted small" }, "Buscando horas libres…")); sel.hora = "";
+    try {
+      const d = await api(`/disponibilidad?fecha=${fFecha.value}&servicio=${encodeURIComponent(c.servicio)}&excluir=${c.id}`);
+      const lista = Object.entries(d.libres).filter(([, ps]) => !fProf.value || ps.includes(fProf.value)).map(([h]) => h).sort();
+      slots.replaceChildren(...(lista.length ? lista.map(h => el("button", { type: "button", "aria-pressed": "false", onclick: e => { sel.hora = h; slots.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b === e.currentTarget)); } }, h))
+        : [el("span", { class: "muted small" }, cerradoPorFestivo(fFecha.value) ? `Festivo (${festivoDe(fFecha.value)}): la clínica no atiende.` : "No hay horas libres ese día.")]));
+    } catch (e) { slots.replaceChildren(el("span", { class: "muted small" }, e.message)); }
+  }
+  fFecha.onchange = fProf.onchange = horas;
+  abrirDrawer("Reprogramar cita", [
+    el("dl", { class: "kv" }, el("dt", {}, "Paciente"), el("dd", {}, c.nombre), el("dt", {}, "Servicio"), el("dd", {}, c.servicio), el("dt", {}, "Hoy está en"), el("dd", { class: "num" }, `${fechaCorta(c.inicio)} · ${hora(c.inicio)}`)),
+    el("div", { class: "row2" }, el("label", { class: "field", for: "rpFecha" }, "Nueva fecha", fFecha), varios() ? el("label", { class: "field", for: "rpProf" }, "Profesional", fProf) : el("span")),
+    el("div", { class: "field" }, "Horas libres", slots), nota,
+  ], [el("button", { class: "btn primary", type: "button", onclick: async () => {
+    nota.hidden = true;
+    if (!sel.hora) { nota.hidden = false; nota.textContent = "Elige una hora libre."; return; }
+    try {
+      const r = await api(`/citas/${c.id}/reprogramar`, { method: "POST", body: JSON.stringify({ fecha: fFecha.value, hora: sel.hora, profesional: fProf.value }) });
+      S.desde = S.vista === "semana" ? lunes(r.fecha) : r.fecha; cargarAgenda(); avisarCambio(c, r);
+    } catch (e) { nota.hidden = false; nota.textContent = e.message; horas(); }
+  }, html: ic("check") + "Mover cita" })]);
+  horas();
+}
+function avisarCambio(c, r) {
+  const nombre = c.nombre.replace(/^Paciente ejemplo · /, "").split(" ")[0];
+  const caja = el("textarea", { id: "avisoTexto", rows: 5, style: "width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:10px;background:var(--surface-2);font:inherit;color:var(--fg)" },
+    `Hola ${nombre}, te escribimos de ${S.info.nombre}. Tu cita de ${r.servicio} quedó reprogramada para el ${fechaLarga(r.fecha)} a las ${r.hora}. ¡Te esperamos! Si no te sirve ese horario, respóndenos por aquí.`);
+  const nota = el("div", { class: "note", hidden: true });
+  const telefonoOk = /^\d{7,}$/.test(c.cliente || "");
+  abrirDrawer("Cita reprogramada", [
+    el("div", { class: "note ok" }, `Listo: ${fechaLarga(r.fecha)} a las ${r.hora}${varios() ? " con " + r.profesional : ""}.`),
+    el("p", { class: "muted small", style: "margin:0" }, "El paciente todavía no sabe del cambio. Avísale con este mensaje (puedes editarlo):"), caja, nota,
+  ], [telefonoOk ? el("button", { class: "btn primary", type: "button", html: ic("msg") + "Enviar por WhatsApp", onclick: async () => {
+        try { await api(`/conversaciones/${encodeURIComponent(c.cliente)}/enviar`, { method: "POST", body: JSON.stringify({ texto: caja.value }) }); toast("Aviso enviado"); cerrarDrawer(); }
+        catch (e) { nota.className = "note err"; nota.hidden = false; nota.textContent = e.message; } } }) : null,
+      el("button", { class: "btn", type: "button", onclick: async () => { try { await navigator.clipboard.writeText(caja.value); toast("Mensaje copiado"); } catch (_) { caja.select(); toast("Selecciona y copia el texto"); } } }, "Copiar mensaje"),
+      el("button", { class: "btn ghost", type: "button", onclick: cerrarDrawer }, "Cerrar")]);
 }
 function abrirBloqueo() {
   const fFecha = el("input", { id: "bqFecha", type: "date", value: S.vista === "dia" ? S.desde : S.info.hoy, min: S.info.hoy });

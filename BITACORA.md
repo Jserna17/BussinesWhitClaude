@@ -392,3 +392,10 @@ P0/P1/P2. Checklist de onboarding actualizado; la pregunta "¿dónde llevan la a
 - Al reactivarse, Sofía recibe una nota con lo que habló el equipo. `enviar_texto` devuelve el id para no confundir sus mensajes con ecos.
 - 31 pruebas OK; demo republicada. **Por confirmar:** formato real del eco con un número conectado.
 **Siguiente:** P0-3 notas de voz.
+
+### P0-3 y P0-4 (misma sesión)
+- **Notas de voz:** `vertice/voz.py` + descarga de WhatsApp; Sofía recibe el texto con 🎤 y confirma datos antes de agendar. Prueba real con audio sintético en español: 1–3 s, transcripción casi idéntica. Falla de transcripción → pide escribir.
+- **Reprogramar:** transacción atómica en la base, herramienta `reprogramar_cita`, endpoint y botón en el panel con mensaje listo para avisar al paciente; la demo lo simula.
+- 40 pruebas OK. Demo republicada.
+**Siguiente:** P0-5 recordatorios con confirmación (plantillas de Meta).
+

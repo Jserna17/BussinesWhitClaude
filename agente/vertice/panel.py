@@ -19,7 +19,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from . import transcripcion
-from .agenda import Agenda, Conflicto, ErrorAgenda
+from .agenda import Agenda, CitaNoEncontrada, Conflicto, ErrorAgenda
 from .db import ESTADOS_CITA, BaseDatos
 from .festivos import festivos
 from .negocio import DIAS, Negocio
@@ -38,6 +38,12 @@ class NuevaCita(BaseModel):
 
 class MensajeEquipo(BaseModel):
     texto: str
+
+
+class Reprogramacion(BaseModel):
+    fecha: str
+    hora: str
+    profesional: str = ""
 
 
 class NuevoEstado(BaseModel):
@@ -176,10 +182,10 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
         return {"desde": inicio.isoformat(), "dias": dias, "citas": citas, "bloqueos": bloqueos}
 
     @api.get("/disponibilidad")
-    def disponibilidad(fecha: str, servicio: str, n: Negocio = Depends(negocio_autorizado)):
+    def disponibilidad(fecha: str, servicio: str, excluir: int = 0, n: Negocio = Depends(negocio_autorizado)):
         ag = Agenda(db, n, ahora)
         try:
-            libres = ag.libres(ag.fecha(fecha), ag.servicio(servicio), anticipacion_min=0)
+            libres = ag.libres(ag.fecha(fecha), ag.servicio(servicio), anticipacion_min=0, excluir_cita=excluir)
         except ErrorAgenda as e:
             raise HTTPException(status_code=400, detail=str(e))
         return {"fecha": fecha, "libres": libres}
@@ -190,6 +196,18 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
         try:
             return Agenda(db, n, ahora).reservar(cliente, datos.nombre, datos.servicio, datos.fecha, datos.hora,
                                                  datos.profesional, origen="panel", anticipacion_min=0)
+        except Conflicto as e:
+            raise HTTPException(status_code=409, detail=str(e))
+        except ErrorAgenda as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    @api.post("/citas/{cita_id}/reprogramar")
+    def reprogramar_cita(cita_id: int, datos: Reprogramacion, n: Negocio = Depends(negocio_autorizado)):
+        try:
+            return Agenda(db, n, ahora).reprogramar(cita_id, datos.fecha, datos.hora, profesional=datos.profesional,
+                                                    anticipacion_min=0)
+        except CitaNoEncontrada as e:
+            raise HTTPException(status_code=404, detail=str(e))
         except Conflicto as e:
             raise HTTPException(status_code=409, detail=str(e))
         except ErrorAgenda as e:

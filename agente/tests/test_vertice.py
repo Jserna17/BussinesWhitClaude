@@ -256,7 +256,7 @@ def test_servicio_con_valoracion_previa_no_se_agenda(db):
 
 
 # --- Agenda: cruces, simultaneidad, bloqueos, especialidad --------------------
-from vertice.agenda import Agenda, Conflicto  # noqa: E402
+from vertice.agenda import Agenda, CitaNoEncontrada, Conflicto  # noqa: E402
 
 
 def test_pacientes_simultaneos_no_reciben_la_misma_silla(tmp_path):
@@ -602,3 +602,57 @@ def test_transcribir_rechaza_audios_enormes_y_vacios():
     falso = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=lambda **k: SimpleNamespace(text="  "))))
     with pytest.raises(voz.ErrorVoz):
         voz.transcribir(b"abc", cliente=falso)
+
+
+def test_reprogramar_mueve_la_cita_y_libera_el_horario_viejo(db):
+    ag = Agenda(db, CLINICA, ahora)
+    cita = ag.reservar("573001112233", "Ana Gómez", "Resina estética", "2026-11-10", "09:00")
+    nueva = ag.reprogramar(cita["cita_id"], "2026-11-12", "10:00", cliente="573001112233")
+    assert nueva["cita_id"] == cita["cita_id"] and nueva["antes"] == "2026-11-10T09:00:00"
+    assert nueva["profesional"] == cita["profesional"]  # misma doctora
+    assert "09:00" in ag.libres(date(2026, 11, 10), ag.servicio("Resina estética"))
+    assert "10:00" not in ag.libres(date(2026, 11, 12), ag.servicio("Resina estética"))
+    assert len(db.citas_entre(CLINICA.id, "2026-11-01", "2026-12-01")) == 1  # no se duplicó
+
+
+def test_reprogramar_a_un_horario_que_se_cruza_con_la_propia_cita(db):
+    ag = Agenda(db, CLINICA, ahora)
+    cita = ag.reservar("573001112233", "Ana Gómez", "Resina estética", "2026-11-10", "09:00")  # 09:00–10:00
+    mover = ag.reprogramar(cita["cita_id"], "2026-11-10", "09:30", cliente="573001112233")    # 09:30–10:30
+    assert mover["hora"] == "09:30"
+
+
+def test_reprogramar_horario_ocupado_deja_la_cita_donde_estaba(db):
+    ag = Agenda(db, CLINICA, ahora)
+    ag.reservar("1", "Luis Pérez", "Resina estética", "2026-11-12", "10:00")
+    cita = ag.reservar("573001112233", "Ana Gómez", "Resina estética", "2026-11-10", "09:00")
+    with pytest.raises(Conflicto):
+        ag.reprogramar(cita["cita_id"], "2026-11-12", "10:00", cliente="573001112233")
+    assert db.cita(CLINICA.id, cita["cita_id"])["inicio"] == "2026-11-10T09:00:00"
+
+
+def test_no_se_reprograma_la_cita_de_otro_paciente_ni_una_cancelada(db):
+    ag = Agenda(db, CLINICA, ahora)
+    cita = ag.reservar("573001112233", "Ana Gómez", "Resina estética", "2026-11-10", "09:00")
+    with pytest.raises(CitaNoEncontrada):
+        ag.reprogramar(cita["cita_id"], "2026-11-10", "11:00", cliente="999")
+    db.cancelar_cita(CLINICA.id, "573001112233", cita["cita_id"])
+    with pytest.raises(CitaNoEncontrada):
+        ag.reprogramar(cita["cita_id"], "2026-11-10", "11:00")
+
+
+def test_herramienta_reprogramar_y_panel(db):
+    h = Herramientas(db, CLINICA, "573001112233", ahora)
+    cita = json.loads(h.ejecutar("agendar_cita", {"nombre": "Ana Gómez", "servicio": "limpieza", "fecha": "2026-11-10", "hora": "10:00"})[0])
+    salida, err = h.ejecutar("reprogramar_cita", {"cita_id": cita["cita_id"], "fecha": "2026-11-10", "hora": "15:00"})
+    assert not err and json.loads(salida)["hora"] == "15:00"
+    _, err = Herramientas(db, CLINICA, "otro", ahora).ejecutar("reprogramar_cita", {"cita_id": cita["cita_id"], "fecha": "2026-11-10", "hora": "16:00"})
+    assert err
+    c = TestClient(crear_app(Asistente(db, APIFalsa([]), ahora), {CLINICA.id: CLINICA}, enviar=lambda *a: None))
+    H = {"X-Negocio": CLINICA.id, "X-Clave": "demo123"}
+    r = c.post(f"/panel/api/citas/{cita['cita_id']}/reprogramar", headers=H, json={"fecha": "2026-11-11", "hora": "08:00"})
+    assert r.status_code == 200 and r.json()["fecha"] == "2026-11-11"
+    # La hora propia cuenta como libre al elegir nueva hora para la misma cita
+    libres = c.get("/panel/api/disponibilidad", headers=H, params={"fecha": "2026-11-11", "servicio": "limpieza", "excluir": cita["cita_id"]}).json()["libres"]
+    assert "08:00" in libres
+    assert c.post("/panel/api/citas/9999/reprogramar", headers=H, json={"fecha": "2026-11-11", "hora": "08:00"}).status_code == 404

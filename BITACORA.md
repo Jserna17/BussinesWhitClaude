@@ -408,3 +408,11 @@ P0/P1/P2. Checklist de onboarding actualizado; la pregunta "¿dónde llevan la a
 - 48 pruebas OK; demo republicada.
 **Siguiente:** P0-6 usuarios con rol y bitácora de cambios.
 
+### P0-6 (misma sesión)
+- `vertice/usuarios.py` + tablas `usuarios`, `sesiones`, `bitacora`: roles dueño/recepción/odontólogo, claves con PBKDF2, sesiones de 12 h, bloqueo tras 5 intentos fallidos.
+- Panel: ingreso con usuario, menú según el rol, vistas **Equipo** (crear, desactivar, restablecer clave, "Mi clave") e **Historial** de cambios; el odontólogo ve solo su agenda.
+- Historial registra acciones de personas y de Sofía; el acceso de soporte (clave de la clínica) aparece como "Soporte Vértice".
+- Errores propios corregidos: (1) con clave incorrecta la página se recargaba en vez de avisar; (2) el script que toma la foto de datos de la demo guardaba el archivo en la carpeta equivocada y las últimas regeneraciones usaron una foto vieja (la demo no mostraba las confirmaciones de recordatorios): corregido y republicada; (3) `agente/snap.json` se había subido al repositorio: retirado y agregado a `.gitignore`.
+- 57 pruebas OK (incluye permisos por rol, sesiones, bloqueo por intentos y bitácora). Demo con selector "Ver como".
+**Siguiente:** P0-7 modo pre-reserva.
+

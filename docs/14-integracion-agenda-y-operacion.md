@@ -159,7 +159,7 @@ sesiones · reactivación de pacientes antiguos.
 | 3. Notas de voz | ✅ 2026-10-28 | Descarga de WhatsApp + transcripción (OpenAI `gpt-4o-mini-transcribe`, cambiable). Probado en vivo con audio sintético: 1–3 s, texto casi idéntico. **Falta probar con audios reales** (ruido, acentos, jerga) |
 | 4. Reprogramar citas | ✅ 2026-10-28 | Atómico (la cita no se duplica ni choca consigo misma); herramienta de Sofía + botón en el panel + mensaje listo para avisar al paciente |
 | 5. Recordatorios con confirmación | ✅ 2026-10-28 (código) | Falta: **aprobar la plantilla en Meta** (`plantillas/plantillas-whatsapp-meta.md`) y probar con un número real |
-| 6. Usuarios con rol + bitácora | ⏳ | |
+| 6. Usuarios con rol + bitácora | ✅ 2026-10-28 | Dueño / Recepción / Odontólogo con permisos que cumple el servidor; historial de quién hizo qué |
 | 7. Modo pre-reserva | ⏳ | |
 | 8. VPS, respaldos, monitoreo, aviso de privacidad | ⏳ | |
 
@@ -200,4 +200,28 @@ sesiones · reactivación de pacientes antiguos.
 - Si el paciente confirma con texto libre, Sofía usa la herramienta `confirmar_asistencia`.
 - Los botones llegan del webhook como mensajes de tipo `button` con el `payload` que enviamos (`confirmar:<id>` / `cambiar:<id>`):
   **por confirmar con una plantilla real**, igual que el formato exacto de los envíos de plantilla.
+
+### P0-6 · usuarios, roles e historial
+| | Dueño | Recepción | Odontólogo |
+|---|---|---|---|
+| Resumen e indicadores | ✅ | ✅ | — |
+| Agenda | completa, edita | completa, edita | **solo la suya**, marca asistió / no asistió |
+| Conversaciones y casos | ✅ | ✅ | — |
+| Equipo (crear personas, desactivar, restablecer clave) | ✅ | — | — |
+| Historial de cambios | ✅ | — | — |
+
+- Cada persona entra con **usuario y clave propios** (PBKDF2-SHA256 con sal; mínimo 8 caracteres con letras y números). El panel guarda solo una
+  sesión que vence a las 12 h; cambiar o restablecer una clave, o desactivar a alguien, cierra sus sesiones al instante.
+- Los permisos **los hace cumplir el servidor**, no solo la pantalla (hay pruebas que intentan lo prohibido con cada rol).
+- **Historial:** cada cita creada, movida, cancelada o marcada, cada bloqueo, chat tomado, mensaje enviado, caso resuelto, persona agregada y
+  cada ingreso (también los fallidos) queda con quién, cuándo y qué. También registra lo que hace Sofía (aparece como "asistente").
+- Tras 5 intentos fallidos de un usuario, el ingreso se bloquea 10 minutos.
+- No se puede desactivar al último dueño ni a uno mismo.
+- **Acceso de soporte:** la clave de la clínica (`panel_clave` / `VERTICE_PANEL_CLAVE_<ID>`) sigue funcionando como acceso de Vértice con permisos de dueño y
+  aparece en el historial como "Soporte Vértice" (el dueño ve cuándo entramos). Se usa para crear al primer dueño; también se puede con la línea de
+  comandos: `python -m vertice.usuarios crear <clinica> <usuario> "<Nombre>" <rol> [profesional]`.
+- **Pendiente para P0-8:** el límite de intentos del acceso de soporte (clave de la clínica) y por dirección IP debe hacerse en el servidor web de
+  entrada (Caddy/Nginx) y todo debe ir por HTTPS: sin HTTPS las claves y sesiones viajan sin cifrar.
+- La demo tiene un selector **"Ver como"** (dueño / recepción / odontólogo) para enseñar a cada tipo de persona lo que vería. Las personas de ejemplo
+  usan la clave `Demo12345` solo en la base de demostración.
 

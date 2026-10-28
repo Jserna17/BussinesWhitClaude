@@ -14,8 +14,42 @@ from .agenda import Agenda, Conflicto
 from .agente import ahora_bogota
 from .db import BaseDatos
 from .negocio import cargar_negocios
+from .usuarios import hashear
 
 RAIZ = Path(__file__).resolve().parent.parent
+
+
+CLAVE_DEMO = "Demo12345"  # la de todas las personas de ejemplo
+EQUIPO_DEMO = [("direccion", "Dr. Juan Pérez", "dueno", ""), ("marta", "Marta Gil", "recepcion", ""),
+               ("laura", "Dra. Laura Gómez", "odontologo", "Dra. Laura Gómez"),
+               ("andres", "Dr. Andrés Ríos", "odontologo", "Dr. Andrés Ríos")]
+
+
+def sembrar_equipo(db: BaseDatos, negocio_id: str = "clinica-demo") -> None:
+    """Personas con acceso al panel (una por rol) y un historial de cambios de ejemplo."""
+    for usuario, nombre, rol, prof in EQUIPO_DEMO:
+        if db.usuario_por_login(negocio_id, usuario) is None:
+            db.crear_usuario(negocio_id, usuario, nombre, rol, prof, hashear(CLAVE_DEMO))
+    if db.con.execute("SELECT COUNT(*) AS n FROM bitacora WHERE negocio_id=? AND quien='Marta Gil'", (negocio_id,)).fetchone()["n"]:
+        return
+    ahora = ahora_bogota().replace(tzinfo=None)
+
+    def hace(horas: float) -> str:
+        return (ahora - timedelta(hours=horas)).isoformat(timespec="seconds")
+    for horas, quien, rol, accion, detalle in [
+        (30, "Marta Gil", "recepcion", "ingreso", "Ingresó al panel"),
+        (29.5, "Marta Gil", "recepcion", "cita_creada", "Marta R. · Limpieza dental (profilaxis) · cita por teléfono"),
+        (26, "Sofía", "asistente", "cita_creada", "Carolina Restrepo · Limpieza dental (profilaxis) · agendada por WhatsApp"),
+        (25, "Marta Gil", "recepcion", "cita_reprogramada", "Jorge P. · Resina estética: movida a otro día a pedido del paciente"),
+        (24, "Dr. Juan Pérez", "dueno", "bloqueo_creado", "Dr. Andrés Ríos · congreso (tarde del viernes)"),
+        (23, "Marta Gil", "recepcion", "chat_tomado", "Tomó el chat de un paciente con una consulta de precios"),
+        (22.8, "Marta Gil", "recepcion", "mensaje_enviado", "Respondió al paciente desde el panel"),
+        (22.6, "Marta Gil", "recepcion", "chat_devuelto", "Devolvió el chat a Sofía"),
+        (9, "Dra. Laura Gómez", "odontologo", "cita_estado", "Paciente de las 8:00 marcado: asistió"),
+        (8.5, "Dr. Andrés Ríos", "odontologo", "cita_estado", "Paciente de las 10:00 marcado: no asistió"),
+        (3, "Dr. Juan Pérez", "dueno", "usuario_creado", "Agregó a Marta Gil como Recepción"),
+    ]:
+        db.registrar_bitacora(negocio_id, quien, rol, accion, detalle, hace(horas))
 
 
 def sembrar(ruta: str, negocio_id: str = "clinica-demo") -> None:
@@ -63,6 +97,7 @@ def sembrar(ruta: str, negocio_id: str = "clinica-demo") -> None:
             db.marcar_confirmacion(n.id, fila["id"], fila["cliente"], "confirmo")
         if "Jorge" in fila["nombre"]:
             db.marcar_confirmacion(n.id, fila["id"], fila["cliente"], "cambiar")
+    sembrar_equipo(db, negocio_id)
     print("Datos de ejemplo agregados a", ruta)
 
 

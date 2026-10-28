@@ -143,6 +143,10 @@ class Herramientas:
         self.notificar_dueno = notificar_dueno
         self.agenda = Agenda(db, negocio, ahora)
 
+    def _anotar(self, accion: str, detalle: str) -> None:
+        self.db.registrar_bitacora(self.negocio.id, self.negocio.nombre_asistente, "asistente", accion, detalle,
+                                   self.ahora().isoformat(timespec="seconds"))
+
     def ejecutar(self, nombre: str, entrada: dict) -> tuple[str, bool]:
         """Devuelve (contenido, es_error)."""
         funcion = getattr(self, f"_{nombre}", None)
@@ -194,6 +198,7 @@ class Herramientas:
                                    "Consulta la disponibilidad de nuevo y ofrece otras horas.")
         except ErrorAgenda as e:
             raise ErrorHerramienta(str(e))
+        self._anotar("cita_creada", f"{nombre.strip()} · {cita['servicio']} · {cita['fecha']} {cita['hora']} (paciente {self.cliente})")
         if len(self.negocio.nombres_profesionales()) == 1:
             cita.pop("profesional")
         return cita
@@ -215,6 +220,7 @@ class Herramientas:
                                    "Consulta la disponibilidad de nuevo y ofrece otras horas.")
         except ErrorAgenda as e:
             raise ErrorHerramienta(str(e))
+        self._anotar("cita_reprogramada", f"Cita #{cita_id} ({cita['servicio']}) de {cita['antes'][:16].replace('T', ' ')} a {cita['fecha']} {cita['hora']}")
         if len(self.negocio.nombres_profesionales()) == 1:
             cita.pop("profesional")
         return cita
@@ -222,11 +228,13 @@ class Herramientas:
     def _confirmar_asistencia(self, cita_id: int) -> dict:
         if not self.db.marcar_confirmacion(self.negocio.id, cita_id, self.cliente, "confirmo"):
             raise ErrorHerramienta("No encontré una cita confirmada con ese id para este cliente.")
+        self._anotar("cita_confirmada", f"El paciente {self.cliente} confirmó la cita #{cita_id}")
         return {"cita_id": cita_id, "asistencia_confirmada": True}
 
     def _cancelar_cita(self, cita_id: int) -> dict:
         if not self.db.cancelar_cita(self.negocio.id, self.cliente, cita_id):
             raise ErrorHerramienta("No encontré una cita confirmada con ese id para este cliente.")
+        self._anotar("cita_cancelada", f"Cita #{cita_id} cancelada a pedido del paciente {self.cliente}")
         return {"cita_id": cita_id, "estado": "cancelada"}
 
     # --- Prospectos y traspaso -----------------------------------------
@@ -236,6 +244,7 @@ class Herramientas:
 
     def _pasar_a_humano(self, motivo: str) -> dict:
         eid = self.db.registrar_escalacion(self.negocio.id, self.cliente, motivo)
+        self._anotar("caso_abierto", f"Pasó al equipo el chat de {self.cliente}: {motivo}")
         if self.notificar_dueno:
             self.notificar_dueno(self.negocio, f"🔔 Caso para atender (cliente {self.cliente}): {motivo}")
         return {"caso_id": eid, "equipo_notificado": True,

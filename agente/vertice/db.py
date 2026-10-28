@@ -76,6 +76,33 @@ CREATE TABLE IF NOT EXISTS mensajes_chat (
     creado TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_mensajes_chat ON mensajes_chat (negocio_id, cliente, creado);
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    negocio_id TEXT NOT NULL,
+    usuario TEXT NOT NULL,
+    nombre TEXT NOT NULL,
+    rol TEXT NOT NULL,
+    profesional TEXT NOT NULL DEFAULT '',
+    clave_hash TEXT NOT NULL,
+    activo INTEGER NOT NULL DEFAULT 1,
+    creado TEXT NOT NULL,
+    UNIQUE (negocio_id, usuario)
+);
+CREATE TABLE IF NOT EXISTS sesiones (
+    token_hash TEXT PRIMARY KEY,
+    usuario_id INTEGER NOT NULL,
+    expira TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS bitacora (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    negocio_id TEXT NOT NULL,
+    quien TEXT NOT NULL,
+    rol TEXT NOT NULL,
+    accion TEXT NOT NULL,
+    detalle TEXT NOT NULL,
+    creado TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_bitacora ON bitacora (negocio_id, creado);
 """
 
 ZONA = ZoneInfo("America/Bogota")
@@ -379,6 +406,73 @@ class BaseDatos:
                                     (negocio_id, desde)).fetchall()
         return self.con.execute("SELECT * FROM mensajes_chat WHERE negocio_id=? AND cliente=? AND creado >= ? ORDER BY id",
                                 (negocio_id, cliente, desde)).fetchall()
+
+    # --- Usuarios, sesiones y bitácora ---------------------------------
+    def crear_usuario(self, negocio_id: str, usuario: str, nombre: str, rol: str, profesional: str, clave_hash: str) -> int:
+        try:
+            return self._escribir(
+                "INSERT INTO usuarios (negocio_id, usuario, nombre, rol, profesional, clave_hash, creado) VALUES (?,?,?,?,?,?,?)",
+                (negocio_id, usuario.strip().lower(), nombre.strip(), rol, profesional, clave_hash, self._ahora())).lastrowid
+        except sqlite3.IntegrityError:
+            raise ValueError(f"Ya existe el usuario '{usuario}'.")
+
+    def usuario_por_login(self, negocio_id: str, usuario: str) -> sqlite3.Row | None:
+        return self.con.execute("SELECT * FROM usuarios WHERE negocio_id=? AND usuario=?",
+                                (negocio_id, usuario.strip().lower())).fetchone()
+
+    def usuario(self, negocio_id: str, usuario_id: int) -> sqlite3.Row | None:
+        return self.con.execute("SELECT * FROM usuarios WHERE negocio_id=? AND id=?", (negocio_id, usuario_id)).fetchone()
+
+    def usuarios(self, negocio_id: str) -> list[sqlite3.Row]:
+        return self.con.execute("SELECT id, usuario, nombre, rol, profesional, activo, creado FROM usuarios "
+                                "WHERE negocio_id=? ORDER BY activo DESC, nombre", (negocio_id,)).fetchall()
+
+    def cambiar_clave_usuario(self, negocio_id: str, usuario_id: int, clave_hash: str) -> bool:
+        ok = self._escribir("UPDATE usuarios SET clave_hash=? WHERE id=? AND negocio_id=?",
+                            (clave_hash, usuario_id, negocio_id)).rowcount == 1
+        if ok:
+            self.cerrar_sesiones_de(usuario_id)  # con la clave nueva hay que volver a entrar
+        return ok
+
+    def activar_usuario(self, negocio_id: str, usuario_id: int, activo: bool) -> bool:
+        ok = self._escribir("UPDATE usuarios SET activo=? WHERE id=? AND negocio_id=?",
+                            (1 if activo else 0, usuario_id, negocio_id)).rowcount == 1
+        if ok and not activo:
+            self.cerrar_sesiones_de(usuario_id)
+        return ok
+
+    def duenos_activos(self, negocio_id: str) -> int:
+        return self.con.execute("SELECT COUNT(*) AS n FROM usuarios WHERE negocio_id=? AND rol='dueno' AND activo=1",
+                                (negocio_id,)).fetchone()["n"]
+
+    def crear_sesion(self, token_hash: str, usuario_id: int, horas: float = 12) -> None:
+        expira = (datetime.fromisoformat(self._ahora()) + timedelta(hours=horas)).isoformat(timespec="seconds")
+        self._escribir("INSERT INTO sesiones (token_hash, usuario_id, expira) VALUES (?,?,?)", (token_hash, usuario_id, expira))
+        self._escribir("DELETE FROM sesiones WHERE expira < ?", (self._ahora(),))
+
+    def sesion_vigente(self, token_hash: str) -> sqlite3.Row | None:
+        return self.con.execute(
+            "SELECT u.* FROM sesiones s JOIN usuarios u ON u.id = s.usuario_id "
+            "WHERE s.token_hash=? AND s.expira > ? AND u.activo=1", (token_hash, self._ahora())).fetchone()
+
+    def cerrar_sesion(self, token_hash: str) -> None:
+        self._escribir("DELETE FROM sesiones WHERE token_hash=?", (token_hash,))
+
+    def cerrar_sesiones_de(self, usuario_id: int) -> None:
+        self._escribir("DELETE FROM sesiones WHERE usuario_id=?", (usuario_id,))
+
+    def registrar_bitacora(self, negocio_id: str, quien: str, rol: str, accion: str, detalle: str,
+                           creado: str | None = None) -> None:
+        """Quién hizo qué. Se escribe sin interrumpir la acción original si algo falla."""
+        try:
+            self._escribir("INSERT INTO bitacora (negocio_id, quien, rol, accion, detalle, creado) VALUES (?,?,?,?,?,?)",
+                           (negocio_id, quien, rol, accion, detalle[:500], creado or self._ahora()))
+        except sqlite3.Error:  # pragma: no cover - la bitácora nunca debe tumbar una cita
+            pass
+
+    def bitacora(self, negocio_id: str, desde: str, limite: int = 300) -> list[sqlite3.Row]:
+        return self.con.execute("SELECT * FROM bitacora WHERE negocio_id=? AND creado >= ? ORDER BY id DESC LIMIT ?",
+                                (negocio_id, desde, limite)).fetchall()
 
     # --- Idempotencia del webhook (Meta reintenta entregas) -------------
     def marcar_procesado(self, mensaje_id: str) -> bool:

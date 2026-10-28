@@ -789,3 +789,144 @@ def test_el_ciclo_de_recordatorios_arranca_con_el_servidor(db, monkeypatch):
                 break
             time.sleep(0.05)
     assert len(enviados) == 1
+
+
+# --- Usuarios, roles e historial ------------------------------------------
+from vertice import usuarios as modulo_usuarios  # noqa: E402
+
+
+@pytest.fixture
+def panel(db, monkeypatch):
+    monkeypatch.setattr(modulo_usuarios, "ITERACIONES", 1000)  # claves rápidas en las pruebas
+    c = TestClient(crear_app(Asistente(db, APIFalsa([]), ahora), {CLINICA.id: CLINICA}, enviar=lambda *a: None))
+    for usuario, nombre, rol, prof in [("dueno1", "Dr. Dueño", "dueno", ""), ("marta", "Marta Recepción", "recepcion", ""),
+                                       ("laura", "Dra. Laura", "odontologo", "Dra. Laura Gómez"),
+                                       ("andres", "Dr. Andrés", "odontologo", "Dr. Andrés Ríos")]:
+        db.crear_usuario(CLINICA.id, usuario, nombre, rol, prof, modulo_usuarios.hashear("Clave1234"))
+    return c
+
+
+def entrar(c, usuario, clave="Clave1234"):
+    r = c.post("/panel/api/login", json={"negocio": CLINICA.id, "usuario": usuario, "clave": clave})
+    assert r.status_code == 200, r.text
+    return {"X-Token": r.json()["token"]}
+
+
+def test_claves_se_guardan_con_hash_y_se_validan():
+    h = modulo_usuarios.hashear("Clave1234")
+    assert "Clave1234" not in h and modulo_usuarios.verificar("Clave1234", h)
+    assert not modulo_usuarios.verificar("clave1234", h) and not modulo_usuarios.verificar("x", "basura")
+    assert modulo_usuarios.validar_clave("corta1") and modulo_usuarios.validar_clave("sololetrasaqui")
+    assert modulo_usuarios.validar_clave("12345678") and modulo_usuarios.validar_clave("Clave1234") is None
+
+
+def test_ingreso_sesion_y_clave_equivocada(panel, db):
+    assert panel.post("/panel/api/login", json={"negocio": CLINICA.id, "usuario": "marta", "clave": "mala"}).status_code == 401
+    assert panel.post("/panel/api/login", json={"negocio": CLINICA.id, "usuario": "nadie", "clave": "Clave1234"}).status_code == 401
+    H = entrar(panel, "Marta")  # el usuario no distingue mayúsculas
+    s = panel.get("/panel/api/sesion", headers=H).json()
+    assert s["usuario"]["rol"] == "recepcion" and "equipo" not in s["permisos"] and "chats" in s["permisos"]
+    assert panel.get("/panel/api/sesion", headers={"X-Token": "inventado"}).status_code == 401
+    panel.post("/panel/api/salir", headers=H)
+    assert panel.get("/panel/api/sesion", headers=H).status_code == 401   # la sesión se cerró
+    # El acceso de soporte con la clave de la clínica sigue funcionando
+    soporte = panel.get("/panel/api/sesion", headers={"X-Negocio": CLINICA.id, "X-Clave": "demo123"}).json()
+    assert soporte["usuario"]["soporte"] is True and "equipo" in soporte["permisos"]
+
+
+def test_sesion_vence_y_usuario_desactivado_pierde_acceso(panel, db):
+    from datetime import timedelta
+    H = entrar(panel, "marta")
+    uid = db.usuario_por_login(CLINICA.id, "marta")["id"]
+    db.activar_usuario(CLINICA.id, uid, False)
+    assert panel.get("/panel/api/sesion", headers=H).status_code == 401
+    assert panel.post("/panel/api/login", json={"negocio": CLINICA.id, "usuario": "marta", "clave": "Clave1234"}).status_code == 401
+    db.activar_usuario(CLINICA.id, uid, True)
+    H = entrar(panel, "marta")
+    futuro = (datetime.fromisoformat(db._ahora()) + timedelta(hours=13)).isoformat(timespec="seconds")
+    db._ahora = lambda: futuro
+    assert panel.get("/panel/api/sesion", headers=H).status_code == 401   # pasaron 12 h
+
+
+def test_demasiados_intentos_bloquean_el_ingreso(panel):
+    for _ in range(5):
+        assert panel.post("/panel/api/login", json={"negocio": CLINICA.id, "usuario": "marta", "clave": "mala"}).status_code == 401
+    assert panel.post("/panel/api/login", json={"negocio": CLINICA.id, "usuario": "marta", "clave": "Clave1234"}).status_code == 429
+
+
+def test_permisos_por_rol_los_hace_cumplir_el_servidor(panel, db):
+    marta, laura, dueno = entrar(panel, "marta"), entrar(panel, "laura"), entrar(panel, "dueno1")
+    cita = {"nombre": "Ana Gómez", "servicio": "Valoración odontológica", "fecha": "2026-11-10", "hora": "09:00", "profesional": "Dra. Laura Gómez"}
+    assert panel.post("/panel/api/citas", headers=marta, json=cita).status_code == 200      # recepción agenda
+    assert panel.post("/panel/api/citas", headers=laura, json=cita).status_code == 403      # odontólogo no
+    for ruta in ("/usuarios", "/bitacora"):
+        assert panel.get("/panel/api" + ruta, headers=marta).status_code == 403             # solo el dueño
+        assert panel.get("/panel/api" + ruta, headers=dueno).status_code == 200
+    for ruta in ("/resumen", "/conversaciones", "/casos"):
+        assert panel.get("/panel/api" + ruta, headers=laura).status_code == 403             # odontólogo: solo su agenda
+        assert panel.get("/panel/api" + ruta, headers=marta).status_code == 200
+    assert panel.post("/panel/api/bloqueos", headers=laura, json={"fecha": "2026-11-10", "desde": "09:00", "hasta": "10:00"}).status_code == 403
+    assert panel.post("/panel/api/conversaciones/573001112233/tomar", headers=laura).status_code == 403
+    assert panel.get("/panel/api/disponibilidad", headers=laura, params={"fecha": "2026-11-10", "servicio": "limpieza"}).status_code == 403
+    assert panel.post("/panel/api/usuarios", headers=marta, json={"usuario": "x1", "nombre": "X", "rol": "dueno", "clave": "Clave1234"}).status_code == 403
+
+
+def test_odontologo_solo_ve_y_marca_su_agenda(panel, db):
+    marta, laura, andres = entrar(panel, "marta"), entrar(panel, "laura"), entrar(panel, "andres")
+    for prof, nombre in (("Dra. Laura Gómez", "Ana Gómez"), ("Dr. Andrés Ríos", "Luis Pérez")):
+        assert panel.post("/panel/api/citas", headers=marta, json={"nombre": nombre, "servicio": "Valoración odontológica",
+                                                                    "fecha": "2026-11-10", "hora": "09:00", "profesional": prof}).status_code == 200
+    panel.post("/panel/api/bloqueos", headers=marta, json={"fecha": "2026-11-11", "desde": "09:00", "hasta": "10:00", "profesional": "Dr. Andrés Ríos"})
+    panel.post("/panel/api/bloqueos", headers=marta, json={"fecha": "2026-11-12", "desde": "09:00", "hasta": "10:00"})
+    ag = panel.get("/panel/api/agenda", headers=laura, params={"desde": "2026-11-09"}).json()
+    assert [c["nombre"] for c in ag["citas"]] == ["Ana Gómez"]
+    assert len(ag["bloqueos"]) == 1 and ag["bloqueos"][0]["profesional"] == ""   # el de Andrés no es suyo
+    propia = ag["citas"][0]["id"]
+    ajena = next(c["id"] for c in panel.get("/panel/api/agenda", headers=marta, params={"desde": "2026-11-09"}).json()["citas"] if c["nombre"] == "Luis Pérez")
+    assert panel.post(f"/panel/api/citas/{propia}/estado", headers=laura, json={"estado": "asistio"}).status_code == 200
+    assert panel.post(f"/panel/api/citas/{ajena}/estado", headers=laura, json={"estado": "asistio"}).status_code == 403
+    assert panel.post(f"/panel/api/citas/{propia}/estado", headers=laura, json={"estado": "cancelada"}).status_code == 403
+    assert panel.post(f"/panel/api/citas/{propia}/reprogramar", headers=laura, json={"fecha": "2026-11-11", "hora": "10:00"}).status_code == 403
+
+
+def test_administrar_equipo(panel, db):
+    dueno = entrar(panel, "dueno1")
+    nuevo = {"usuario": "Sofia.R", "nombre": "Sofía Ramírez", "rol": "recepcion", "clave": "OtraClave99"}
+    assert panel.post("/panel/api/usuarios", headers=dueno, json={**nuevo, "clave": "corta"}).status_code == 400
+    assert panel.post("/panel/api/usuarios", headers=dueno, json={**nuevo, "rol": "jefe"}).status_code == 400
+    assert panel.post("/panel/api/usuarios", headers=dueno, json={**nuevo, "rol": "odontologo", "profesional": "Nadie"}).status_code == 400
+    uid = panel.post("/panel/api/usuarios", headers=dueno, json=nuevo).json()["id"]
+    assert panel.post("/panel/api/usuarios", headers=dueno, json=nuevo).status_code == 409   # ya existe
+    entrar(panel, "sofia.r", "OtraClave99")
+    lista = panel.get("/panel/api/usuarios", headers=dueno).json()
+    assert all("clave" not in u and "clave_hash" not in u for u in lista) and len(lista) == 5
+    # No se puede dejar la clínica sin dueño ni desactivarse a sí mismo
+    mio = db.usuario_por_login(CLINICA.id, "dueno1")["id"]
+    assert panel.post(f"/panel/api/usuarios/{mio}/estado", headers=dueno, json={"activo": False}).status_code == 400
+    # Restablecer clave cierra las sesiones de esa persona
+    sesion_sofia = entrar(panel, "sofia.r", "OtraClave99")
+    assert panel.post(f"/panel/api/usuarios/{uid}/clave", headers=dueno, json={"clave": "Nueva5678x"}).status_code == 200
+    assert panel.get("/panel/api/sesion", headers=sesion_sofia).status_code == 401
+    entrar(panel, "sofia.r", "Nueva5678x")
+
+
+def test_cambiar_mi_clave(panel):
+    marta = entrar(panel, "marta")
+    assert panel.post("/panel/api/mi-clave", headers=marta, json={"actual": "mala", "nueva": "Nueva5678x"}).status_code == 400
+    assert panel.post("/panel/api/mi-clave", headers=marta, json={"actual": "Clave1234", "nueva": "floja"}).status_code == 400
+    assert panel.post("/panel/api/mi-clave", headers=marta, json={"actual": "Clave1234", "nueva": "Nueva5678x"}).status_code == 200
+    assert panel.get("/panel/api/sesion", headers=marta).status_code == 401      # debe volver a entrar
+    entrar(panel, "marta", "Nueva5678x")
+
+
+def test_la_bitacora_registra_personas_y_asistente(panel, db):
+    marta, dueno = entrar(panel, "marta"), entrar(panel, "dueno1")
+    panel.post("/panel/api/citas", headers=marta, json={"nombre": "Ana Gómez", "servicio": "Valoración odontológica", "fecha": "2026-11-10", "hora": "09:00"})
+    Herramientas(db, CLINICA, "573001112233", ahora).ejecutar("agendar_cita", {"nombre": "Luis Pérez", "servicio": "limpieza", "fecha": "2026-11-10", "hora": "10:00"})
+    panel.post("/panel/api/login", json={"negocio": CLINICA.id, "usuario": "marta", "clave": "mala"})
+    h = panel.get("/panel/api/bitacora", headers=dueno).json()
+    acciones = [(f["quien"], f["rol"], f["accion"]) for f in h]
+    assert ("Marta Recepción", "recepcion", "cita_creada") in acciones
+    assert ("Sofía", "asistente", "cita_creada") in acciones
+    assert ("marta", "-", "ingreso_fallido") in acciones and ("Marta Recepción", "recepcion", "ingreso") in acciones
+    assert all("Clave1234" not in json.dumps(f) for f in h)

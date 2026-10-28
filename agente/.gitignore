@@ -3,3 +3,4 @@ __pycache__/
 .env
 *.db-shm
 *.db-wal
+snap.json

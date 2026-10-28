@@ -234,6 +234,17 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
 .login { width: min(400px, 100%); padding: 28px; display: grid; gap: 16px; }
 .login h1 { font: 800 1.35rem var(--display); margin: 0; }
 
+.who { display: flex; align-items: center; gap: 10px; padding: 8px 6px; }
+.who .n { font-weight: 700; font-size: .88rem; line-height: 1.2; }
+.person { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.person:first-child { border-top: 0; padding-top: 0; }
+.person .acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.log-day { font: 700 .76rem var(--body); text-transform: uppercase; letter-spacing: .06em; color: var(--faint); margin: 18px 0 6px; }
+.log-day:first-child { margin-top: 0; }
+.log-row { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: .88rem; }
+.log-row .h { color: var(--muted); font-variant-numeric: tabular-nums; }
+.log-row .a { font-weight: 600; }
+.log-row.mal .a { color: var(--bad); }
 .toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: .88rem; z-index: 30; box-shadow: var(--shadow-lg); }
 
 /* --- Responsive --- */
@@ -262,7 +273,8 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
   <form id="loginForm" class="card login">
     <div class="logo"><span class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 3 2 21h20z"/></svg></span><b>VÉRTICE</b></div>
     <div><h1>Panel de la clínica</h1><p class="muted small" style="margin:4px 0 0">Agenda, conversaciones del asistente e indicadores.</p></div>
-    <label class="field" for="lgNegocio">Código de la clínica<input id="lgNegocio" autocomplete="username" required></label>
+    <label class="field" for="lgNegocio">Código de la clínica<input id="lgNegocio" autocomplete="organization" autocapitalize="off" required></label>
+    <label class="field" for="lgUsuario">Usuario<input id="lgUsuario" autocomplete="username" autocapitalize="off" placeholder="Tu usuario"></label>
     <label class="field" for="lgClave">Clave<input id="lgClave" type="password" autocomplete="current-password" required></label>
     <button class="btn primary" type="submit" style="justify-content:center;padding:10px">Entrar</button>
     <div id="lgMsg" class="note err" hidden></div>
@@ -274,12 +286,16 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
     <div class="logo"><span class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 3 2 21h20z"/></svg></span><b>VÉRTICE</b></div>
     <div class="clinic-card"><div class="n" id="clinica"></div><div class="s" id="clinicaSub"></div></div>
     <nav class="menu" aria-label="Secciones">
-      <button data-tab="resumen" aria-current="page"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span class="lbl">Resumen</span></button>
-      <button data-tab="agenda"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="lbl">Agenda</span></button>
-      <button data-tab="chats"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="lbl">Conversaciones</span><span class="count" id="nChats" hidden></span></button>
-      <button data-tab="casos"><svg class="i" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 2.4 17.6A2 2 0 0 0 4.1 21h15.8a2 2 0 0 0 1.7-3.4L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span class="lbl">Casos</span><span class="count" id="nCasos" hidden></span></button>
+      <button data-tab="resumen" data-perm="resumen" aria-current="page"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span class="lbl">Resumen</span></button>
+      <button data-tab="agenda" data-perm="agenda_ver"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="lbl">Agenda</span></button>
+      <button data-tab="chats" data-perm="chats"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span class="lbl">Conversaciones</span><span class="count" id="nChats" hidden></span></button>
+      <button data-tab="casos" data-perm="casos"><svg class="i" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 2.4 17.6A2 2 0 0 0 4.1 21h15.8a2 2 0 0 0 1.7-3.4L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span class="lbl">Casos</span><span class="count" id="nCasos" hidden></span></button>
+      <button data-tab="equipo" data-perm="equipo" hidden><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></svg><span class="lbl">Equipo</span></button>
+      <button data-tab="historial" data-perm="historial" hidden><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="lbl">Historial</span></button>
     </nav>
     <div class="side-foot">
+      <div class="who"><div class="avatar" id="quienAv">?</div><div style="min-width:0"><div class="n" id="quienNombre"></div><div class="muted small" id="quienRol"></div></div></div>
+      <button class="btn ghost" id="miClave" type="button" hidden><svg class="i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Mi clave</button>
       <button class="btn ghost" id="salir" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Salir</button>
     </div>
   </aside>
@@ -359,6 +375,20 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
         </div>
       </section>
 
+      <!-- EQUIPO -->
+      <section data-view="equipo" hidden>
+        <div class="card"><div class="card-h"><h2>Personas con acceso al panel</h2><span class="muted small more">Cada persona entra con su usuario y clave</span></div>
+          <div class="card-b" id="equipoLista"></div></div>
+        <p class="muted small">Dueño: ve y administra todo. Recepción: agenda, conversaciones y casos. Odontólogo: solo su propia agenda.</p>
+      </section>
+
+      <!-- HISTORIAL -->
+      <section data-view="historial" hidden>
+        <div class="section-label" style="display:flex;align-items:center;gap:10px">Quién hizo qué
+          <div class="seg" role="group" aria-label="Periodo"><button type="button" data-hdias="7" aria-pressed="true">7 días</button><button type="button" data-hdias="30" aria-pressed="false">30 días</button></div></div>
+        <div class="card"><div class="card-b" id="historialLista"></div></div>
+      </section>
+
       <!-- CASOS -->
       <section data-view="casos" hidden>
         <div class="cases">
@@ -380,7 +410,7 @@ dl.kv dt { color: var(--muted); } dl.kv dd { margin: 0; font-weight: 600; }
 
 <script>
 const $ = id => document.getElementById(id);
-const S = { negocio: "", clave: "", info: null, desde: null, vista: "semana", conv: null, convs: [], dias: 7, agenda: null };
+const S = { negocio: "", clave: "", token: "", info: null, desde: null, vista: "semana", conv: null, convs: [], dias: 7, agenda: null };
 const DIAS = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
 const DIA_TXT = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const DIA_CORTO = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -399,9 +429,10 @@ const ICON = {
 const ic = (n, cls = "i") => `<svg class="${cls}" viewBox="0 0 24 24">${ICON[n]}</svg>`;
 
 async function api(ruta, opts = {}) {
-  const r = await fetch("/panel/api" + ruta, { ...opts, headers: { "Content-Type": "application/json", "X-Negocio": S.negocio, "X-Clave": S.clave, ...(opts.headers || {}) } });
-  if (r.status === 401) { salir(); throw new Error("Sesión no válida"); }
+  const cred = S.token ? { "X-Token": S.token } : { "X-Negocio": S.negocio, "X-Clave": S.clave };
+  const r = await fetch("/panel/api" + ruta, { ...opts, headers: { "Content-Type": "application/json", ...cred, ...(opts.headers || {}) } });
   const d = await r.json().catch(() => ({}));
+  if (r.status === 401 && S.info) { salir(); throw new Error("La sesión venció. Ingresa de nuevo."); }
   if (!r.ok) throw new Error(d.detail || "Error " + r.status);
   return d;
 }
@@ -432,35 +463,58 @@ const varios = () => S.info.profesionales.length > 1;
 // --- Sesión -------------------------------------------------------------------
 $("loginForm").onsubmit = async e => {
   e.preventDefault();
-  S.negocio = $("lgNegocio").value.trim(); S.clave = $("lgClave").value;
-  try { await entrar(); try { sessionStorage.setItem("vp", JSON.stringify([S.negocio, S.clave])); } catch (_) {} }
-  catch (_) { $("lgMsg").hidden = false; $("lgMsg").textContent = "Código o clave incorrectos."; }
+  S.negocio = $("lgNegocio").value.trim(); S.clave = $("lgClave").value; S.token = ""; S.info = null;
+  const usuario = $("lgUsuario").value.trim();
+  try {
+    if (usuario) {  // ingreso personal: se guarda solo la sesión, nunca la clave
+      const r = await fetch("/panel/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ negocio: S.negocio, usuario, clave: S.clave }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.detail || "Usuario o clave incorrectos.");
+      S.token = d.token; S.clave = "";
+    }
+    await entrar();
+    try { sessionStorage.setItem("vp", JSON.stringify(S.token ? { n: S.negocio, t: S.token } : { n: S.negocio, c: S.clave })); } catch (_) {}
+  } catch (err) { S.token = ""; $("lgMsg").hidden = false; $("lgMsg").textContent = usuario ? err.message : "Código o clave incorrectos."; }
 };
 async function entrar() {
   S.info = await api("/sesion");
+  const permisos = new Set(S.info.permisos); S.can = p => permisos.has(p);
   $("login").hidden = true; $("app").hidden = false;
+  document.querySelectorAll("nav.menu [data-perm]").forEach(b => b.hidden = !S.can(b.dataset.perm));
+  const u = S.info.usuario;
+  $("quienAv").textContent = iniciales(u.nombre); $("quienNombre").textContent = u.nombre;
+  $("quienRol").textContent = u.rol_texto + (u.rol === "odontologo" ? " · " + u.profesional : "");
+  $("miClave").hidden = u.soporte;
   $("clinica").textContent = S.info.nombre;
   $("clinicaSub").textContent = `Asistente: ${asist()} · ${S.info.profesionales.length} ${S.info.profesionales.length === 1 ? "consultorio" : "profesionales"}`;
   S.desde = lunes(S.info.hoy);
   if (matchMedia("(max-width: 900px)").matches) { S.vista = "dia"; S.desde = S.info.hoy; marcarVista(); }
-  ir("resumen"); cargarCasos(true); api("/conversaciones").then(d => { S.convs = d; contarChats(); }).catch(() => {});
+  const primera = [...document.querySelectorAll("nav.menu [data-perm]")].find(b => !b.hidden).dataset.tab;
+  ir(primera);
+  if (S.can("casos")) cargarCasos(true);
+  if (S.can("chats")) api("/conversaciones").then(d => { S.convs = d; contarChats(); }).catch(() => {});
 }
-function salir() { try { sessionStorage.removeItem("vp"); } catch (_) {} location.reload(); }
+function salir() {
+  if (S.token) fetch("/panel/api/salir", { method: "POST", headers: { "X-Token": S.token } }).catch(() => {});
+  try { sessionStorage.removeItem("vp"); } catch (_) {}
+  location.reload();
+}
 $("salir").onclick = salir;
 
 // --- Navegación ---------------------------------------------------------------
-const TITULOS = { resumen: "Resumen", agenda: "Agenda", chats: "Conversaciones", casos: "Casos e interesados" };
+const TITULOS = { resumen: "Resumen", agenda: "Agenda", chats: "Conversaciones", casos: "Casos e interesados", equipo: "Equipo", historial: "Historial de cambios" };
 function ir(tab) {
   document.querySelectorAll("nav.menu [data-tab]").forEach(b => b.dataset.tab === tab ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
   document.querySelectorAll("[data-view]").forEach(v => v.hidden = v.dataset.view !== tab);
   $("titulo").textContent = TITULOS[tab];
   $("subtitulo").textContent = tab === "resumen" ? fechaLarga(S.info.hoy) : "";
   const acts = $("topActs"); acts.replaceChildren();
-  if (tab === "agenda") acts.append(
+  if (tab === "agenda" && S.can("agenda_editar")) acts.append(
     el("button", { class: "btn", type: "button", onclick: () => abrirBloqueo(), html: ic("lock") + "Bloquear horario" }),
     el("button", { class: "btn primary", type: "button", onclick: () => abrirNuevaCita(), html: ic("plus") + "Nueva cita" }));
+  else if (tab === "equipo") acts.append(el("button", { class: "btn primary", type: "button", onclick: () => abrirNuevoUsuario(), html: ic("plus") + "Agregar persona" }));
   else acts.append(el("button", { class: "btn", type: "button", onclick: () => ir(tab), html: ic("refresh") + "Actualizar" }));
-  ({ resumen: cargarResumen, agenda: cargarAgenda, chats: cargarConvs, casos: () => cargarCasos() })[tab]();
+  ({ resumen: cargarResumen, agenda: cargarAgenda, chats: cargarConvs, casos: () => cargarCasos(), equipo: cargarEquipo, historial: cargarHistorial })[tab]();
 }
 document.querySelectorAll("nav.menu [data-tab]").forEach(b => b.onclick = () => ir(b.dataset.tab));
 document.querySelectorAll("[data-ir]").forEach(b => b.onclick = () => ir(b.dataset.ir));
@@ -550,7 +604,7 @@ async function cargarAgenda() {
   let ini = 8 * 60, fin = 18 * 60;
   dias.forEach(f => [null, ...S.info.profesionales].forEach(p => franjasDe(f, p).forEach(([a, b]) => { ini = Math.min(ini, minutos(a)); fin = Math.max(fin, minutos(b)); })));
   ini = Math.floor(ini / 60) * 60; fin = Math.ceil(fin / 60) * 60;
-  const alto = (fin - ini) * PPM, profs = S.info.profesionales, L = profs.length;
+  const alto = (fin - ini) * PPM, profs = S.info.usuario.rol === "odontologo" ? [S.info.usuario.profesional] : S.info.profesionales, L = profs.length;
   const cal = $("cal");
   cal.style.setProperty("--dias", n);
   cal.style.setProperty("--colmin", n === 1 ? "0px" : (L > 1 ? "150px" : "120px"));
@@ -614,13 +668,14 @@ $("drCerrar").onclick = cerrarDrawer; $("scrim").onclick = cerrarDrawer;
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("drawer").hidden) cerrarDrawer(); });
 
 function verCita(c) {
+  const edita = S.can("agenda_editar");
   const acciones = c.estado === "confirmada"
     ? [el("button", { class: "btn primary", type: "button", onclick: () => estadoCita(c, "asistio"), html: ic("check") + "Asistió" }),
-       el("button", { class: "btn", type: "button", onclick: () => abrirReprogramar(c) }, "Reprogramar"),
+       edita ? el("button", { class: "btn", type: "button", onclick: () => abrirReprogramar(c) }, "Reprogramar") : null,
        el("button", { class: "btn", type: "button", onclick: () => estadoCita(c, "no_asistio") }, "No asistió"),
-       el("button", { class: "btn danger", type: "button", onclick: () => estadoCita(c, "cancelada") }, "Cancelar cita")]
+       edita ? el("button", { class: "btn danger", type: "button", onclick: () => estadoCita(c, "cancelada") }, "Cancelar cita") : null]
     : [el("button", { class: "btn", type: "button", onclick: () => estadoCita(c, "confirmada") }, "Volver a confirmada")];
-  const tieneChat = /^\d{7,}$/.test(c.cliente || "") || S.convs.some(x => x.cliente === c.cliente);
+  const tieneChat = S.can("chats") && (/^\d{7,}$/.test(c.cliente || "") || S.convs.some(x => x.cliente === c.cliente));
   const choque = c.estado === "confirmada" && (cerradoPorFestivo(c.inicio.slice(0, 10)) ? `Ese día es festivo (${festivoDe(c.inicio.slice(0, 10))}).`
     : (S.agenda.bloqueos.find(b => (!b.profesional || b.profesional === c.profesional) && c.inicio < b.fin && c.fin > b.inicio) ? "Quedó dentro de un horario bloqueado." : ""));
   abrirDrawer(c.nombre, [
@@ -648,7 +703,7 @@ function verBloqueo(b) {
     el("dt", {}, "Desde"), el("dd", {}, `${fechaLarga(b.inicio)} · ${hora(b.inicio)}`), el("dt", {}, "Hasta"), el("dd", {}, `${fechaLarga(b.fin)} · ${hora(b.fin)}`),
     el("dt", {}, "Aplica a"), el("dd", {}, b.profesional || "Toda la clínica"), el("dt", {}, "Motivo"), el("dd", {}, b.motivo || "—")),
     el("p", { class: "muted small" }, `Mientras exista, ${asist()} no ofrece estas horas.`)],
-    [el("button", { class: "btn danger", type: "button", onclick: async () => { await api(`/bloqueos/${b.id}`, { method: "DELETE" }); toast("Bloqueo quitado"); cerrarDrawer(); cargarAgenda(); } }, "Quitar bloqueo")]);
+    S.can("agenda_editar") ? [el("button", { class: "btn danger", type: "button", onclick: async () => { await api(`/bloqueos/${b.id}`, { method: "DELETE" }); toast("Bloqueo quitado"); cerrarDrawer(); cargarAgenda(); } }, "Quitar bloqueo")] : []);
 }
 function abrirNuevaCita() {
   const sel = { hora: "" };
@@ -856,8 +911,81 @@ async function cargarCasos(soloContar) {
     : [el("p", { class: "empty" }, "Sin interesados.")]));
 }
 
+// --- Equipo ---------------------------------------------------------------------
+async function cargarEquipo() {
+  const lista = await api("/usuarios");
+  $("equipoLista").replaceChildren(...(lista.length ? lista.map(u => el("div", { class: "person", style: u.activo ? "" : "opacity:.6" },
+    el("div", { class: "avatar" }, iniciales(u.nombre)),
+    el("div", { style: "min-width:0" }, el("div", { style: "font-weight:700" }, u.nombre),
+      el("div", { class: "muted small" }, `${u.usuario} · ${ROLES_TXT[u.rol]}${u.profesional ? " · " + u.profesional : ""}`),
+      el("span", { class: "pill " + (u.activo ? "asistio" : "cancelada"), style: "margin-top:4px" }, u.activo ? "Activo" : "Desactivado")),
+    el("div", { class: "acts" },
+      el("button", { class: "btn sm", type: "button", onclick: () => abrirClaveUsuario(u) }, "Nueva clave"),
+      el("button", { class: "btn sm " + (u.activo ? "danger" : ""), type: "button", onclick: async () => {
+        try { await api(`/usuarios/${u.id}/estado`, { method: "POST", body: JSON.stringify({ activo: !u.activo }) }); toast(u.activo ? "Usuario desactivado" : "Usuario activado"); cargarEquipo(); }
+        catch (e) { toast(e.message); } } }, u.activo ? "Desactivar" : "Activar"))))
+    : [el("p", { class: "empty" }, "Todavía no hay personas. Agrega a tu equipo con el botón de arriba.")]));
+}
+const ROLES_TXT = { dueno: "Dueño", recepcion: "Recepción", odontologo: "Odontólogo" };
+function campoClave(id, etiqueta) {
+  return el("label", { class: "field", for: id }, etiqueta, el("input", { id, type: "password", autocomplete: "new-password" }),
+    el("span", { class: "muted small", style: "font-weight:400" }, "Mínimo 8 caracteres, con letras y números."));
+}
+function abrirNuevoUsuario() {
+  const nombre = el("input", { id: "nuNombre", placeholder: "Nombre y apellido" }), usuario = el("input", { id: "nuUsuario", autocapitalize: "off", placeholder: "ej.: marta" });
+  const rol = el("select", { id: "nuRol" }, ["recepcion", "odontologo", "dueno"].map(r => el("option", { value: r }, ROLES_TXT[r])));
+  const prof = el("select", { id: "nuProf" }, S.info.profesionales.map(p => el("option", { value: p }, p)));
+  const filaProf = el("label", { class: "field", for: "nuProf", hidden: true }, "Profesional con el que se asocia", prof);
+  rol.onchange = () => filaProf.hidden = rol.value !== "odontologo";
+  const clave = campoClave("nuClave", "Clave inicial"), nota = el("div", { class: "note err", hidden: true });
+  abrirDrawer("Agregar persona", [
+    el("label", { class: "field", for: "nuNombre" }, "Nombre", nombre), el("label", { class: "field", for: "nuUsuario" }, "Usuario para ingresar", usuario),
+    el("label", { class: "field", for: "nuRol" }, "Rol", rol), filaProf, clave, nota,
+  ], [el("button", { class: "btn primary", type: "button", onclick: async () => {
+    try {
+      await api("/usuarios", { method: "POST", body: JSON.stringify({ nombre: nombre.value, usuario: usuario.value, rol: rol.value, profesional: rol.value === "odontologo" ? prof.value : "", clave: $("nuClave").value }) });
+      toast("Persona agregada"); cerrarDrawer(); cargarEquipo();
+    } catch (e) { nota.hidden = false; nota.textContent = e.message; } } }, "Agregar")]);
+}
+function abrirClaveUsuario(u) {
+  const nota = el("div", { class: "note err", hidden: true });
+  abrirDrawer("Nueva clave para " + u.nombre, [el("p", { class: "muted small", style: "margin:0" }, "La persona tendrá que ingresar de nuevo con esta clave."), campoClave("ncClave", "Clave nueva"), nota],
+    [el("button", { class: "btn primary", type: "button", onclick: async () => {
+      try { await api(`/usuarios/${u.id}/clave`, { method: "POST", body: JSON.stringify({ clave: $("ncClave").value }) }); toast("Clave actualizada"); cerrarDrawer(); }
+      catch (e) { nota.hidden = false; nota.textContent = e.message; } } }, "Guardar clave")]);
+}
+$("miClave").onclick = () => {
+  const actual = el("label", { class: "field", for: "mcActual" }, "Clave actual", el("input", { id: "mcActual", type: "password", autocomplete: "current-password" }));
+  const nota = el("div", { class: "note err", hidden: true });
+  abrirDrawer("Cambiar mi clave", [actual, campoClave("mcNueva", "Clave nueva"), nota], [el("button", { class: "btn primary", type: "button", onclick: async () => {
+    try { await api("/mi-clave", { method: "POST", body: JSON.stringify({ actual: $("mcActual").value, nueva: $("mcNueva").value }) }); toast("Clave cambiada: ingresa de nuevo"); setTimeout(salir, 900); }
+    catch (e) { nota.hidden = false; nota.textContent = e.message; } } }, "Cambiar clave")]);
+};
+
+// --- Historial ------------------------------------------------------------------
+const ACCIONES = { cita_creada: "Creó una cita", cita_reprogramada: "Reprogramó una cita", cita_estado: "Cambió el estado de una cita", cita_cancelada: "Canceló una cita",
+  cita_confirmada: "Confirmó asistencia", bloqueo_creado: "Bloqueó un horario", bloqueo_quitado: "Quitó un bloqueo", chat_tomado: "Tomó un chat", chat_devuelto: "Devolvió un chat",
+  mensaje_enviado: "Escribió a un paciente", caso_resuelto: "Resolvió un caso", caso_abierto: "Pasó un caso al equipo", usuario_creado: "Agregó a una persona",
+  usuario_activado: "Activó a una persona", usuario_desactivado: "Desactivó a una persona", clave_cambiada: "Cambió su clave", clave_restablecida: "Restableció una clave",
+  ingreso: "Ingresó al panel", ingreso_fallido: "Intento de ingreso fallido" };
+document.querySelectorAll("[data-hdias]").forEach(b => b.onclick = () => { S.hdias = +b.dataset.hdias; document.querySelectorAll("[data-hdias]").forEach(x => x.setAttribute("aria-pressed", x === b)); cargarHistorial(); });
+async function cargarHistorial() {
+  const filas = await api("/bitacora?dias=" + (S.hdias || 7));
+  const nodos = []; let dia = "";
+  for (const f of filas) {
+    if (f.creado.slice(0, 10) !== dia) { dia = f.creado.slice(0, 10); nodos.push(el("div", { class: "log-day" }, fechaLarga(dia))); }
+    nodos.push(el("div", { class: "log-row" + (f.accion === "ingreso_fallido" ? " mal" : "") }, el("div", { class: "h" }, f.creado.slice(11, 16)),
+      el("div", {}, el("span", { class: "a" }, ACCIONES[f.accion] || f.accion), " · ", el("span", {}, f.quien), f.rol && f.rol !== "-" ? el("span", { class: "tag", style: "margin-left:6px" }, f.rol === "asistente" ? asist() + " (IA)" : ROLES_TXT[f.rol] || f.rol) : null,
+        f.detalle && f.detalle !== "Ingresó al panel" ? el("div", { class: "muted small" }, f.detalle) : null)));
+  }
+  $("historialLista").replaceChildren(...(nodos.length ? nodos : [el("p", { class: "empty" }, "Todavía no hay cambios registrados en este periodo.")]));
+}
+
 // Sesión guardada en esta pestaña
-try { const g = JSON.parse(sessionStorage.getItem("vp") || "null"); if (g) { [S.negocio, S.clave] = g; entrar().catch(() => {}); } } catch (_) {}
+try {
+  const g = JSON.parse(sessionStorage.getItem("vp") || "null");
+  if (g) { S.negocio = g.n; S.token = g.t || ""; S.clave = g.c || ""; entrar().catch(() => { S.token = ""; S.clave = ""; }); }
+} catch (_) {}
 </script>
 </body>
 </html>

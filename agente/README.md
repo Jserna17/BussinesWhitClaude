@@ -13,6 +13,10 @@ Un solo servidor atiende a **muchos negocios**: cada cliente es un archivo en `n
 | `vertice/herramientas.py` | Agenda (disponibilidad, agendar, ver, cancelar), prospectos, traspaso a humano |
 | `vertice/whatsapp.py` | Cloud API de Meta: firma del webhook, lectura de mensajes, envío |
 | `vertice/app.py` | Servidor web (FastAPI) con el webhook `/webhook` y `/salud` |
+| `vertice/salud.py`, `vertice/monitor.py` | Qué medir y cuándo avisar (WhatsApp rechazando, modelo caído, sin mensajes, respaldos viejos…) |
+| `vertice/respaldo.py` | Respaldos consistentes, verificados, cifrados, con retención y subida a otro lugar; restauración |
+| `vertice/usuarios.py` | Usuarios, roles y permisos del panel |
+| `despliegue/` | Guía y scripts para instalar en un servidor (HTTPS, servicios, respaldos, monitoreo) — ver `despliegue/README.md` |
 | `vertice/chat.py` | **Simulador en la terminal** para probar o hacer demos sin WhatsApp |
 | `vertice/db.py` | SQLite: conversaciones, citas, prospectos, casos para humanos |
 | `negocios/clinica-demo.yaml` | Clínica dental ficticia ("Sofía") para demos |

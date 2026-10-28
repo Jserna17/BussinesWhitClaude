@@ -1,0 +1,22 @@
+[Unit]
+Description=Vértice · asistente de WhatsApp y panel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=vertice
+Group=vertice
+WorkingDirectory=/opt/vertice/agente
+EnvironmentFile=/etc/vertice/vertice.env
+ExecStart=/opt/vertice/venv/bin/uvicorn vertice.app:app --host 127.0.0.1 --port 8000 --proxy-headers
+Restart=always
+RestartSec=3
+# Endurecimiento: el servicio solo puede escribir en /var/lib/vertice
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/vertice
+
+[Install]
+WantedBy=multi-user.target

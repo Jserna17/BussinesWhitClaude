@@ -103,18 +103,39 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
                  ahora: Callable[[], datetime] = datetime.now, enviar: Callable | None = None) -> None:
     api = APIRouter(prefix="/panel/api")
 
-    fallos: dict[tuple[str, str], list[float]] = {}  # intentos de ingreso fallidos (se cuentan en memoria)
-    MAX_FALLOS, VENTANA_FALLOS = 5, 600
+    fallos: dict[tuple[str, str], list[float]] = {}  # intentos de ingreso fallidos por usuario (en memoria)
+    fallos_ip: dict[str, list[float]] = {}           # y por dirección de red, para frenar adivinar claves
+    MAX_FALLOS, VENTANA_FALLOS, MAX_FALLOS_IP = 5, 600, 30
 
-    def sesion_de(x_token: str = Header(""), x_negocio: str = Header(""), x_clave: str = Header("")) -> Sesion:
+    def ip_de(request: Request) -> str:
+        """Detrás de nuestro servidor web (Caddy, en la misma máquina) la dirección real viene en X-Forwarded-For."""
+        host = request.client.host if request.client else "?"
+        if host in ("127.0.0.1", "::1"):
+            return request.headers.get("x-forwarded-for", "").split(",")[0].strip() or host
+        return host
+
+    def ip_bloqueada(ip: str) -> bool:
+        recientes = [t for t in fallos_ip.get(ip, []) if time.monotonic() - t < VENTANA_FALLOS]
+        fallos_ip[ip] = recientes
+        return len(recientes) >= MAX_FALLOS_IP
+
+    def anotar_fallo_ip(ip: str) -> None:
+        fallos_ip.setdefault(ip, []).append(time.monotonic())
+
+    def sesion_de(request: Request, x_token: str = Header(""), x_negocio: str = Header(""), x_clave: str = Header("")) -> Sesion:
         """Quién llama: una persona con su sesión (X-Token) o, para soporte, la clave de la clínica (X-Negocio + X-Clave)."""
+        ip = ip_de(request)
+        if ip_bloqueada(ip):
+            raise HTTPException(status_code=429, detail="Demasiados intentos fallidos desde tu red. Espera 10 minutos.")
         if x_token:
             u = db.sesion_vigente(hash_token(x_token))
             if u is not None and u["negocio_id"] in negocios:
                 return Sesion(negocios[u["negocio_id"]], u["id"], u["usuario"], u["nombre"], u["rol"], u["profesional"])
+            anotar_fallo_ip(ip)
             raise HTTPException(status_code=401, detail="La sesión venció. Ingresa de nuevo.")
         n = negocios.get(x_negocio)
         if n is None or not n.panel_clave or not hmac.compare_digest(n.panel_clave, x_clave):
+            anotar_fallo_ip(ip)
             raise HTTPException(status_code=401, detail="Clínica o clave incorrecta.")
         return Sesion(n, 0, "soporte", "Soporte Vértice", "dueno")
 
@@ -365,7 +386,8 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
         n = s.negocio
         for c in conversaciones_leidas(n):
             if c["cliente"] == cliente:
-                return {**c, "nombre": nombres_por_cliente(n).get(cliente) or c["nombre_perfil"]}
+                aut = db.con.execute("SELECT creado FROM autorizaciones WHERE negocio_id=? AND cliente=?", (n.id, cliente)).fetchone()
+                return {**c, "nombre": nombres_por_cliente(n).get(cliente) or c["nombre_perfil"], "aviso_privacidad": aut["creado"] if aut else ""}
         raise HTTPException(status_code=404, detail="Conversación no encontrada.")
 
     @api.post("/conversaciones/{cliente}/tomar")
@@ -423,6 +445,9 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
     # --- Ingreso, usuarios e historial ---------------------------------
     @api.post("/login")
     def ingresar(datos: Ingreso, request: Request):
+        ip = ip_de(request)
+        if ip_bloqueada(ip):
+            raise HTTPException(status_code=429, detail="Demasiados intentos fallidos desde tu red. Espera 10 minutos.")
         llave = (datos.negocio, datos.usuario.strip().lower())
         ahora_s = time.monotonic()
         recientes = [t for t in fallos.get(llave, []) if ahora_s - t < VENTANA_FALLOS]
@@ -434,6 +459,7 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
         valido = verificar(datos.clave, u["clave_hash"] if u else hashear("sin usuario")) and u is not None and u["activo"] == 1
         if not valido:
             fallos[llave] = recientes + [ahora_s]
+            anotar_fallo_ip(ip)
             if n:
                 db.registrar_bitacora(n.id, datos.usuario.strip()[:60] or "(vacío)", "-", "ingreso_fallido",
                                       "Clave o usuario incorrectos", ahora().isoformat(timespec="seconds"))
@@ -516,6 +542,26 @@ def montar_panel(app: FastAPI, db: BaseDatos, negocios: dict[str, Negocio],
         db.cambiar_clave_usuario(s.negocio.id, usuario_id, hashear(datos.clave))
         anotar(s, "clave_restablecida", f"Nueva clave para {u['nombre']} ({u['usuario']})")
         return {"ok": True}
+
+    @api.get("/pacientes/{cliente}/datos")
+    def datos_del_paciente(cliente: str, s: Sesion = Depends(permiso("datos_personales"))):
+        """Derecho de acceso: todo lo que el sistema guarda de una persona."""
+        n = s.negocio
+        datos = db.exportar_datos_paciente(n.id, cliente)
+        datos["conversaciones"] = [{"clave": c["clave"], "actualizado": c["actualizado"],
+                                    "mensajes": transcripcion.leer(json.loads(c["mensajes"]))["mensajes"]} for c in datos["conversaciones"]]
+        anotar(s, "datos_exportados", f"Descargó los datos de un paciente (…{cliente[-4:]})")
+        return datos
+
+    @api.delete("/pacientes/{cliente}/datos")
+    def eliminar_datos_del_paciente(cliente: str, s: Sesion = Depends(permiso("datos_personales"))):
+        """Derecho de supresión (a pedido del titular de los datos)."""
+        if not (cliente.isdigit() or cliente.startswith("panel-")):
+            raise HTTPException(status_code=400, detail="Identificador de paciente inválido.")
+        resultado = db.eliminar_datos_paciente(s.negocio.id, cliente)
+        anotar(s, "datos_eliminados", f"Eliminó los datos de un paciente (…{cliente[-4:]}): {resultado['conversaciones']} conversaciones, "
+               f"{resultado['citas_anonimizadas']} citas anonimizadas, {resultado['citas_futuras_canceladas']} citas futuras canceladas")
+        return resultado
 
     @api.get("/bitacora")
     def historial(dias: int = 7, limite: int = 300, s: Sesion = Depends(permiso("historial"))):

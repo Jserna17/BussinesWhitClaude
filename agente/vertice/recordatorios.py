@@ -76,6 +76,7 @@ def ciclo(db: BaseDatos, negocios: dict[str, Negocio], enviar_plantilla: Callabl
                         [f"confirmar:{cita['id']}", f"cambiar:{cita['id']}"])
                 except Exception as e:  # noqa: BLE001 - se reintenta en el siguiente ciclo
                     db.liberar_recordatorio(cita["id"], numero)
+                    db.registrar_fallo(n.id, "recordatorio", f"cita {cita['id']}: {e}")
                     resultado["fallidos"] += 1
                     log.error("[%s] Recordatorio %s de la cita %s no se pudo enviar: %s", n.id, numero, cita["id"], e)
                     continue

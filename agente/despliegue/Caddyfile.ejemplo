@@ -1,0 +1,16 @@
+# Caddy pone el HTTPS (certificado gratis y renovación automática) y reenvía todo a la app, que solo escucha en 127.0.0.1:8000.
+# Cambia TU-DOMINIO por tu dominio (ej. app.verticeautomatizacion.com) o, mientras no lo tengas, por <IP-con-guiones>.sslip.io
+# (ej. 203-0-113-10.sslip.io para la IP 203.0.113.10: funciona con certificado real y no cuesta nada).
+TU-DOMINIO {
+	encode gzip
+	# Se bloquea lo que nadie debe ver desde internet
+	@interno path /salud/detalle /docs /openapi.json /redoc
+	respond @interno 404
+
+	reverse_proxy 127.0.0.1:8000 {
+		header_up X-Forwarded-For {remote_host}
+	}
+	log {
+		output file /var/log/caddy/vertice.log
+	}
+}

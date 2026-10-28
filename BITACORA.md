@@ -422,3 +422,10 @@ P0/P1/P2. Checklist de onboarding actualizado; la pregunta "¿dónde llevan la a
 - Demo con dos solicitudes de ejemplo. 61 pruebas OK. Demo republicada.
 **Siguiente:** P0-8 (VPS, respaldos, monitoreo, privacidad).
 
+### P0-8 (misma sesión) — y cierre de los 8 imprescindibles
+- **Auditoría de fallos** encontró y corrigió: avisos al equipo que tumbaban la conversación si WhatsApp los rechazaba; pacientes sin respuesta (y sin rastro) ante un error inesperado; servidor que aceptaba mensajes falsos si faltaba el secreto de firma; documentación de la API pública.
+- Nuevo: modo producción, monitoreo con alertas al celular, respaldos cifrados con restauración verificada, aviso de privacidad con evidencia, descargar/eliminar datos de un paciente, límite de intentos por red, cabeceras de seguridad.
+- Kit de instalación en `agente/despliegue/` (**no probado en un servidor real**), `plantillas/privacidad-y-tratamiento-de-datos.md` (borrador para el abogado).
+- 77 pruebas OK + prueba de humo de CLI y servidor en modo producción. Demo republicada con privacidad y roles.
+**Estado:** los 8 imprescindibles de `docs/14` están construidos. Lo que sigue depende de acciones del fundador: aprobar servidor, Meta (token/plantilla), abogado y probar con conversaciones reales.
+

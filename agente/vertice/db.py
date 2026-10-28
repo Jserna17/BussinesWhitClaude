@@ -103,6 +103,26 @@ CREATE TABLE IF NOT EXISTS bitacora (
     creado TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_bitacora ON bitacora (negocio_id, creado);
+CREATE TABLE IF NOT EXISTS estado (
+    clave TEXT PRIMARY KEY,
+    valor TEXT NOT NULL,
+    actualizado TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS fallos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    negocio_id TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    detalle TEXT NOT NULL,
+    creado TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_fallos ON fallos (tipo, creado);
+CREATE TABLE IF NOT EXISTS autorizaciones (
+    negocio_id TEXT NOT NULL,
+    cliente TEXT NOT NULL,
+    version TEXT NOT NULL,
+    creado TEXT NOT NULL,
+    PRIMARY KEY (negocio_id, cliente)
+);
 """
 
 ZONA = ZoneInfo("America/Bogota")
@@ -475,6 +495,72 @@ class BaseDatos:
     def bitacora(self, negocio_id: str, desde: str, limite: int = 300) -> list[sqlite3.Row]:
         return self.con.execute("SELECT * FROM bitacora WHERE negocio_id=? AND creado >= ? ORDER BY id DESC LIMIT ?",
                                 (negocio_id, desde, limite)).fetchall()
+
+    # --- Salud del sistema (lo lee el monitoreo) -------------------------
+    def poner_estado(self, clave: str, valor: str) -> None:
+        self._escribir("INSERT OR REPLACE INTO estado (clave, valor, actualizado) VALUES (?,?,?)", (clave, valor, self._ahora()))
+
+    def estado(self, clave: str) -> str | None:
+        fila = self.con.execute("SELECT valor FROM estado WHERE clave=?", (clave,)).fetchone()
+        return fila["valor"] if fila else None
+
+    def registrar_fallo(self, negocio_id: str, tipo: str, detalle: str) -> None:
+        """tipo: modelo | envio | atender | recordatorio | firma. Nunca debe tumbar quien lo llama."""
+        try:
+            self._escribir("INSERT INTO fallos (negocio_id, tipo, detalle, creado) VALUES (?,?,?,?)",
+                           (negocio_id, tipo, detalle[:400], self._ahora()))
+        except sqlite3.Error:  # pragma: no cover
+            pass
+
+    def fallos_desde(self, desde: str) -> dict[str, int]:
+        filas = self.con.execute("SELECT tipo, COUNT(*) AS n FROM fallos WHERE creado >= ? GROUP BY tipo", (desde,)).fetchall()
+        return {f["tipo"]: f["n"] for f in filas}
+
+    # --- Autorización de tratamiento de datos (Ley 1581) ------------------
+    def registrar_autorizacion(self, negocio_id: str, cliente: str, version: str) -> bool:
+        """True si es la primera vez que se le muestra el aviso de privacidad a este paciente."""
+        return self._escribir("INSERT OR IGNORE INTO autorizaciones (negocio_id, cliente, version, creado) VALUES (?,?,?,?)",
+                              (negocio_id, cliente, version, self._ahora())).rowcount == 1
+
+    # --- Derechos del titular de los datos (Ley 1581: acceso y supresión) -----
+    def exportar_datos_paciente(self, negocio_id: str, cliente: str) -> dict:
+        def filas(sql, *args):
+            return [dict(f) for f in self.con.execute(sql, args).fetchall()]
+        claves = (negocio_id, f"{negocio_id}@openai")
+        return {
+            "cliente": cliente,
+            "autorizacion": filas("SELECT version, creado FROM autorizaciones WHERE negocio_id=? AND cliente=?", negocio_id, cliente),
+            "citas": filas("SELECT id, nombre, servicio, inicio, fin, estado, profesional, origen, creado FROM citas "
+                           "WHERE negocio_id=? AND cliente=? ORDER BY inicio", negocio_id, cliente),
+            "interesados": filas("SELECT nombre, interes, notas, creado FROM prospectos WHERE negocio_id=? AND cliente=?", negocio_id, cliente),
+            "casos": filas("SELECT motivo, estado, creado FROM escalaciones WHERE negocio_id=? AND cliente=?", negocio_id, cliente),
+            "mensajes_equipo_y_pausas": filas("SELECT rol, texto, origen, creado FROM mensajes_chat WHERE negocio_id=? AND cliente=? ORDER BY id",
+                                              negocio_id, cliente),
+            "conversaciones": filas("SELECT negocio_id AS clave, mensajes, actualizado FROM conversaciones "
+                                    "WHERE negocio_id IN (?,?) AND cliente=?", *claves, cliente),
+        }
+
+    def eliminar_datos_paciente(self, negocio_id: str, cliente: str) -> dict:
+        """Derecho de supresión: borra conversaciones y datos de contacto, cancela citas futuras y deja las pasadas sin
+        nombre ni teléfono (la agenda conserva el hueco, no la persona). Los nombres que ya estén escritos dentro de un texto
+        libre del historial de cambios no se pueden localizar de forma automática."""
+        with self.transaccion() as con:
+            claves = (negocio_id, f"{negocio_id}@openai")
+            n = {"conversaciones": con.execute("DELETE FROM conversaciones WHERE negocio_id IN (?,?) AND cliente=?", (*claves, cliente)).rowcount,
+                 "mensajes": con.execute("DELETE FROM mensajes_chat WHERE negocio_id=? AND cliente=?", (negocio_id, cliente)).rowcount,
+                 "interesados": con.execute("DELETE FROM prospectos WHERE negocio_id=? AND cliente=?", (negocio_id, cliente)).rowcount,
+                 "casos": con.execute("DELETE FROM escalaciones WHERE negocio_id=? AND cliente=?", (negocio_id, cliente)).rowcount}
+            con.execute("DELETE FROM pausas WHERE negocio_id=? AND cliente=?", (negocio_id, cliente))
+            con.execute("DELETE FROM autorizaciones WHERE negocio_id=? AND cliente=?", (negocio_id, cliente))
+            n["citas_futuras_canceladas"] = con.execute(
+                f"UPDATE citas SET estado='cancelada' WHERE negocio_id=? AND cliente=? AND {_ACTIVOS_SQL} AND inicio >= ?",
+                (negocio_id, cliente, self._ahora())).rowcount
+            n["citas_anonimizadas"] = con.execute(
+                "UPDATE citas SET nombre='Paciente eliminado', cliente='eliminado' WHERE negocio_id=? AND cliente=?",
+                (negocio_id, cliente)).rowcount
+            con.execute("UPDATE bitacora SET detalle=replace(detalle, ?, '[eliminado]') WHERE negocio_id=? AND detalle LIKE ?",
+                        (cliente, negocio_id, f"%{cliente}%"))
+        return n
 
     # --- Idempotencia del webhook (Meta reintenta entregas) -------------
     def marcar_procesado(self, mensaje_id: str) -> bool:

@@ -147,6 +147,15 @@ class Herramientas:
         self.db.registrar_bitacora(self.negocio.id, self.negocio.nombre_asistente, "asistente", accion, detalle,
                                    self.ahora().isoformat(timespec="seconds"))
 
+    def _avisar(self, texto: str) -> None:
+        """Avisa al equipo sin que una falla de WhatsApp tumbe lo que el paciente estaba haciendo."""
+        if not self.notificar_dueno:
+            return
+        try:
+            self.notificar_dueno(self.negocio, texto)
+        except Exception as e:  # noqa: BLE001
+            self.db.registrar_fallo(self.negocio.id, "envio", f"Aviso al equipo no enviado: {e}")
+
     def ejecutar(self, nombre: str, entrada: dict) -> tuple[str, bool]:
         """Devuelve (contenido, es_error)."""
         funcion = getattr(self, f"_{nombre}", None)
@@ -203,9 +212,8 @@ class Herramientas:
         if cita["estado"] == "por_confirmar":
             cita["nota"] = ("Quedó SOLICITADA y apartada, todavía NO confirmada: dile al cliente que la clínica se la confirma "
                             "por este mismo chat en breve y que el horario queda apartado mientras tanto.")
-            if self.notificar_dueno:
-                self.notificar_dueno(self.negocio, f"🗓️ Solicitud de cita por confirmar: {nombre.strip()} · {cita['servicio']} · "
-                                                    f"{cita['dia']} {cita['fecha']} {cita['hora']} (WhatsApp {self.cliente})")
+            self._avisar(f"🗓️ Solicitud de cita por confirmar: {nombre.strip()} · {cita['servicio']} · "
+                         f"{cita['dia']} {cita['fecha']} {cita['hora']} (WhatsApp {self.cliente})")
         if len(self.negocio.nombres_profesionales()) == 1:
             cita.pop("profesional")
         return cita
@@ -252,8 +260,7 @@ class Herramientas:
     def _pasar_a_humano(self, motivo: str) -> dict:
         eid = self.db.registrar_escalacion(self.negocio.id, self.cliente, motivo)
         self._anotar("caso_abierto", f"Pasó al equipo el chat de {self.cliente}: {motivo}")
-        if self.notificar_dueno:
-            self.notificar_dueno(self.negocio, f"🔔 Caso para atender (cliente {self.cliente}): {motivo}")
+        self._avisar(f"🔔 Caso para atender (cliente {self.cliente}): {motivo}")
         return {"caso_id": eid, "equipo_notificado": True,
                 "nota": "Dile al cliente que una persona del equipo le escribirá pronto."}
 

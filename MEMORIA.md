@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-28 · Sesión #20 (P0-1 a P0-7; falta P0-8)
+> Última actualización: 2026-10-28 · Sesión #20 (los 8 imprescindibles de docs/14 construidos; falta servidor y pruebas reales)
 
 ---
 
@@ -137,7 +137,11 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [x] P0-5 recordatorios con botones de confirmación hechos en código (2026-10-28); **falta que el fundador cree/apruebe la plantilla en Meta** (`plantillas/plantillas-whatsapp-meta.md`)
 - [x] P0-6 usuarios con rol (dueño/recepción/odontólogo), sesiones con vencimiento y bitácora de cambios hechos (2026-10-28)
 - [x] P0-7 modo pre-reserva (agenda en otro sistema / semana de sombra) hecho (2026-10-28)
-- [ ] P0-8 antes del primer cliente: VPS con HTTPS, respaldos diarios, monitoreo y aviso de privacidad (Ley 1581)
+- [x] P0-8 robustez, modo producción, monitoreo, respaldos cifrados, aviso de privacidad y kit de instalación hechos y probados en código (2026-10-28)
+- [ ] **Contratar el servidor (VPS) y hacer la primera instalación real** (`agente/despliegue/README.md`) — requiere aprobación del fundador; la instalación nunca se ha probado en un servidor real
+- [ ] Meta: token permanente + App Secret + webhook + plantilla `recordatorio_cita` aprobada; confirmar con número real los formatos de eco, botones y plantillas
+- [ ] Abogado: revisar `plantillas/privacidad-y-tratamiento-de-datos.md` (aviso, contrato de encargado, política)
+- [ ] Probar con audios y conversaciones reales (notas de voz, jerga) antes del primer cliente
 - [ ] Ampliar base a 150 negocios (restaurantes, salones, hoteles/fincas, Santa Rosa, La Virginia)
 - [ ] Primeros 3 clientes piloto
 
@@ -186,6 +190,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-28 | Recordatorios: día anterior y 2 h antes, solo de 8 a. m. a 8 p. m., con botones Confirmo/Necesito cambiarla; se reservan en la base antes de enviar | Reducir inasistencias sin molestar ni enviar dos veces |
 | 2026-10-28 | Panel con usuarios y roles (dueño, recepción, odontólogo); permisos validados en el servidor; el acceso con la clave de la clínica queda como "Soporte Vértice" y se ve en el historial | Que cada persona vea solo lo suyo, saber quién hizo cada cambio y poder dar soporte con transparencia |
 | 2026-10-28 | Modo pre-reserva: el asistente aparta el horario como "por confirmar" y la recepción confirma o rechaza; es el modo de la semana de sombra y de clínicas con agenda externa | Una sola agenda oficial y cero dobles reservas sin exigir cambiar su sistema |
+| 2026-10-28 | Producción exige secretos (arranque bloqueado si faltan), respaldos cifrados y subidos a otro lugar, alertas al celular y aviso de privacidad en el primer mensaje | Mejor caído y avisado que abierto a mensajes falsos; los datos de salud son sensibles (Ley 1581) y un respaldo que solo vive en el servidor no es un respaldo |
 | 2026-10-28 | Reprogramar es una sola operación atómica y el panel no avisa solo al paciente: ofrece un mensaje para que el equipo lo envíe | Evitar huecos y no contactar pacientes sin que una persona lo decida |
 
 ## 8. Preguntas abiertas para el fundador
@@ -194,7 +199,8 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 2. ¿Ya auditaste las primeras clínicas (mystery shopping a las 7–8 p. m.)?
 3. ¿Tienes conocimientos técnicos o computador disponible para crear la cuenta de Meta for Developers con guía?
 4. ¿Facturarás como persona natural al inicio? (recomendado; SAS después).
-5. ¿Arrancamos a construir los pendientes P0 de `docs/14` (en el orden propuesto)?
+5. ¿Apruebas contratar el servidor (VPS ~USD 5–12/mes, verificar precio) y usar un dominio gratuito `sslip.io` hasta la primera venta, para hacer la primera instalación real? (`agente/despliegue/README.md`)
+6. ¿Dónde guardamos los respaldos fuera del servidor (tu Google Drive con rclone, u otro)?
 
 ## 9. Reglas de operación para Claude
 
@@ -224,5 +230,6 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - `docs/14-integracion-agenda-y-operacion.md` — incorporar la agenda de la clínica, riesgos de operación y prioridades P0/P1/P2
 - `prospectos/` — base de prospectos (CSV) y guía de uso
 - `agente/` — código del asistente de WhatsApp (README con instalación, conexión a Meta y costos)
-- `plantillas/` — guiones, propuesta, contrato, onboarding, **auditoría gratis** y **anuncios dentales**
+- `plantillas/` — guiones, propuesta, contrato, onboarding, **auditoría gratis**, **anuncios dentales**, **plantillas de WhatsApp para Meta** y **privacidad y tratamiento de datos**
+- `agente/despliegue/` — instalación en servidor (HTTPS, servicios, respaldos, monitoreo), rutina mensual y recuperación
 - `BITACORA.md` — diario de sesiones

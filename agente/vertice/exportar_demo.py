@@ -23,7 +23,7 @@ SIMULADOR = r"""
   const casos = F["/casos"];
   // Roles de la demo: "Ver como" cambia lo que muestra el panel (el servidor real hace cumplir los mismos permisos).
   const ROLES = {
-    dueno: { nombre: "Dr. Juan Pérez", rol: "dueno", rol_texto: "Dueño", profesional: "", p: ["autenticado", "resumen", "agenda_ver", "agenda_editar", "estado_cita", "chats", "casos", "equipo", "historial"] },
+    dueno: { nombre: "Dr. Juan Pérez", rol: "dueno", rol_texto: "Dueño", profesional: "", p: ["autenticado", "resumen", "agenda_ver", "agenda_editar", "estado_cita", "chats", "casos", "equipo", "historial", "datos_personales"] },
     recepcion: { nombre: "Marta Gil", rol: "recepcion", rol_texto: "Recepción", profesional: "", p: ["autenticado", "resumen", "agenda_ver", "agenda_editar", "estado_cita", "chats", "casos"] },
     odontologo: { nombre: "Dra. Laura Gómez", rol: "odontologo", rol_texto: "Odontólogo", profesional: "Dra. Laura Gómez", p: ["autenticado", "agenda_ver", "estado_cita"] },
   };
@@ -105,6 +105,16 @@ SIMULADOR = r"""
       return R({ cita_id: c.id, estado: "confirmada", servicio: c.servicio, fecha: cuerpo.fecha, hora: cuerpo.hora, profesional: prof, antes });
     }
     if (metodo === "POST" && (m = ruta.match(/^\/citas\/(\d+)\/estado$/))) { const c = citas.get(+m[1]); if (c) { c.estado = cuerpo.estado; anotar("cita_estado", `Cita #${c.id} (${c.nombre}) marcada: ${cuerpo.estado}`); } return R({ ok: true }); }
+    if ((m = ruta.match(/^\/pacientes\/([^/]+)\/datos$/))) {
+      const cli = decodeURIComponent(m[1]), hilo = F.hilos[cli];
+      if (!hilo) return R({ detail: "Paciente no encontrado." }, 404);
+      if (metodo === "GET") { anotar("datos_exportados", `Descargó los datos de un paciente (…${cli.slice(-4)})`); return R({ cliente: cli, conversaciones: [{ mensajes: hilo.mensajes }], citas: [...citas.values()].filter(c => c.cliente === cli) }); }
+      if (metodo === "DELETE") {
+        delete F.hilos[cli]; const i = F["/conversaciones"].findIndex(x => x.cliente === cli); if (i >= 0) F["/conversaciones"].splice(i, 1);
+        [...citas.values()].filter(c => c.cliente === cli).forEach(c => { c.nombre = "Paciente eliminado"; c.cliente = "eliminado"; if (c.estado === "confirmada") c.estado = "cancelada"; });
+        anotar("datos_eliminados", `Eliminó los datos de un paciente (…${cli.slice(-4)})`); return R({ conversaciones: 1 });
+      }
+    }
     if (metodo === "POST" && ruta === "/usuarios") {
       if (!/^[a-z0-9._-]{3,}$/i.test(cuerpo.usuario || "")) return R({ detail: "El usuario debe tener al menos 3 letras o números (sin espacios)." }, 400);
       if (!(cuerpo.nombre || "").trim()) return R({ detail: "Escribe el nombre de la persona." }, 400);

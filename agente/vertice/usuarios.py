@@ -1,7 +1,7 @@
 """Usuarios del panel: roles, permisos y claves.
 
 Roles:
-- dueno:       todo (indicadores, agenda, conversaciones, casos, equipo e historial de cambios).
+- dueno:       todo (indicadores, agenda, conversaciones, casos, equipo, historial de cambios y datos personales de pacientes).
 - recepcion:   resumen, agenda completa, conversaciones y casos. No administra usuarios ni ve el historial.
 - odontologo:  solo su propia agenda; puede marcar asistió / no asistió. No ve conversaciones ni indicadores.
 
@@ -27,7 +27,7 @@ ITERACIONES = 200_000
 MIN_CLAVE = 8
 
 PERMISOS = {
-    "dueno": {"autenticado", "resumen", "agenda_ver", "agenda_editar", "estado_cita", "chats", "casos", "equipo", "historial"},
+    "dueno": {"autenticado", "resumen", "agenda_ver", "agenda_editar", "estado_cita", "chats", "casos", "equipo", "historial", "datos_personales"},
     "recepcion": {"autenticado", "resumen", "agenda_ver", "agenda_editar", "estado_cita", "chats", "casos"},
     "odontologo": {"autenticado", "agenda_ver", "estado_cita"},
 }

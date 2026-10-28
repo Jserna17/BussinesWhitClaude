@@ -45,6 +45,8 @@ class Negocio:
     intervalo_min: int = 30      # cada cuánto empieza un turno
     panel_clave: str = ""        # clave del panel del médico (o variable VERTICE_PANEL_CLAVE_<ID>)
     abre_festivos: bool = False  # festivos de Colombia: cerrado salvo que la clínica diga lo contrario
+    aviso_privacidad: bool = True   # primer mensaje a cada paciente nuevo con el aviso de tratamiento de datos (Ley 1581)
+    politica_url: str = ""          # enlace a la política de tratamiento de datos de la clínica
     modo_agenda: str = "propia"  # "propia": Vértice es la agenda · "pre_reserva": Sofía aparta y la recepción confirma
     recordatorios: bool = True   # recordatorio con botones por WhatsApp (plantilla aprobada por Meta)
     plantilla_recordatorio: str = "recordatorio_cita"
@@ -87,6 +89,14 @@ def _franjas(valor) -> list[tuple[str, str]]:
 
 def texto_franjas(franjas: list[tuple[str, str]]) -> str:
     return " y ".join(f"{a} a {b}" for a, b in franjas) or "cerrado"
+
+
+def aviso_privacidad_texto(n: "Negocio") -> str:
+    """Aviso corto que se muestra una sola vez a cada paciente nuevo. Revisar el texto con el abogado antes de usarlo."""
+    enlace = f" Nuestra política de datos: {n.politica_url}" if n.politica_url else ""
+    return (f"Hola 👋 Soy {n.nombre_asistente}, asistente virtual de {n.nombre}. Para atenderte usamos tus datos (nombre, teléfono y lo que nos cuentes) "
+            f"solo para responderte y gestionar tu cita, y los procesamos con herramientas de inteligencia artificial. Compartir datos de salud es "
+            f"opcional. Puedes pedir verlos, corregirlos o borrarlos cuando quieras, escribiéndonos aquí.{enlace}")
 
 
 def cargar_negocio(ruta: Path) -> Negocio:

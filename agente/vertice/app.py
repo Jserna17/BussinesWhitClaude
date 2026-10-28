@@ -14,12 +14,12 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 
-from . import recordatorios, voz, whatsapp
-from .agente import Asistente
+from . import recordatorios, salud, voz, whatsapp
+from .agente import RESPUESTA_FALLA, Asistente
 from .db import BaseDatos
-from .negocio import Negocio, cargar_negocios
+from .negocio import Negocio, aviso_privacidad_texto, cargar_negocios
 from .panel import montar_panel
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -30,6 +30,8 @@ CARPETA_NEGOCIOS = Path(os.environ.get("VERTICE_NEGOCIOS", RAIZ / "negocios"))
 RUTA_DB = os.environ.get("VERTICE_DB", RAIZ / "vertice.db")
 VERIFY_TOKEN = os.environ.get("WHATSAPP_VERIFY_TOKEN", "")
 APP_SECRET = os.environ.get("WHATSAPP_APP_SECRET", "")
+MONITOR_TOKEN = os.environ.get("VERTICE_MONITOR_TOKEN", "")
+RUTA_RESPALDOS = os.environ.get("VERTICE_RESPALDOS", "")
 
 NO_TEXTO = "Por ahora solo puedo leer mensajes de texto y notas de voz ✍️ ¿Me escribes tu consulta?"
 INTERVALO_RECORDATORIOS = int(os.environ.get("VERTICE_RECORDATORIOS_SEGUNDOS", "300"))
@@ -50,6 +52,12 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
     asistente = asistente or Asistente(db, notificar_dueno=notificar_dueno)
     negocios = negocios if negocios is not None else cargar_negocios(CARPETA_NEGOCIOS)
     por_numero = {n.whatsapp_phone_number_id: n for n in negocios.values() if n.whatsapp_phone_number_id}
+    produccion = os.environ.get("VERTICE_ENTORNO") == "produccion"
+    if produccion:  # en producción, sin secretos no se arranca: mejor caído y avisado que abierto a mensajes falsos
+        faltan = [v for v, ok in (("WHATSAPP_APP_SECRET", APP_SECRET), ("WHATSAPP_VERIFY_TOKEN", VERIFY_TOKEN),
+                                  ("WHATSAPP_TOKEN", os.environ.get("WHATSAPP_TOKEN", "") or not por_numero)) if not ok]
+        if faltan:
+            raise RuntimeError("Modo producción: faltan variables de entorno obligatorias: " + ", ".join(faltan))
 
     if recordatorios_activos is None:
         recordatorios_activos = os.environ.get("VERTICE_RECORDATORIOS", "1") != "0"
@@ -63,23 +71,52 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
             while True:
                 try:
                     r = await asyncio.to_thread(enviar_recordatorios)
+                    db.poner_estado("ultimo_ciclo_recordatorios", asistente.ahora().isoformat(timespec="seconds"))
                     if r["enviados"] or r["fallidos"]:
                         log.info("Recordatorios: %s", r)
-                except Exception:  # noqa: BLE001 - el ciclo nunca debe morir
+                except Exception as e:  # noqa: BLE001 - el ciclo nunca debe morir
                     log.exception("Falló el ciclo de recordatorios")
+                    db.registrar_fallo("-", "recordatorio", f"ciclo: {e}")
                 await asyncio.sleep(INTERVALO_RECORDATORIOS)
         tarea = asyncio.create_task(bucle()) if recordatorios_activos else None
         yield
         if tarea:
             tarea.cancel()
 
-    app = FastAPI(title="Vértice · Asistente de WhatsApp", lifespan=vida)
+    # En producción no se publica la documentación interna de la API.
+    app = FastAPI(title="Vértice · Asistente de WhatsApp", lifespan=vida,
+                  docs_url=None if produccion else "/docs", redoc_url=None, openapi_url=None if produccion else "/openapi.json")
     app.state.enviar_recordatorios = enviar_recordatorios
+
+    @app.middleware("http")
+    async def cabeceras_de_seguridad(request: Request, siguiente):
+        respuesta = await siguiente(request)
+        if request.url.path.startswith("/panel"):
+            respuesta.headers["Cache-Control"] = "no-store"
+            respuesta.headers["X-Content-Type-Options"] = "nosniff"
+            respuesta.headers["X-Frame-Options"] = "DENY"
+            respuesta.headers["Referrer-Policy"] = "no-referrer"
+            respuesta.headers["Content-Security-Policy"] = (
+                "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
+        return respuesta
+
     montar_panel(app, db, negocios, asistente.ahora, enviar)
 
     @app.get("/salud")
-    def salud():
-        return {"ok": True, "negocios": sorted(negocios)}
+    def salud_publica():
+        """Solo dice si el servicio y su base de datos responden (sin revelar nada más)."""
+        try:
+            db.con.execute("SELECT 1").fetchone()
+        except Exception:  # noqa: BLE001
+            return JSONResponse({"ok": False}, status_code=503)
+        return {"ok": True}
+
+    @app.get("/salud/detalle")
+    def salud_detalle(request: Request):
+        if not MONITOR_TOKEN or request.headers.get("X-Monitor") != MONITOR_TOKEN:
+            raise HTTPException(status_code=404)
+        return salud.recolectar(db, negocios, asistente.ahora(), RUTA_RESPALDOS, RUTA_DB)
 
     @app.get("/webhook")
     def verificar(request: Request):
@@ -89,7 +126,13 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
         raise HTTPException(status_code=403)
 
     def enviar_y_registrar(negocio: Negocio, para: str, texto: str) -> None:
-        wamid = enviar(negocio.whatsapp_phone_number_id, para, texto)
+        try:
+            wamid = enviar(negocio.whatsapp_phone_number_id, para, texto)
+        except Exception as e:  # noqa: BLE001 - WhatsApp rechazó o no respondió: que el equipo lo vea
+            log.error("[%s] No se pudo enviar la respuesta a %s: %s", negocio.id, para, e)
+            db.registrar_fallo(negocio.id, "envio", f"Respuesta a {para}: {e}")
+            db.registrar_escalacion(negocio.id, para, f"No se pudo enviar la respuesta por WhatsApp ({e}). Escríbele desde la app o el panel.")
+            return
         if wamid:
             db.marcar_procesado(wamid)  # si Meta lo "ecoa" de vuelta no es un mensaje del equipo
 
@@ -124,6 +167,17 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
         return ""
 
     def atender(m: whatsapp.MensajeEntrante, negocio: Negocio) -> None:
+        """Procesa un mensaje. Pase lo que pase, el paciente no se queda sin respuesta ni se pierde su mensaje."""
+        try:
+            _atender(m, negocio)
+        except Exception as e:  # noqa: BLE001
+            log.exception("[%s] Falló la atención del mensaje %s", negocio.id, m.id)
+            db.registrar_fallo(negocio.id, "atender", f"{type(e).__name__}: {e}")
+            db.guardar_mensaje_chat(negocio.id, m.de, "paciente", m.texto or f"[{m.tipo}]", "sin_procesar")
+            db.registrar_escalacion(negocio.id, m.de, f"Falla del sistema al atender el último mensaje del paciente ({type(e).__name__}). Respóndele a mano.")
+            enviar_y_registrar(negocio, m.de, RESPUESTA_FALLA)
+
+    def _atender(m: whatsapp.MensajeEntrante, negocio: Negocio) -> None:
         if m.payload:
             traducido = respuesta_a_boton(m, negocio)
             if traducido == "":
@@ -138,6 +192,8 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
         if texto_entrante is None:
             enviar_y_registrar(negocio, m.de, NO_ENTENDI_VOZ if m.tipo == "audio" else NO_TEXTO)
             return
+        if negocio.aviso_privacidad and db.registrar_autorizacion(negocio.id, m.de, "v1"):
+            enviar_y_registrar(negocio, m.de, aviso_privacidad_texto(negocio))  # primer contacto: aviso de tratamiento de datos
         texto = texto_entrante if not m.nombre_perfil else f"(Nombre en WhatsApp: {m.nombre_perfil}) {texto_entrante}"
         respuesta = asistente.responder(negocio, m.de, texto)
         enviar_y_registrar(negocio, m.de, respuesta)
@@ -146,6 +202,7 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
     async def recibir(request: Request, tareas: BackgroundTasks):
         cuerpo = await request.body()
         if APP_SECRET and not whatsapp.firma_valida(cuerpo, request.headers.get("X-Hub-Signature-256"), APP_SECRET):
+            db.registrar_fallo("-", "firma", "Webhook con firma inválida (¿cambió el secreto de la app en Meta, o es un intento falso?)")
             raise HTTPException(status_code=401)
         payload = json.loads(cuerpo or b"{}")
         for e in whatsapp.extraer_ecos(payload):
@@ -162,6 +219,7 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
             if not db.marcar_procesado(m.id):
                 continue  # Meta reintenta entregas: no responder dos veces
             tareas.add_task(atender, m, negocio)
+            db.poner_estado("ultimo_webhook", asistente.ahora().isoformat(timespec="seconds"))
         return {"ok": True}  # responder rápido; Meta reintenta si tardamos
 
     return app

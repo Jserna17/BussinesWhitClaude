@@ -161,7 +161,7 @@ sesiones · reactivación de pacientes antiguos.
 | 5. Recordatorios con confirmación | ✅ 2026-10-28 (código) | Falta: **aprobar la plantilla en Meta** (`plantillas/plantillas-whatsapp-meta.md`) y probar con un número real |
 | 6. Usuarios con rol + bitácora | ✅ 2026-10-28 | Dueño / Recepción / Odontólogo con permisos que cumple el servidor; historial de quién hizo qué |
 | 7. Modo pre-reserva | ✅ 2026-10-28 | `modo_agenda: pre_reserva` en el YAML de la clínica |
-| 8. VPS, respaldos, monitoreo, aviso de privacidad | ⏳ | |
+| 8. VPS, respaldos, monitoreo, aviso de privacidad | ✅ código y documentos · ⏳ **falta contratar el servidor y probar la instalación real** | Ver detalle abajo |
 
 ### P0-2 · cómo funciona
 - Si una persona de la clínica escribe desde la app de WhatsApp Business, Meta avisa por el webhook `smb_message_echoes`;
@@ -240,4 +240,24 @@ sesiones · reactivación de pacientes antiguos.
   - El aviso al dueño por WhatsApp (`notificar_dueno`) solo llega si el dueño escribió al número de la clínica en las últimas 24 h; para que llegue siempre hace
     falta una plantilla de aviso interno (pendiente, junto con P0-8).
   - Vértice no lee la agenda externa: en este modo la recepción sigue siendo quien verifica contra su agenda real.
+
+### P0-8 · que no se caiga y que los datos estén protegidos
+**Hecho y probado (77 pruebas automáticas + prueba de humo por línea de comandos):**
+- **Robustez** (hallada con una auditoría): si WhatsApp rechaza un aviso al equipo ya no se tumba la conversación; si falla la respuesta o hay un error inesperado, el paciente recibe una disculpa,
+  su mensaje se guarda y queda un **caso para el equipo**; nunca se pierde un mensaje en silencio.
+- **Modo producción** (`VERTICE_ENTORNO=produccion`): el servidor **no arranca** sin los secretos de WhatsApp (antes aceptaba mensajes falsos si faltaba el secreto de firma);
+  oculta `/docs`; `/salud` público no revela nada; el detalle exige token; cabeceras de seguridad en el panel; el límite de intentos fallidos ahora también es **por dirección de red**.
+- **Monitoreo** (`vertice/monitor.py`, cada 5 min): avisa al celular (ntfy u otro webhook) cuando WhatsApp rechaza envíos (token vencido), el modelo de IA falla, hay errores del sistema, firmas inválidas,
+  no llegan mensajes hace > 36 h, el ciclo de recordatorios se detuvo, hay casos/solicitudes sin atender > 2 h, poco disco, el servidor no responde o el respaldo falta. Avisa una vez, repite a las 6 h y avisa la recuperación.
+- **Respaldos** (`vertice/respaldo.py`): copia consistente, verificada (integridad), comprimida, **cifrada** (AES-256) y **subida a otro lugar**; retención 14 días + domingos de 8 semanas; `verificar` hace la prueba de restauración;
+  probados la restauración real, el cifrado con clave equivocada, la subida fallida y una copia dañada.
+- **Privacidad (Ley 1581)**: aviso de datos en el primer mensaje con evidencia de entrega, y para el dueño **descargar** y **eliminar** los datos de un paciente. Documento base para el abogado: `plantillas/privacidad-y-tratamiento-de-datos.md`.
+- **Kit de instalación** (`agente/despliegue/`): `instalar.sh`, `actualizar.sh`, servicios y temporizadores de systemd (sintaxis verificada), Caddy (HTTPS), cortafuegos, `.env` de ejemplo y guía paso a paso con rutina mensual y plan de recuperación.
+
+**Falta (no se puede hacer sin ti o sin gasto):**
+1. **Aprobar y contratar el servidor** (y el dominio, o usar uno gratuito `sslip.io` mientras no haya primera venta). Hasta entonces **la instalación nunca se ha probado en un servidor real**: es lo primero que hay que hacer y puede pedir ajustes.
+2. Lugar para los respaldos fuera del servidor (p. ej. tu Google Drive con `rclone`) y guardar aparte la clave de cifrado.
+3. App de Meta: token permanente, App Secret, webhook y la plantilla de recordatorios aprobada; confirmar con un número real los formatos de eco/botones/plantillas (marcados "por confirmar" arriba).
+4. Revisión del **abogado** (aviso de datos, contrato de encargado, política de la clínica).
+5. Pendientes menores conocidos: aviso al dueño por plantilla (hoy solo llega si el dueño escribió en las últimas 24 h), purga automática por antigüedad, y probar con **audios y conversaciones reales** antes de dar por buena la calidad.
 

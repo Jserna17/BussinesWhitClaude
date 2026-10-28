@@ -1,0 +1,10 @@
+[Unit]
+Description=Vértice · respaldo diario (3:10 a. m. hora de Colombia)
+
+[Timer]
+OnCalendar=*-*-* 03:10:00
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

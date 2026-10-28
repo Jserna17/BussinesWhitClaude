@@ -53,6 +53,13 @@ def sembrar_equipo(db: BaseDatos, negocio_id: str = "clinica-demo") -> None:
         db.registrar_bitacora(negocio_id, quien, rol, accion, detalle, hace(horas))
 
 
+def sembrar_autorizaciones(db: BaseDatos, negocio_id: str = "clinica-demo") -> None:
+    """Las conversaciones de la demo se hicieron antes del aviso de privacidad: se registra como entregado en su primer contacto."""
+    for c in db.conversaciones([negocio_id, f"{negocio_id}@openai"]):
+        if db.registrar_autorizacion(negocio_id, c["cliente"], "v1"):
+            db.con.execute("UPDATE autorizaciones SET creado=? WHERE negocio_id=? AND cliente=?", (c["actualizado"], negocio_id, c["cliente"]))
+
+
 def sembrar_solicitudes(db: BaseDatos, negocio_id: str = "clinica-demo") -> None:
     """Dos solicitudes de ejemplo "por confirmar" (así se ve el modo pre-reserva, para clínicas con agenda en otro sistema)."""
     from dataclasses import replace
@@ -123,6 +130,7 @@ def sembrar(ruta: str, negocio_id: str = "clinica-demo") -> None:
             db.marcar_confirmacion(n.id, fila["id"], fila["cliente"], "cambiar")
     sembrar_equipo(db, negocio_id)
     sembrar_solicitudes(db, negocio_id)
+    sembrar_autorizaciones(db, negocio_id)
     print("Datos de ejemplo agregados a", ruta)
 
 

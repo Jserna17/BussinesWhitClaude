@@ -1,0 +1,12 @@
+[Unit]
+Description=Vértice · monitoreo (avisa si algo falla)
+
+[Service]
+Type=oneshot
+User=vertice
+Group=vertice
+WorkingDirectory=/opt/vertice/agente
+EnvironmentFile=/etc/vertice/vertice.env
+ExecStart=/opt/vertice/venv/bin/python -m vertice.monitor
+# El monitor sale con código 1 cuando hay alertas activas: eso es normal y no es una falla del monitor
+SuccessExitStatus=1

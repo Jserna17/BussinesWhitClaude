@@ -1,0 +1,10 @@
+[Unit]
+Description=Vértice · respaldo diario de la base de datos
+
+[Service]
+Type=oneshot
+User=vertice
+Group=vertice
+WorkingDirectory=/opt/vertice/agente
+EnvironmentFile=/etc/vertice/vertice.env
+ExecStart=/opt/vertice/venv/bin/python -m vertice.respaldo crear

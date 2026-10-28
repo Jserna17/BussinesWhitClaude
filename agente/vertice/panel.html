@@ -884,6 +884,11 @@ async function abrir(cliente) {
     el("div", {}, el("h3", {}, "Paciente"), el("dl", { class: "kv", style: "grid-template-columns:80px 1fr" },
       el("dt", {}, "Nombre"), el("dd", {}, c.nombre || "—"), el("dt", {}, "WhatsApp"), el("dd", {}, telefono(cliente)),
       el("dt", {}, "Estado"), el("dd", {}, resumen.sin_responder ? el("span", { class: "pill abierta" }, "Esperando al equipo") : resumen.pausada ? el("span", { class: "pill no_asistio" }, "Atiende el equipo") : resumen.tiene_cita ? el("span", { class: "pill confirmada" }, "Con cita") : resumen.caso_abierto ? el("span", { class: "pill abierta" }, "Caso abierto") : "Sin cita"))),
+    el("div", {}, el("h3", {}, "Privacidad"),
+      el("p", { class: "small", style: "margin:0 0 8px" }, c.aviso_privacidad ? `Aviso de datos entregado el ${fechaCorta(c.aviso_privacidad)}.` : "No hay registro de que se le haya mostrado el aviso de datos."),
+      S.can("datos_personales") ? el("div", { style: "display:grid;gap:6px" },
+        el("button", { class: "btn sm", type: "button", onclick: () => descargarDatos(cliente) }, "Descargar sus datos"),
+        el("button", { class: "btn sm danger", type: "button", onclick: () => eliminarDatos(cliente, c.nombre) }, "Eliminar sus datos")) : null),
     el("div", {}, el("h3", {}, `Acciones de ${asist()}`), acciones.length ? el("div", { style: "display:grid;gap:6px" }, acciones.map(a => el("div", { class: "small" + (a.texto.startsWith("Intentó") ? " muted" : "") }, "• " + a.texto))) : el("p", { class: "muted small", style: "margin:0" }, "Solo respondió preguntas.")));
 }
 function pintarControl(cliente, c) {
@@ -910,6 +915,22 @@ function pintarControl(cliente, c) {
       await cargarConvs(); await abrir(cliente); $("hilo").scrollTop = $("hilo").scrollHeight;
     } catch (err) { toast(err.message); }
   };
+}
+async function descargarDatos(cliente) {
+  try {
+    const d = await api(`/pacientes/${encodeURIComponent(cliente)}/datos`);
+    const a = el("a", { href: URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: "application/json" })), download: `datos-paciente-${cliente.slice(-4)}.json` });
+    document.body.append(a); a.click(); a.remove(); toast("Datos descargados");
+  } catch (e) { toast(e.message); }
+}
+async function eliminarDatos(cliente, nombre) {
+  if (!confirm(`Vas a eliminar los datos de ${nombre || "este paciente"}: su conversación, sus datos de contacto y el nombre en sus citas, y se cancelarán sus citas futuras. No se puede deshacer. ¿Continuar?`)) return;
+  try {
+    await api(`/pacientes/${encodeURIComponent(cliente)}/datos`, { method: "DELETE" });
+    toast("Datos eliminados"); S.conv = null; await cargarConvs();
+    $("hilo").replaceChildren(el("p", { class: "empty" }, "Los datos de este paciente fueron eliminados.")); $("convFicha").replaceChildren(); $("convTitulo").textContent = "Elige una conversación"; $("convInfo").textContent = "";
+    $("btnControl").hidden = true; $("composer").hidden = true; $("convBanner").hidden = true;
+  } catch (e) { toast(e.message); }
 }
 function irAChat(cliente) { S.conv = cliente; ir("chats"); setTimeout(() => abrir(cliente), 60); }
 
@@ -1010,7 +1031,7 @@ $("miClave").onclick = () => {
 };
 
 // --- Historial ------------------------------------------------------------------
-const ACCIONES = { solicitud_creada: "Recibió una solicitud de cita", solicitud_confirmada: "Confirmó una solicitud de cita", solicitud_rechazada: "Rechazó una solicitud de cita", cita_creada: "Creó una cita", cita_reprogramada: "Reprogramó una cita", cita_estado: "Cambió el estado de una cita", cita_cancelada: "Canceló una cita",
+const ACCIONES = { datos_exportados: "Descargó los datos de un paciente", datos_eliminados: "Eliminó los datos de un paciente", solicitud_creada: "Recibió una solicitud de cita", solicitud_confirmada: "Confirmó una solicitud de cita", solicitud_rechazada: "Rechazó una solicitud de cita", cita_creada: "Creó una cita", cita_reprogramada: "Reprogramó una cita", cita_estado: "Cambió el estado de una cita", cita_cancelada: "Canceló una cita",
   cita_confirmada: "Confirmó asistencia", bloqueo_creado: "Bloqueó un horario", bloqueo_quitado: "Quitó un bloqueo", chat_tomado: "Tomó un chat", chat_devuelto: "Devolvió un chat",
   mensaje_enviado: "Escribió a un paciente", caso_resuelto: "Resolvió un caso", caso_abierto: "Pasó un caso al equipo", usuario_creado: "Agregó a una persona",
   usuario_activado: "Activó a una persona", usuario_desactivado: "Desactivó a una persona", clave_cambiada: "Cambió su clave", clave_restablecida: "Restableció una clave",

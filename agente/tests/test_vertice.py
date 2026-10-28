@@ -3,6 +3,7 @@
 import hashlib
 import hmac
 import json
+import shutil
 from datetime import date, datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -18,7 +19,10 @@ from vertice.negocio import cargar_negocios
 from vertice.whatsapp import extraer_mensajes, firma_valida
 
 NEGOCIOS = cargar_negocios(Path(__file__).resolve().parent.parent / "negocios")
-CLINICA = NEGOCIOS["clinica-demo"]
+from dataclasses import replace as _reemplazar  # noqa: E402
+
+# El aviso de privacidad del primer mensaje tiene sus propias pruebas; en las demás se desactiva para no mezclar.
+CLINICA = _reemplazar(NEGOCIOS["clinica-demo"], aviso_privacidad=False)
 # Fecha fija: lunes 9 de noviembre de 2026, 9:00 a. m.
 AHORA = datetime(2026, 11, 9, 9, 0)
 
@@ -994,3 +998,232 @@ def test_prompt_y_configuracion_de_pre_reserva(tmp_path):
     ruta.write_text((Path(__file__).parent.parent / "negocios" / "clinica-demo.yaml").read_text(encoding="utf-8") + "\nmodo_agenda: manual\n", encoding="utf-8")
     with pytest.raises(ValueError):
         cargar_negocio(ruta)
+
+
+# --- P0-8: robustez, salud, respaldos y privacidad ----------------------------
+from vertice import app as modulo_app, monitor, respaldo, salud as modulo_salud  # noqa: E402
+
+
+def test_un_aviso_al_equipo_que_falla_no_tumba_la_conversacion(db):
+    def roto(neg, texto):
+        raise RuntimeError("401 token vencido")
+    h = Herramientas(db, CLINICA, "573001112233", ahora, notificar_dueno=roto)
+    salida, err = h.ejecutar("pasar_a_humano", {"motivo": "Dolor fuerte"})
+    assert not err and json.loads(salida)["equipo_notificado"] is True       # el caso quedó registrado y Sofía puede seguir
+    assert db.filas("escalaciones", CLINICA.id)[0]["motivo"] == "Dolor fuerte"
+    assert db.fallos_desde("2000-01-01") == {"envio": 1}
+
+
+def test_si_whatsapp_rechaza_la_respuesta_queda_un_caso_para_el_equipo(db):
+    n = _reemplazar(CLINICA, whatsapp_phone_number_id="123")
+
+    def rechaza(pid, para, t):
+        raise RuntimeError("131047 fuera de la ventana de 24 h")
+    c = TestClient(crear_app(Asistente(db, APIFalsa([respuesta(texto("Hola"))]), ahora), {n.id: n}, enviar=rechaza, recordatorios_activos=False))
+    assert c.post("/webhook", json=payload()).status_code == 200
+    assert db.fallos_desde("2000-01-01") == {"envio": 1}
+    assert "No se pudo enviar la respuesta" in db.filas("escalaciones", n.id)[0]["motivo"]
+
+
+def test_error_inesperado_no_deja_al_paciente_sin_respuesta_ni_pierde_su_mensaje(db):
+    n = _reemplazar(CLINICA, whatsapp_phone_number_id="123")
+    enviados = []
+
+    class Roto(Asistente):
+        def responder(self, *a, **k):
+            raise ZeroDivisionError("bug")
+    c = TestClient(crear_app(Roto(db, APIFalsa([]), ahora), {n.id: n}, enviar=lambda pid, para, t: enviados.append(t),
+                             recordatorios_activos=False))
+    c.post("/webhook", json=payload(texto_msg="Necesito una cita urgente"))
+    from vertice.agente import RESPUESTA_FALLA
+    assert enviados == [RESPUESTA_FALLA]
+    assert db.mensajes_chat(n.id, "573001112233")[0]["texto"] == "Necesito una cita urgente"
+    assert "Respóndele a mano" in db.filas("escalaciones", n.id)[0]["motivo"]
+    assert db.fallos_desde("2000-01-01") == {"atender": 1}
+
+
+def test_modo_produccion_exige_secretos_y_oculta_la_documentacion(db, monkeypatch):
+    n = _reemplazar(CLINICA, whatsapp_phone_number_id="123")
+    monkeypatch.setenv("VERTICE_ENTORNO", "produccion")
+    for var in ("WHATSAPP_TOKEN",):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setattr(modulo_app, "APP_SECRET", "")
+    monkeypatch.setattr(modulo_app, "VERIFY_TOKEN", "")
+    with pytest.raises(RuntimeError, match="WHATSAPP_APP_SECRET"):
+        crear_app(Asistente(db, APIFalsa([]), ahora), {n.id: n})
+    monkeypatch.setattr(modulo_app, "APP_SECRET", "s")
+    monkeypatch.setattr(modulo_app, "VERIFY_TOKEN", "v")
+    monkeypatch.setenv("WHATSAPP_TOKEN", "t")
+    c = TestClient(crear_app(Asistente(db, APIFalsa([]), ahora), {n.id: n}, recordatorios_activos=False))
+    assert c.get("/docs").status_code == 404 and c.get("/openapi.json").status_code == 404
+    assert c.post("/webhook", json=payload()).status_code == 401            # sin firma: rechazado
+    assert db.fallos_desde("2000-01-01") == {"firma": 1}
+
+
+def test_salud_publica_no_revela_nada_y_el_detalle_exige_token(db, monkeypatch):
+    monkeypatch.setattr(modulo_app, "MONITOR_TOKEN", "secreto-monitor")
+    c = TestClient(crear_app(Asistente(db, APIFalsa([]), ahora), {CLINICA.id: CLINICA}, recordatorios_activos=False))
+    assert c.get("/salud").json() == {"ok": True}
+    assert c.get("/salud/detalle").status_code == 404
+    assert c.get("/salud/detalle", headers={"X-Monitor": "otro"}).status_code == 404
+    d = c.get("/salud/detalle", headers={"X-Monitor": "secreto-monitor"}).json()
+    assert {"ultimo_webhook", "fallos_ultima_hora", "disco_libre_pct", "casos_abiertos"} <= d.keys()
+
+
+def test_el_panel_envia_cabeceras_de_seguridad(db):
+    c = TestClient(crear_app(Asistente(db, APIFalsa([]), ahora), {CLINICA.id: CLINICA}, recordatorios_activos=False))
+    h = c.get("/panel").headers
+    assert h["cache-control"] == "no-store" and h["x-frame-options"] == "DENY" and "frame-ancestors 'none'" in h["content-security-policy"]
+
+
+def test_webhook_registra_cuando_llego_el_ultimo_mensaje(db):
+    n = _reemplazar(CLINICA, whatsapp_phone_number_id="123")
+    c = TestClient(crear_app(Asistente(db, APIFalsa([respuesta(texto("Hola"))]), ahora), {n.id: n}, enviar=lambda *a: "w", recordatorios_activos=False))
+    c.post("/webhook", json=payload())
+    assert db.estado("ultimo_webhook") == AHORA.isoformat(timespec="seconds")
+
+
+@pytest.fixture
+def disco_sano(monkeypatch):
+    monkeypatch.setattr(modulo_salud.shutil, "disk_usage", lambda ruta: SimpleNamespace(total=100, used=10, free=90))
+
+
+def test_evaluar_detecta_los_problemas_que_dejan_sin_servicio(db, disco_sano):
+    from datetime import timedelta
+    base = modulo_salud.recolectar(db, {CLINICA.id: CLINICA}, AHORA)
+    assert modulo_salud.evaluar(base, AHORA) == {}                      # sistema nuevo y sano: ninguna alerta
+    mal = {**base, "fallos_ultima_hora": {"envio": 3, "modelo": 3, "atender": 1, "firma": 1, "recordatorio": 4},
+           "ultimo_webhook": (AHORA - timedelta(hours=40)).isoformat(), "ultimo_ciclo_recordatorios": (AHORA - timedelta(minutes=30)).isoformat(),
+           "caso_mas_antiguo_min": 300, "casos_abiertos": 2, "solicitud_mas_antigua_min": 200, "solicitudes_pendientes": 1,
+           "disco_libre_pct": 5.0, "respaldos_configurados": True, "ultimo_respaldo": (AHORA - timedelta(hours=30)).isoformat(),
+           "subida_configurada": True, "ultima_subida": None}
+    assert set(modulo_salud.evaluar(mal, AHORA)) == {"envio", "modelo", "atender", "firma", "recordatorio", "sin_mensajes", "ciclo",
+                                                      "casos", "solicitudes", "disco", "respaldo", "respaldo_remoto"}
+
+
+def test_monitor_avisa_una_vez_repite_a_las_6_h_y_avisa_la_recuperacion(db, disco_sano):
+    from datetime import timedelta
+    enviados = []
+    ok = lambda url: True  # noqa: E731
+    for _ in range(3):
+        db.registrar_fallo(CLINICA.id, "envio", "token vencido")
+    # db._ahora está fijo en AHORA: los fallos cuentan como "de la última hora"
+    r1 = monitor.ejecutar(db, {CLINICA.id: CLINICA}, AHORA, enviados.append, responde=ok)
+    assert "envio" in r1 and len(enviados) == 1 and enviados[0].startswith("🔴")
+    monitor.ejecutar(db, {CLINICA.id: CLINICA}, AHORA + timedelta(minutes=5), enviados.append, responde=ok)
+    assert len(enviados) == 1                                           # no se repite cada 5 minutos
+    monitor.ejecutar(db, {CLINICA.id: CLINICA}, AHORA + timedelta(minutes=30), enviados.append, responde=ok)
+    assert len(enviados) == 1
+    # Pasan las horas: el problema ya no está en la última hora -> recuperado
+    monitor.ejecutar(db, {CLINICA.id: CLINICA}, AHORA + timedelta(hours=7), enviados.append, responde=ok)
+    assert enviados[-1] == "✅ Recuperado: envio"
+    # El servidor deja de responder desde afuera
+    r = monitor.ejecutar(db, {CLINICA.id: CLINICA}, AHORA + timedelta(hours=8), enviados.append, url_publica="https://x.test", responde=lambda u: False)
+    assert "caido" in r and "no responde" in enviados[-1]
+
+
+def _base_con_datos(tmp_path):
+    ruta = tmp_path / "vertice.db"
+    base = BaseDatos(ruta)
+    base.crear_usuario("c", "ana", "Ana", "dueno", "", "hash")
+    Agenda(base, CLINICA, ahora).reservar("573001112233", "Ana Gómez", "Valoración odontológica", "2026-11-10", "09:00")
+    base.guardar_historial("c", "573001112233", [{"role": "user", "content": "hola"}], AHORA)
+    return ruta, base
+
+
+def test_respaldo_crear_verificar_y_restaurar_con_los_mismos_datos(tmp_path):
+    ruta, base = _base_con_datos(tmp_path)
+    carpeta = tmp_path / "respaldos"
+    f = respaldo.crear(ruta, carpeta, AHORA)
+    assert f.name == "vertice-20261109-0900.db.gz" and oct(f.stat().st_mode)[-3:] == "600"
+    base.crear_usuario("c", "luis", "Luis", "recepcion", "", "hash")   # cambios posteriores no entran al respaldo ya hecho
+    assert respaldo.verificar(carpeta)["registros"] == {"citas": 1, "conversaciones": 1, "usuarios": 1, "prospectos": 0}
+    destino = tmp_path / "restaurada.db"
+    assert respaldo.restaurar(f, destino)["citas"] == 1
+    assert len(BaseDatos(destino).citas_entre(CLINICA.id, "2026-11-01", "2026-12-01")) == 1
+    with pytest.raises(respaldo.ErrorRespaldo):                          # no pisa una base existente sin permiso
+        respaldo.restaurar(f, destino)
+
+
+def test_respaldo_retencion_diaria_y_semanal(tmp_path):
+    from datetime import timedelta
+    ruta, _ = _base_con_datos(tmp_path)
+    carpeta = tmp_path / "r"
+    inicio = datetime(2026, 8, 1, 3, 0)
+    for dia in range(100):
+        respaldo.crear(ruta, carpeta, inicio + timedelta(days=dia), diarios=14, semanales=8)
+    nombres = sorted(f.name for f in carpeta.glob("vertice-*"))
+    fechas = [datetime.strptime(n[8:21], "%Y%m%d-%H%M") for n in nombres]
+    hoy = inicio + timedelta(days=99)
+    assert sum(1 for f in fechas if hoy - f <= timedelta(days=14)) == 15      # los últimos 14 días
+    assert all(f.weekday() == 6 for f in fechas if hoy - f > timedelta(days=14))  # y de ahí atrás solo domingos
+    assert max(hoy - f for f in fechas) <= timedelta(weeks=8)
+
+
+@pytest.mark.skipif(shutil.which("openssl") is None, reason="requiere openssl")
+def test_respaldo_cifrado_y_subida_a_otro_lugar(tmp_path):
+    ruta, _ = _base_con_datos(tmp_path)
+    otro = tmp_path / "otro_lugar"
+    otro.mkdir()
+    f = respaldo.crear(ruta, tmp_path / "r", AHORA, clave="clave-larga-segura", subir=f"cp {{archivo}} {otro}/")
+    assert f.name.endswith(".db.gz.enc") and b"SQLite" not in f.read_bytes()      # no se puede leer sin la clave
+    assert (otro / f.name).exists() and (tmp_path / "r" / "subida_ok.txt").exists()
+    with pytest.raises(respaldo.ErrorRespaldo, match="falta"):
+        respaldo.restaurar(f, tmp_path / "x.db")
+    with pytest.raises(respaldo.ErrorRespaldo):
+        respaldo.restaurar(f, tmp_path / "y.db", clave="otra-clave")
+    assert respaldo.restaurar(f, tmp_path / "z.db", clave="clave-larga-segura")["citas"] == 1
+    with pytest.raises(respaldo.ErrorRespaldo, match="NO se pudo subir"):
+        respaldo.crear(ruta, tmp_path / "r2", AHORA, subir="false {archivo}")
+
+
+def test_respaldo_detecta_una_copia_danada(tmp_path):
+    import gzip
+    carpeta = tmp_path / "r"
+    carpeta.mkdir()
+    malo = carpeta / "vertice-20261109-0900.db.gz"
+    malo.write_bytes(gzip.compress(b"esto no es una base de datos" * 100))
+    with pytest.raises(respaldo.ErrorRespaldo):
+        respaldo.verificar(carpeta)
+
+
+def test_aviso_de_privacidad_se_entrega_una_sola_vez_y_queda_registrado(db):
+    n = _reemplazar(CLINICA, whatsapp_phone_number_id="123", aviso_privacidad=True, politica_url="https://clinica.test/datos")
+    api = APIFalsa([respuesta(texto("¡Hola!")), respuesta(texto("Claro"))])
+    enviados = []
+    c = TestClient(crear_app(Asistente(db, api, ahora), {n.id: n}, enviar=lambda pid, para, t: enviados.append(t) or "w", recordatorios_activos=False))
+    c.post("/webhook", json=payload(msg_id="wamid.1"))
+    assert len(enviados) == 2 and "asistente virtual" in enviados[0] and "https://clinica.test/datos" in enviados[0] and enviados[1] == "¡Hola!"
+    c.post("/webhook", json=payload(msg_id="wamid.2"))                  # el segundo mensaje ya no repite el aviso
+    assert len(enviados) == 3 and enviados[2] == "Claro"
+    assert db.con.execute("SELECT version FROM autorizaciones").fetchone()["version"] == "v1"
+
+
+def test_derechos_del_paciente_exportar_y_eliminar(panel, db):
+    dueno, marta = entrar(panel, "dueno1"), entrar(panel, "marta")
+    cli = "573001112233"
+    Agenda(db, CLINICA, ahora).reservar(cli, "Ana Gómez", "Valoración odontológica", "2026-11-10", "09:00")   # cita futura
+    db.registrar_prospecto(CLINICA.id, cli, "Ana Gómez", "Blanqueamiento", "pidió precio")
+    db.guardar_mensaje_chat(CLINICA.id, cli, "paciente", "Hola, soy Ana", "whatsapp")
+    db.guardar_historial(CLINICA.id, cli, [{"role": "user", "content": "[Mensaje recibido el lunes 2026-11-09 a las 09:00] Hola"}], AHORA)
+    db.registrar_autorizacion(CLINICA.id, cli, "v1")
+    assert panel.get(f"/panel/api/pacientes/{cli}/datos", headers=marta).status_code == 403              # solo el dueño
+    assert panel.delete(f"/panel/api/pacientes/{cli}/datos", headers=marta).status_code == 403
+    datos = panel.get(f"/panel/api/pacientes/{cli}/datos", headers=dueno).json()
+    assert datos["citas"][0]["nombre"] == "Ana Gómez" and datos["interesados"][0]["interes"] == "Blanqueamiento" and datos["autorizacion"]
+    assert datos["conversaciones"][0]["mensajes"][0]["texto"] == "Hola"
+    assert panel.delete("/panel/api/pacientes/abc/datos", headers=dueno).status_code == 400
+    r = panel.delete(f"/panel/api/pacientes/{cli}/datos", headers=dueno).json()
+    assert (r["conversaciones"], r["interesados"], r["citas_futuras_canceladas"], r["citas_anonimizadas"]) == (1, 1, 1, 1)
+    despues = panel.get(f"/panel/api/pacientes/{cli}/datos", headers=dueno).json()
+    assert not despues["citas"] and not despues["conversaciones"] and not despues["interesados"] and not despues["autorizacion"]
+    fila = db.con.execute("SELECT nombre, cliente, estado FROM citas").fetchone()
+    assert (fila["nombre"], fila["cliente"], fila["estado"]) == ("Paciente eliminado", "eliminado", "cancelada")
+    bit = " ".join(f["detalle"] for f in panel.get("/panel/api/bitacora", headers=dueno).json())
+    assert cli not in bit                                                                                  # ni el teléfono queda en el historial
+
+
+def test_demasiados_intentos_desde_una_misma_red_se_bloquean(panel):
+    for _ in range(30):
+        assert panel.get("/panel/api/sesion", headers={"X-Negocio": CLINICA.id, "X-Clave": "mala"}).status_code == 401
+    assert panel.get("/panel/api/sesion", headers={"X-Negocio": CLINICA.id, "X-Clave": "demo123"}).status_code == 429

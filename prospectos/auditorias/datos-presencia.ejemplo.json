@@ -1,0 +1,10 @@
+{
+  "_ayuda": "Copia este archivo como datos-presencia.json y llena lo que revises. Deja null o quita lo que no hayas verificado. Las claves son los id de cada clínica.",
+  "pb": {
+    "google": {"estrellas": 4.8, "resenas": 120, "responde": true},
+    "instagram": 5,
+    "anuncios": false,
+    "web": "parcial"
+  },
+  "orozco": {}, "maxisonrisas": {}, "delcastillo": {}, "ortocentro": {}
+}

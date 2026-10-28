@@ -4,7 +4,7 @@
 > (o persona) debe leerlo ANTES de trabajar y actualizarlo DESPUÉS de cualquier decisión,
 > aprendizaje o cambio de estado. Si algo no está aquí, no existe.
 >
-> Última actualización: 2026-10-28 · Sesión #20 (los 8 imprescindibles de docs/14 construidos; falta servidor y pruebas reales)
+> Última actualización: 2026-10-28 · Sesión #20 (8 imprescindibles construidos, panel en blanco, hojas de auditoría; falta servidor y pruebas reales)
 
 ---
 
@@ -123,7 +123,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 - [x] Respuestas del día siguiente: 16 de ~20 respondieron entre 7:56 y 11:38 a. m. (mediana ≈ 10,8 h, casi todas personas,
   varias con notas de voz); 3 nunca respondieron (Proced, Odontología y Sonrisa, @Richo5555)
 - [ ] Cerrar con amabilidad los chats donde ofrecieron cita (no dejar cupos apartados)
-- [ ] Completar Google/Instagram/anuncios de las clínicas prioritarias y armar hojas de auditoría
+- [x] Hojas de auditoría de las 5 clínicas prioritarias listas (`prospectos/auditorias/`: PDF para entregar + guía interna). **Falta que el fundador complete Google/Instagram/anuncios/web (8 min por clínica)** y Claude regenera el puntaje
 - [ ] Primeras 5 visitas con la auditoría impresa (ruta Megacentro Pinares)
 - [ ] Ampliar lista dental a 60+ clínicas (cuando haya acceso a Google Maps o con ayuda del fundador)
 - [ ] Fundador crea cuenta en Meta for Developers (número de prueba de WhatsApp)
@@ -191,6 +191,7 @@ contactos/semana, reuniones agendadas, tasa de cierre.
 | 2026-10-28 | Panel con usuarios y roles (dueño, recepción, odontólogo); permisos validados en el servidor; el acceso con la clave de la clínica queda como "Soporte Vértice" y se ve en el historial | Que cada persona vea solo lo suyo, saber quién hizo cada cambio y poder dar soporte con transparencia |
 | 2026-10-28 | Modo pre-reserva: el asistente aparta el horario como "por confirmar" y la recepción confirma o rechaza; es el modo de la semana de sombra y de clínicas con agenda externa | Una sola agenda oficial y cero dobles reservas sin exigir cambiar su sistema |
 | 2026-10-28 | Producción exige secretos (arranque bloqueado si faltan), respaldos cifrados y subidos a otro lugar, alertas al celular y aviso de privacidad en el primer mensaje | Mejor caído y avisado que abierto a mensajes falsos; los datos de salud son sensibles (Ley 1581) y un respaldo que solo vive en el servidor no es un respaldo |
+| 2026-10-28 | El panel y la demo se ven siempre en blanco (tema claro); el modo oscuro es opcional con un interruptor, no automático según el sistema | El fundador prefiere la vista blanca y más sobria; el modo automático la mostraba oscura en su equipo |
 | 2026-10-28 | Reprogramar es una sola operación atómica y el panel no avisa solo al paciente: ofrece un mensaje para que el equipo lo envíe | Evitar huecos y no contactar pacientes sin que una persona lo decida |
 
 ## 8. Preguntas abiertas para el fundador

@@ -1,0 +1,200 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Vértice · auditoría</title><style>
+@page { size: Letter; margin: 14mm 14mm 12mm; }
+* { box-sizing: border-box; }
+body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; color: #0f172a; font-size: 9.8pt; line-height: 1.38; margin: 0; }
+.hoja { page-break-after: always; height: 247mm; position: relative; overflow: hidden; padding-bottom: 12mm; }
+.hoja:last-child { page-break-after: auto; }
+header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0d5c4e; padding-bottom: 8px; margin-bottom: 14px; }
+.marca { display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: .08em; font-size: 11pt; }
+.marca i { width: 22px; height: 22px; background: #0d5c4e; border-radius: 6px; display: inline-block; position: relative; }
+.marca i::after { content: ""; position: absolute; left: 5px; top: 5px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 11px solid #fff; }
+.fecha { color: #64748b; font-size: 9pt; text-align: right; }
+h1 { font-size: 18pt; margin: 0 0 2px; letter-spacing: -.01em; }
+.sub { color: #475569; margin: 0 0 2px; }
+.dir { color: #64748b; font-size: 9pt; margin: 0 0 14px; }
+h2 { font-size: 9.6pt; text-transform: uppercase; letter-spacing: .07em; color: #0d5c4e; margin: 13px 0 6px; }
+.prueba { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+.prueba div { padding: 8px 10px; border-right: 1px solid #e2e8f0; }
+.prueba div:last-child { border-right: 0; background: #eaf4f1; }
+.prueba small { display: block; color: #64748b; font-size: 8pt; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+.prueba b { font-size: 10.5pt; }
+.prueba .grande { font-size: 17pt; color: #0d5c4e; line-height: 1.1; }
+ul { margin: 0; padding-left: 18px; } li { margin-bottom: 4px; }
+.contexto { background: #f8fafc; border-left: 3px solid #0d5c4e; padding: 9px 12px; border-radius: 4px; }
+table.pres { width: 100%; border-collapse: collapse; }
+table.pres td { border: 1px solid #e2e8f0; padding: 5px 8px; vertical-align: top; }
+table.pres td:first-child { width: 22%; font-weight: 600; background: #f8fafc; }
+.linea { display: inline-block; border-bottom: 1px solid #94a3b8; min-width: 120px; height: 13px; }
+.dato { font-weight: 600; }
+.pend { color: #94a3b8; font-size: 8.5pt; }
+.puntaje { display: flex; gap: 14px; align-items: center; margin-top: 12px; }
+.puntaje .n { font-size: 20pt; font-weight: 800; color: #0d5c4e; }
+.acc { counter-reset: a; list-style: none; padding: 0; }
+.acc li { counter-increment: a; padding-left: 30px; position: relative; margin-bottom: 5px; }
+.acc li::before { content: counter(a); position: absolute; left: 0; top: 0; width: 20px; height: 20px; border-radius: 50%; background: #0d5c4e; color: #fff; font-weight: 700; font-size: 9pt; text-align: center; line-height: 20px; }
+footer { position: absolute; bottom: 0; left: 0; right: 0; border-top: 1px solid #e2e8f0; padding-top: 6px; font-size: 8pt; color: #64748b; display: flex; justify-content: space-between; }
+.cuadro { border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 11px; margin-bottom: 6px; page-break-inside: avoid; }
+.cuadro h3 { margin: 0 0 4px; font-size: 10.5pt; }
+.chk { display: inline-block; width: 11px; height: 11px; border: 1.2px solid #64748b; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.aviso { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 9px 12px; }
+</style></head><body>
+<section class="hoja">
+  <header><div class="marca"><i></i>VÉRTICE</div><div class="fecha">Auditoría de pacientes<br>28 de octubre de 2026</div></header>
+  <h1>PB Odontología</h1>
+  <p class="sub">Dra. Laura Sánchez · ortodoncia y rehabilitación</p>
+  <p class="dir">Megacentro Pinares, Torre 1, piso 12, consultorio 1211 · Pereira</p>
+
+  <h2>1 · Lo que probamos: escribirles como un paciente nuevo</h2>
+  <div class="prueba">
+    <div><small>Escribimos</small><b>Martes 27 de octubre · 9:52 p. m.</b><br><span class="pend">WhatsApp 318 226 9139</span></div>
+    <div><small>Respondieron</small><b>Miércoles 28 de octubre · 8:15 a. m.</b></div>
+    <div><small>Tiempo de espera</small><span class="grande">≈ 10,4 horas</span></div>
+  </div>
+  <ul style="margin-top:10px"><li>No hubo respuesta esa noche.</li><li>Por la mañana respondieron con el precio de la valoración ($90.000, abonable al tratamiento).</li><li>No se agendó cita en la conversación: la persona quedó esperando el siguiente paso.</li></ul>
+
+  <h2>2 · Cómo se compara</h2>
+  <div class="contexto">Esa misma noche escribimos a unas 20 clínicas de Pereira y Dosquebradas pidiendo cita. <b>Ninguna dejó una cita agendada esa noche</b> y la espera típica fue de
+  unas 11 horas. Quien pide cita de noche suele escribir a varias clínicas a la vez: la primera que responde y le da la cita tiene ventaja.</div>
+
+  <h2>3 · Presencia digital <span class="pend" style="text-transform:none;letter-spacing:0">(se completa con la clínica)</span></h2>
+  <table class="pres">
+    <tr><td>Ficha de Google</td><td><span class="linea"></span> <span class="pend">estrellas · reseñas · ¿responde reseñas?</span></td></tr>
+    <tr><td>Instagram</td><td><span class="linea"></span> <span class="pend">publicaciones en el último mes · ¿enlace a WhatsApp?</span></td></tr>
+    <tr><td>Anuncios (Meta)</td><td><span class="linea"></span> <span class="pend">biblioteca de anuncios de Meta</span></td></tr>
+    <tr><td>Sitio web</td><td><span class="linea"></span> <span class="pend">pbodontologia.com · ¿botón de WhatsApp?</span></td></tr>
+  </table>
+  <div class="puntaje"><div class="n">0</div><div><b>puntos de 30 revisados hasta ahora</b><br><span class="pend">WhatsApp: 0/30 (Respuesta al día siguiente). El puntaje final sobre 100 se completa con la revisión de presencia digital de abajo.</span></div></div>
+
+  <h2>4 · Tres acciones que recomendamos</h2>
+  <ol class="acc"><li>Responder en menos de un minuto, también de noche, con el precio de la valoración y los horarios libres reales (horario partido L–V incluido).</li><li>Dejar la valoración de ortodoncia agendada en la misma conversación, sin esperar a la mañana.</li><li>Anuncios &quot;clic a WhatsApp&quot; para valoración de ortodoncia en Pereira y Dosquebradas.</li></ol>
+
+  <footer><span>Vértice · Automatización con IA · Pereira, Colombia</span><span>Preparado por Juan José Serna · WhatsApp: ____________________</span></footer>
+</section>
+<section class="hoja">
+  <header><div class="marca"><i></i>VÉRTICE</div><div class="fecha">Auditoría de pacientes<br>28 de octubre de 2026</div></header>
+  <h1>Consultorio Dr. Ricardo Orozco</h1>
+  <p class="sub">Odontología · agendamiento digital en su sitio web</p>
+  <p class="dir">Megacentro Pinares, Torre 1, consultorio 904 · Pereira</p>
+
+  <h2>1 · Lo que probamos: escribirles como un paciente nuevo</h2>
+  <div class="prueba">
+    <div><small>Escribimos</small><b>Martes 27 de octubre · por la noche (hora exacta por confirmar)</b><br><span class="pend">WhatsApp 311 841 7498 / 314 661 2227</span></div>
+    <div><small>Respondieron</small><b>Miércoles 28 de octubre · 9:02 a. m.</b></div>
+    <div><small>Tiempo de espera</small><span class="grande">al día siguiente</span></div>
+  </div>
+  <ul style="margin-top:10px"><li>Por la mañana respondió una asistente (&quot;Laura, asistente del Dr. Ricardo Orozco&quot;).</li><li>Tiene dos números de contacto distintos (311 841 7498 y 314 661 2227).</li><li>Según su sitio web, ya ofrece agendamiento digital; por WhatsApp, en esta prueba, la cita no se pudo agendar.</li></ul>
+
+  <h2>2 · Cómo se compara</h2>
+  <div class="contexto">Esa misma noche escribimos a unas 20 clínicas de Pereira y Dosquebradas pidiendo cita. <b>Ninguna dejó una cita agendada esa noche</b> y la espera típica fue de
+  unas 11 horas. Quien pide cita de noche suele escribir a varias clínicas a la vez: la primera que responde y le da la cita tiene ventaja.</div>
+
+  <h2>3 · Presencia digital <span class="pend" style="text-transform:none;letter-spacing:0">(se completa con la clínica)</span></h2>
+  <table class="pres">
+    <tr><td>Ficha de Google</td><td><span class="linea"></span> <span class="pend">estrellas · reseñas · ¿responde reseñas?</span></td></tr>
+    <tr><td>Instagram</td><td><span class="linea"></span> <span class="pend">publicaciones en el último mes · ¿enlace a WhatsApp?</span></td></tr>
+    <tr><td>Anuncios (Meta)</td><td><span class="linea"></span> <span class="pend">biblioteca de anuncios de Meta</span></td></tr>
+    <tr><td>Sitio web</td><td><span class="linea"></span> <span class="pend">odontologoricardoorozco.com · ¿botón de WhatsApp?</span></td></tr>
+  </table>
+  <div class="puntaje"><div class="n">0</div><div><b>puntos de 30 revisados hasta ahora</b><br><span class="pend">WhatsApp: 0/30 (Respuesta al día siguiente). El puntaje final sobre 100 se completa con la revisión de presencia digital de abajo.</span></div></div>
+
+  <h2>4 · Tres acciones que recomendamos</h2>
+  <ol class="acc"><li>Que el WhatsApp también agende: el mismo calendario del sitio, desde la conversación, a cualquier hora.</li><li>Responder fuera de horario sin depender de una persona (24/7).</li><li>Ordenar los dos números de contacto en un solo WhatsApp con respuestas coherentes.</li></ol>
+
+  <footer><span>Vértice · Automatización con IA · Pereira, Colombia</span><span>Preparado por Juan José Serna · WhatsApp: ____________________</span></footer>
+</section>
+<section class="hoja">
+  <header><div class="marca"><i></i>VÉRTICE</div><div class="fecha">Auditoría de pacientes<br>28 de octubre de 2026</div></header>
+  <h1>Maxisonrisas</h1>
+  <p class="sub">Odontología · dos sedes en Dosquebradas</p>
+  <p class="dir">Calle 21 #17-78 (Av. La Pradera) · Calle 8 #19-80 (Av. Juan B. Gutiérrez) · Dosquebradas</p>
+
+  <h2>1 · Lo que probamos: escribirles como un paciente nuevo</h2>
+  <div class="prueba">
+    <div><small>Escribimos</small><b>Martes 27 de octubre · 10:17 p. m.</b><br><span class="pend">WhatsApp 320 792 4477</span></div>
+    <div><small>Respondieron</small><b>Miércoles 28 de octubre · 9:04 a. m.</b></div>
+    <div><small>Tiempo de espera</small><span class="grande">≈ 10,8 horas</span></div>
+  </div>
+  <ul style="margin-top:10px"><li>El mensaje de la noche no llegó a entregarse (un solo visto gris): el teléfono no lo recibió hasta la mañana.</li><li>Respondieron con una nota de voz de 1 minuto 41 segundos.</li><li>No se agendó cita en la conversación.</li></ul>
+
+  <h2>2 · Cómo se compara</h2>
+  <div class="contexto">Esa misma noche escribimos a unas 20 clínicas de Pereira y Dosquebradas pidiendo cita. <b>Ninguna dejó una cita agendada esa noche</b> y la espera típica fue de
+  unas 11 horas. Quien pide cita de noche suele escribir a varias clínicas a la vez: la primera que responde y le da la cita tiene ventaja.</div>
+
+  <h2>3 · Presencia digital <span class="pend" style="text-transform:none;letter-spacing:0">(se completa con la clínica)</span></h2>
+  <table class="pres">
+    <tr><td>Ficha de Google</td><td><span class="linea"></span> <span class="pend">estrellas · reseñas · ¿responde reseñas?</span></td></tr>
+    <tr><td>Instagram</td><td><span class="linea"></span> <span class="pend">publicaciones en el último mes · ¿enlace a WhatsApp?</span></td></tr>
+    <tr><td>Anuncios (Meta)</td><td><span class="linea"></span> <span class="pend">biblioteca de anuncios de Meta</span></td></tr>
+    <tr><td>Sitio web</td><td><span class="linea"></span> <span class="pend">maxisonrisas.co · ¿botón de WhatsApp?</span></td></tr>
+  </table>
+  <div class="puntaje"><div class="n">0</div><div><b>puntos de 30 revisados hasta ahora</b><br><span class="pend">WhatsApp: 0/30 (Respuesta al día siguiente). El puntaje final sobre 100 se completa con la revisión de presencia digital de abajo.</span></div></div>
+
+  <h2>4 · Tres acciones que recomendamos</h2>
+  <ol class="acc"><li>Un WhatsApp que reciba siempre, aunque el teléfono de la sede esté apagado o sin batería.</li><li>Responder en texto, con horarios de cada sede, y dejar la cita agendada en la sede que le quede mejor al paciente.</li><li>Anuncios &quot;clic a WhatsApp&quot; por sede (Pradera y Av. Juan B. Gutiérrez).</li></ol>
+
+  <footer><span>Vértice · Automatización con IA · Pereira, Colombia</span><span>Preparado por Juan José Serna · WhatsApp: ____________________</span></footer>
+</section>
+<section class="hoja">
+  <header><div class="marca"><i></i>VÉRTICE</div><div class="fecha">Auditoría de pacientes<br>28 de octubre de 2026</div></header>
+  <h1>Del Castillo Odontología Especializada</h1>
+  <p class="sub">Implantes y ortodoncia</p>
+  <p class="dir">Calle 25 #8-30 · Pereira</p>
+
+  <h2>1 · Lo que probamos: escribirles como un paciente nuevo</h2>
+  <div class="prueba">
+    <div><small>Escribimos</small><b>Martes 27 de octubre · 9:39 p. m.</b><br><span class="pend">WhatsApp 314 814 2403</span></div>
+    <div><small>Respondieron</small><b>Miércoles 28 de octubre · 8:52 a. m.</b></div>
+    <div><small>Tiempo de espera</small><span class="grande">≈ 11,2 horas</span></div>
+  </div>
+  <ul style="margin-top:10px"><li>No hubo respuesta esa noche.</li><li>Por la mañana explicaron el proceso de valoración de ortodoncia en 4 mensajes, escritos a mano.</li><li>No se agendó cita en la conversación.</li></ul>
+
+  <h2>2 · Cómo se compara</h2>
+  <div class="contexto">Esa misma noche escribimos a unas 20 clínicas de Pereira y Dosquebradas pidiendo cita. <b>Ninguna dejó una cita agendada esa noche</b> y la espera típica fue de
+  unas 11 horas. Quien pide cita de noche suele escribir a varias clínicas a la vez: la primera que responde y le da la cita tiene ventaja.</div>
+
+  <h2>3 · Presencia digital <span class="pend" style="text-transform:none;letter-spacing:0">(se completa con la clínica)</span></h2>
+  <table class="pres">
+    <tr><td>Ficha de Google</td><td><span class="linea"></span> <span class="pend">estrellas · reseñas · ¿responde reseñas?</span></td></tr>
+    <tr><td>Instagram</td><td><span class="linea"></span> <span class="pend">publicaciones en el último mes · ¿enlace a WhatsApp?</span></td></tr>
+    <tr><td>Anuncios (Meta)</td><td><span class="linea"></span> <span class="pend">biblioteca de anuncios de Meta</span></td></tr>
+    <tr><td>Sitio web</td><td><span class="linea"></span> <span class="pend">delcastilloodontologia.com · ¿botón de WhatsApp?</span></td></tr>
+  </table>
+  <div class="puntaje"><div class="n">0</div><div><b>puntos de 30 revisados hasta ahora</b><br><span class="pend">WhatsApp: 0/30 (Respuesta al día siguiente). El puntaje final sobre 100 se completa con la revisión de presencia digital de abajo.</span></div></div>
+
+  <h2>4 · Tres acciones que recomendamos</h2>
+  <ol class="acc"><li>Explicar el proceso de valoración al instante y a cualquier hora, y dejar la cita agendada.</li><li>Calificar al paciente (implante, ortodoncia, estética) para que el especialista reciba conversaciones listas.</li><li>Anuncios &quot;clic a WhatsApp&quot; para implantes y ortodoncia, tratamientos de alto valor.</li></ol>
+
+  <footer><span>Vértice · Automatización con IA · Pereira, Colombia</span><span>Preparado por Juan José Serna · WhatsApp: ____________________</span></footer>
+</section>
+<section class="hoja">
+  <header><div class="marca"><i></i>VÉRTICE</div><div class="fecha">Auditoría de pacientes<br>28 de octubre de 2026</div></header>
+  <h1>Ortocentro</h1>
+  <p class="sub">Ortodoncia y odontología · Pereira, Dosquebradas y La Virginia</p>
+  <p class="dir">Cra. 6 #22-48 (Pereira) · C.C. Plaza del Sol, local 207 (Dosquebradas)</p>
+
+  <h2>1 · Lo que probamos: escribirles como un paciente nuevo</h2>
+  <div class="prueba">
+    <div><small>Escribimos</small><b>Martes 27 de octubre · 10:00 p. m.</b><br><span class="pend">WhatsApp 320 688 9421 (asistente virtual &quot;Ana&quot;)</span></div>
+    <div><small>Respondieron</small><b>Inmediata (segundos)</b></div>
+    <div><small>Tiempo de espera</small><span class="grande">segundos</span></div>
+  </div>
+  <ul style="margin-top:10px"><li>Ya tienen un asistente virtual que responde al instante: van por delante del resto.</li><li>Pero el asistente no puede ver la agenda (&quot;no tengo acceso a la agenda&quot;, 4 veces) y pide datos personales sensibles, como la cédula.</li><li>Cuando la persona pidió cita para el día siguiente, la respuesta fue &quot;una asesora te contactará&quot;: la cita no quedó agendada.</li></ul>
+
+  <h2>2 · Cómo se compara</h2>
+  <div class="contexto">Esa misma noche escribimos a unas 20 clínicas de Pereira y Dosquebradas pidiendo cita. <b>Ninguna dejó una cita agendada esa noche</b> y la espera típica fue de
+  unas 11 horas. Quien pide cita de noche suele escribir a varias clínicas a la vez: la primera que responde y le da la cita tiene ventaja.</div>
+
+  <h2>3 · Presencia digital <span class="pend" style="text-transform:none;letter-spacing:0">(se completa con la clínica)</span></h2>
+  <table class="pres">
+    <tr><td>Ficha de Google</td><td><span class="linea"></span> <span class="pend">estrellas · reseñas · ¿responde reseñas?</span></td></tr>
+    <tr><td>Instagram</td><td><span class="linea"></span> <span class="pend">publicaciones en el último mes · ¿enlace a WhatsApp?</span></td></tr>
+    <tr><td>Anuncios (Meta)</td><td><span class="linea"></span> <span class="pend">biblioteca de anuncios de Meta</span></td></tr>
+    <tr><td>Sitio web</td><td><span class="linea"></span> <span class="pend">ortocentro.com.co · ¿botón de WhatsApp?</span></td></tr>
+  </table>
+  <div class="puntaje"><div class="n">30</div><div><b>puntos de 30 revisados hasta ahora</b><br><span class="pend">WhatsApp: 30/30 (Responde al instante, pero no agenda). El puntaje final sobre 100 se completa con la revisión de presencia digital de abajo.</span></div></div>
+
+  <h2>4 · Tres acciones que recomendamos</h2>
+  <ol class="acc"><li>Conectar el asistente a la agenda real: que muestre horarios libres y deje la cita confirmada en la misma conversación.</li><li>Pedir solo lo necesario (nombre y teléfono) y no la cédula en el primer contacto.</li><li>Medir cuántas conversaciones del asistente terminan en cita y cuántas se pierden en &quot;una asesora te contactará&quot;.</li></ol>
+
+  <footer><span>Vértice · Automatización con IA · Pereira, Colombia</span><span>Preparado por Juan José Serna · WhatsApp: ____________________</span></footer>
+</section></body></html>

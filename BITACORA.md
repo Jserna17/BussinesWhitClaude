@@ -429,3 +429,9 @@ P0/P1/P2. Checklist de onboarding actualizado; la pregunta "¿dónde llevan la a
 - 77 pruebas OK + prueba de humo de CLI y servidor en modo producción. Demo republicada con privacidad y roles.
 **Estado:** los 8 imprescindibles de `docs/14` están construidos. Lo que sigue depende de acciones del fundador: aprobar servidor, Meta (token/plantilla), abogado y probar con conversaciones reales.
 
+### Panel en blanco y hojas de auditoría (misma sesión)
+- **Diseño:** el panel seguía el modo oscuro del sistema (por eso al fundador le salía oscuro). Ahora es **blanco por defecto siempre**, con interruptor "Tema oscuro" que se recuerda; paleta de grises neutros, tarjetas de atención sobrias. Igual para la página de Sofía. Demo republicada.
+- **Hojas de auditoría** (`prospectos/auditorias/`): `hojas-para-entregar.pdf` (5 hojas, solo datos verificados de la prueba de WhatsApp) y `guia-del-fundador.pdf` (interna: ruta en 3 jornadas, revisión previa de 8 min, reglas, notas por clínica). `generar.py` + `a-pdf.js` las regeneran; el puntaje se calcula al llenar `datos-presencia.json`.
+- La búsqueda web **no** encontró Google/Instagram de estas clínicas: esos campos quedan en blanco, no se inventaron. Se quitó de la hoja de Orozco lo no verificable (identidad del Instagram).
+- **Pendiente del fundador:** revisión previa (Google, Instagram, anuncios, web) y cerrar con amabilidad los chats donde ofrecieron cita.
+

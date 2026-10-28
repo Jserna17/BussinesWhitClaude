@@ -539,3 +539,66 @@ def test_panel_tomar_control_responder_y_devolver(db):
     assert c.get("/panel/api/conversaciones", headers=H).json()[0]["sin_responder"] is True
     assert c.post(f"/panel/api/conversaciones/{cli}/devolver", headers=H).status_code == 200
     assert c.get("/panel/api/conversaciones", headers=H).json()[0]["pausada"] is False
+
+
+def payload_audio(msg_id="wamid.a1", media="media123"):
+    return {"entry": [{"changes": [{"value": {
+        "metadata": {"phone_number_id": "123"},
+        "contacts": [{"wa_id": "573001112233", "profile": {"name": "Ana"}}],
+        "messages": [{"id": msg_id, "from": "573001112233", "type": "audio",
+                      "audio": {"id": media, "mime_type": "audio/ogg; codecs=opus", "voice": True}}],
+    }}]}]}
+
+
+def test_nota_de_voz_se_transcribe_y_llega_al_asistente(db):
+    from dataclasses import replace
+    negocio = replace(CLINICA, whatsapp_phone_number_id="123")
+    m = extraer_mensajes(payload_audio())[0]
+    assert (m.tipo, m.texto, m.media_id) == ("audio", None, "media123")
+    api = APIFalsa([respuesta(texto("Claro, ¿para qué día?"))])
+    enviados = []
+    c = TestClient(crear_app(Asistente(db, api, ahora), {negocio.id: negocio},
+                             enviar=lambda pid, para, t: enviados.append(t) or "wamid.s",
+                             descargar=lambda mid: (b"OggS...", "audio/ogg"),
+                             transcribir=lambda audio, mime: "quiero una limpieza para mañana"))
+    c.post("/webhook", json=payload_audio())
+    assert enviados == ["Claro, ¿para qué día?"]
+    pedido = json.dumps(api.peticiones[0]["messages"], ensure_ascii=False)
+    assert "🎤 quiero una limpieza para mañana" in pedido
+
+
+def test_nota_de_voz_que_falla_pide_escribir(db):
+    from dataclasses import replace
+    negocio = replace(CLINICA, whatsapp_phone_number_id="123")
+    enviados = []
+
+    def roto(audio, mime):
+        raise RuntimeError("sin red")
+
+    c = TestClient(crear_app(Asistente(db, APIFalsa([]), ahora), {negocio.id: negocio},
+                             enviar=lambda pid, para, t: enviados.append(t),
+                             descargar=lambda mid: (b"x", "audio/ogg"), transcribir=roto))
+    c.post("/webhook", json=payload_audio())
+    assert len(enviados) == 1 and "escribir" in enviados[0]
+
+
+def test_nota_de_voz_en_chat_pausado_se_guarda_transcrita(db):
+    from dataclasses import replace
+    negocio = replace(CLINICA, whatsapp_phone_number_id="123")
+    db.pausar(negocio.id, "573001112233", 12, "prueba")
+    enviados = []
+    c = TestClient(crear_app(Asistente(db, APIFalsa([]), ahora), {negocio.id: negocio},
+                             enviar=lambda pid, para, t: enviados.append(t),
+                             descargar=lambda mid: (b"x", "audio/ogg"), transcribir=lambda a, m: "¿atienden el sábado?"))
+    c.post("/webhook", json=payload_audio())
+    assert enviados == []
+    assert db.mensajes_chat(negocio.id, "573001112233")[0]["texto"] == "🎤 ¿atienden el sábado?"
+
+
+def test_transcribir_rechaza_audios_enormes_y_vacios():
+    from vertice import voz
+    with pytest.raises(voz.ErrorVoz):
+        voz.transcribir(b"0" * (voz.MAX_BYTES + 1))
+    falso = SimpleNamespace(audio=SimpleNamespace(transcriptions=SimpleNamespace(create=lambda **k: SimpleNamespace(text="  "))))
+    with pytest.raises(voz.ErrorVoz):
+        voz.transcribir(b"abc", cliente=falso)

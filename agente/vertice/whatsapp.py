@@ -24,6 +24,8 @@ class MensajeEntrante:
     nombre_perfil: str
     texto: str | None  # None si no es texto (audio, imagen, ubicación…)
     tipo: str
+    media_id: str = ""  # nota de voz: id para descargarla
+    mime: str = ""
 
 
 @dataclass(frozen=True)
@@ -73,11 +75,23 @@ def extraer_mensajes(payload: dict) -> list[MensajeEntrante]:
                 texto = m.get("text", {}).get("body") if tipo == "text" else None
                 if tipo == "button":
                     texto = m.get("button", {}).get("text")
+                audio = m.get("audio", {}) if tipo == "audio" else {}
                 mensajes.append(MensajeEntrante(
                     id=m.get("id", ""), phone_number_id=phone_number_id, de=m.get("from", ""),
                     nombre_perfil=nombres.get(m.get("from"), ""), texto=texto, tipo=tipo,
+                    media_id=str(audio.get("id", "")), mime=audio.get("mime_type", ""),
                 ))
     return mensajes
+
+
+def descargar_media(media_id: str, token: str | None = None) -> tuple[bytes, str]:
+    """Descarga un archivo (nota de voz) de WhatsApp: primero se pide la URL y luego el contenido, ambos con el token."""
+    token = token or os.environ["WHATSAPP_TOKEN"]
+    cab = {"Authorization": f"Bearer {token}"}
+    with urllib.request.urlopen(urllib.request.Request(f"https://graph.facebook.com/{GRAPH_VERSION}/{media_id}", headers=cab), timeout=15) as r:
+        info = json.load(r)
+    with urllib.request.urlopen(urllib.request.Request(info["url"], headers=cab), timeout=30) as r:
+        return r.read(), info.get("mime_type", "audio/ogg")
 
 
 def enviar_texto(phone_number_id: str, para: str, texto: str, token: str | None = None) -> str | None:

@@ -13,7 +13,7 @@ from pathlib import Path
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 
-from . import whatsapp
+from . import voz, whatsapp
 from .agente import Asistente
 from .db import BaseDatos
 from .negocio import Negocio, cargar_negocios
@@ -28,7 +28,8 @@ RUTA_DB = os.environ.get("VERTICE_DB", RAIZ / "vertice.db")
 VERIFY_TOKEN = os.environ.get("WHATSAPP_VERIFY_TOKEN", "")
 APP_SECRET = os.environ.get("WHATSAPP_APP_SECRET", "")
 
-NO_TEXTO = "Por ahora solo puedo leer mensajes de texto ✍️ ¿Me escribes tu consulta?"
+NO_TEXTO = "Por ahora solo puedo leer mensajes de texto y notas de voz ✍️ ¿Me escribes tu consulta?"
+NO_ENTENDI_VOZ = "No logré escuchar bien tu nota de voz 🎧 ¿Me la puedes escribir, por favor?"
 
 
 def notificar_dueno(negocio: Negocio, texto: str) -> None:
@@ -39,7 +40,7 @@ def notificar_dueno(negocio: Negocio, texto: str) -> None:
 
 
 def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] | None = None,
-              enviar=whatsapp.enviar_texto) -> FastAPI:
+              enviar=whatsapp.enviar_texto, descargar=whatsapp.descargar_media, transcribir=voz.transcribir) -> FastAPI:
     db = BaseDatos(RUTA_DB) if asistente is None else asistente.db
     asistente = asistente or Asistente(db, notificar_dueno=notificar_dueno)
     negocios = negocios if negocios is not None else cargar_negocios(CARPETA_NEGOCIOS)
@@ -64,15 +65,27 @@ def crear_app(asistente: Asistente | None = None, negocios: dict[str, Negocio] |
         if wamid:
             db.marcar_procesado(wamid)  # si Meta lo "ecoa" de vuelta no es un mensaje del equipo
 
+    def texto_de(m: whatsapp.MensajeEntrante, negocio: Negocio) -> str | None:
+        """Texto del mensaje; las notas de voz se transcriben (con 🎤 delante para que el asistente lo sepa)."""
+        if m.tipo == "audio" and m.media_id:
+            try:
+                audio, mime = descargar(m.media_id)
+                return "🎤 " + transcribir(audio, m.mime or mime)
+            except Exception as e:  # noqa: BLE001 - no se pudo: se le pide que escriba
+                log.error("[%s] No se pudo transcribir la nota de voz de %s: %s", negocio.id, m.de, e)
+                return None
+        return m.texto
+
     def atender(m: whatsapp.MensajeEntrante, negocio: Negocio) -> None:
+        texto_entrante = texto_de(m, negocio)
         if db.pausa_vigente(negocio.id, m.de):
             # Una persona atiende este chat: guardamos el mensaje para que el equipo lo vea y no respondemos.
-            db.guardar_mensaje_chat(negocio.id, m.de, "paciente", m.texto or f"[{m.tipo}]", "whatsapp")
+            db.guardar_mensaje_chat(negocio.id, m.de, "paciente", texto_entrante or f"[{m.tipo}]", "whatsapp")
             return
-        if m.texto is None:
-            enviar_y_registrar(negocio, m.de, NO_TEXTO)
+        if texto_entrante is None:
+            enviar_y_registrar(negocio, m.de, NO_ENTENDI_VOZ if m.tipo == "audio" else NO_TEXTO)
             return
-        texto = m.texto if not m.nombre_perfil else f"(Nombre en WhatsApp: {m.nombre_perfil}) {m.texto}"
+        texto = texto_entrante if not m.nombre_perfil else f"(Nombre en WhatsApp: {m.nombre_perfil}) {texto_entrante}"
         respuesta = asistente.responder(negocio, m.de, texto)
         enviar_y_registrar(negocio, m.de, respuesta)
 

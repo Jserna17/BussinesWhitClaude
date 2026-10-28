@@ -31,6 +31,12 @@ Fuente: capturas de pantalla compartidas el 2026-10-27. **Pendiente:** revisar m
 
 No contactadas aún (de la lista): Arte Dental DG (320 856 7282), Dr. Roberto Granados (304 237 2914), Clident (312 337 3960) — confirmar con el fundador.
 
+## Respuestas del día siguiente (28-oct)
+
+| Hora | Clínica | Respuesta |
+|---|---|---|
+| 6:00 a. m. en punto | Pendiente identificar | Respondió alguien. Una hora exacta sugiere mensaje programado o automático al abrir; verificar con la captura. **Paciente que escribió a las ~10 p. m. esperó ~8 horas.** |
+
 ## Lo que aprendimos
 1. **De ~20 clínicas, solo 3 respondieron algo útil de noche** (Ortocentro con IA, la auxiliar de la Dra. Calderón y una que dio el precio). El resto: nada, mensaje de ausencia o mensaje sin entregar.
 2. **Ninguna agendó una cita de noche.** Ni siquiera la que tiene IA: el paciente dice "la necesito lo más pronto posible / ¿pueden mañana?" y la respuesta es "una asesora te contactará".
